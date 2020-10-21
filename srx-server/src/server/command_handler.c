@@ -420,7 +420,22 @@ static bool _processUpdateValidation(CommandHandler* cmdHandler,
     }
     free(prefix);
   }
+
+  // ----------------------------------------------------------------
+  // 
+  // TODO:
+  // 1. fetch validation task for Aspath from AspathCache 
+  // 2. relate this job to ASPA object DB
+  // 3. validation work
+  // 4. notification
+  //
+  // ----------------------------------------------------------------
   
+
+
+
+
+
   // Now check if the update changed - In a future version check if bgpsecResult
   // is not DONOTUSE and  not originVal - in a future version the origin 
   // validation will get the validation result handed down to store and it will

@@ -649,6 +649,24 @@ bool processValidationRequest(ServerConnectionHandler* self,
                                     clientID, clientMapping,
                                     &srxRes, &defResInfo);
 
+  // ----------------------------------------------------------------
+  //
+  // TODO:  
+  // 1. here get Update result for ASPA and 
+  // 2. put a task into Aspath Cache
+  // 3. CommandHandler takes this job to process in _processUpdateValidation()
+  //
+  // ----------------------------------------------------------------
+
+
+
+
+
+
+
+
+
+
   if (doStoreUpdate)
   {
     //TODO: Normally an update should be validated all the time. Maybe the
