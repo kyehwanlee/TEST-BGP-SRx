@@ -192,7 +192,7 @@ void releaseUpdateCache(UpdateCache* self);
  */
 bool getUpdateResult(UpdateCache* self, SRxUpdateID* updateID, 
                      uint8_t clientID, void* clientMapping,
-                     SRxResult* srxRes, SRxDefaultResult* defaultRes);
+                     SRxResult* srxRes, SRxDefaultResult* defaultRes, uint32_t *pathID);
 
 /**
  * This function returns the update signature if already existent. It will NOT
@@ -278,7 +278,7 @@ UC_UpdateData* getUpdateData(UpdateCache* self, SRxUpdateID* updateID);
 int storeUpdate(UpdateCache* self, uint8_t clientID, void* clientMapping,
                 SRxUpdateID* updateID, IPPrefix* prefix, 
                 uint32_t asn, SRxDefaultResult* defRes,
-                BGPSecData* bgpData);
+                BGPSecData* bgpData, uint32_t pathID);
 
 /**
  * Removes the update data from the list and releases all memory associated to 

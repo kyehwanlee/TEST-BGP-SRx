@@ -249,7 +249,7 @@ static void handleEndOfData (uint32_t valCacheID, uint16_t session_id,
     
     if ((queueElem.reason & RQ_ROA) == RQ_ROA)
     {
-      if (getUpdateResult(uCache, uID, 0, NULL, &srxRes, &defaultRes))
+      if (getUpdateResult(uCache, uID, 0, NULL, &srxRes, &defaultRes, NULL))
       {
         valRes.valType |= VRT_ROA;
         valRes.valResult.roaResult = srxRes.roaResult;

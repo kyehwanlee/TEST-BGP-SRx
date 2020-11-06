@@ -99,6 +99,7 @@
 #include "server/srx_server.h"
 #include "server/srx_packet_sender.h"
 #include "server/update_cache.h"
+#include "server/aspath_cache.h"
 #include "util/directory.h"
 #include "util/log.h"
 
@@ -139,6 +140,8 @@ static SKI_CACHE*    skiCache  = NULL;
 /** The RPKI queue that is used to manage changes in the RPKI.
  * @since 0.5.0.0 */
 static RPKI_QUEUE*   rpkiQueue = NULL;
+
+static AspathCache  aspathCache;
 
 /** The cache that manages keys for bgpsec. 
  * @deprecated  MIGHT BE NOT USED
@@ -304,6 +307,7 @@ static bool setupCaches()
     RAISE_ERROR("Failed to setup a cache - stopping");    
     return false;
   }
+  createAspathCache(&aspathCache);
 
   LOG(LEVEL_INFO, "- SRx Caches and RPKI Queue created");
   return true;
@@ -335,7 +339,7 @@ static bool setupHandlers()
     else
     {
       handlers |= SETUP_BGPSEC_HANDLER;
-      if (!createServerConnectionHandler (&svrConnHandler, &updCache, &config))
+      if (!createServerConnectionHandler (&svrConnHandler, &updCache, &aspathCache, &config))
       {
         RAISE_ERROR("Failed to create Server Connection Handler.");
       }

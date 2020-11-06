@@ -341,6 +341,7 @@ static bool _processUpdateValidation(CommandHandler* cmdHandler,
   // 1. get an idea what validations are requested:
   bool originVal = _isSet(bhdr->flags, SRX_PROXY_FLAGS_VERIFY_PREFIX_ORIGIN);
   bool pathVal   = _isSet(bhdr->flags, SRX_PROXY_FLAGS_VERIFY_PATH);
+  bool aspaVal   = _isSet(bhdr->flags, SRX_PROXY_FLAGS_VERIFY_ASPA);
   SRxUpdateID updateID = (SRxUpdateID)item->dataID;
 
   if (!originVal && !pathVal)
@@ -354,8 +355,9 @@ static bool _processUpdateValidation(CommandHandler* cmdHandler,
   SRxDefaultResult defRes;
   SRxResult srxRes;
 
+  uint32_t pathID= 0;
   if(!getUpdateResult(cmdHandler->updCache, &item->dataID, 0, NULL,
-                      &srxRes, &defRes))
+                      &srxRes, &defRes, &pathID))
   {
     RAISE_SYS_ERROR("Command handler attempts to start validation for update"
                     "[0x%08X] but it does not exist!", updateID);
@@ -368,6 +370,7 @@ static bool _processUpdateValidation(CommandHandler* cmdHandler,
   SRxResult srxRes_mod;
   srxRes_mod.bgpsecResult = SRx_RESULT_DONOTUSE;
   srxRes_mod.roaResult    = SRx_RESULT_DONOTUSE; // Indicates this
+  srxRes_mod.aspaResult    = SRx_RESULT_DONOTUSE; // Indicates this
 
     
   // Only do bgpdsec path validation if not already performed
@@ -430,7 +433,13 @@ static bool _processUpdateValidation(CommandHandler* cmdHandler,
   // 4. notification
   //
   // ----------------------------------------------------------------
-  
+  if (aspaVal)
+  {
+    srxRes_mod.aspaResult = SRx_RESULT_DONOTUSE;
+
+    // Do Validation for ASPA
+    //
+  }
 
 
 
@@ -441,7 +450,8 @@ static bool _processUpdateValidation(CommandHandler* cmdHandler,
   // validation will get the validation result handed down to store and it will
   // be send there as well. Not yet though.
   if (   (srxRes_mod.bgpsecResult != SRx_RESULT_DONOTUSE)
-      || (srxRes_mod.roaResult    != SRx_RESULT_DONOTUSE))
+      || (srxRes_mod.roaResult    != SRx_RESULT_DONOTUSE)
+      || (srxRes_mod.aspaResult   != SRx_RESULT_DONOTUSE))
   {
     if (!modifyUpdateResult(cmdHandler->updCache, &item->dataID, &srxRes_mod, 
                             false))

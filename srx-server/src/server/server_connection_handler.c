@@ -60,6 +60,7 @@
 #include "util/log.h"
 #include "server/server_connection_handler.h"
 #include "server/srx_packet_sender.h"
+#include "server/aspath_cache.h"
 #include "shared/srx_identifier.h"
 #include "shared/srx_packets.h"
 #include "shared/srx_defs.h"
@@ -433,6 +434,7 @@ bool addToSCHReceiverQueue(uint8_t* pdu, ServerSocket* svrSoc,
  */
 bool createServerConnectionHandler(ServerConnectionHandler* self,
                                    UpdateCache* updCache,
+                                   AspathCache* aspathCache,
                                    Configuration* sysConfig)
 {
   bool cont = true;
@@ -465,6 +467,7 @@ bool createServerConnectionHandler(ServerConnectionHandler* self,
       }
 
       self->updateCache = updCache;
+      self->aspathCache = aspathCache;
       self->sysConfig = sysConfig;
 
       if (!sysConfig->mode_no_receivequeue)
@@ -548,6 +551,7 @@ bool processValidationRequest(ServerConnectionHandler* self,
 
   bool     doOriginVal = (hdr->flags & SRX_FLAG_ROA) == SRX_FLAG_ROA;
   bool     doPathVal   = (hdr->flags & SRX_FLAG_BGPSEC) == SRX_FLAG_BGPSEC;
+  bool     doAspaVal   = (hdr->flags & SRX_FLAG_ASPA) == SRX_FLAG_ASPA;
 
   bool      v4     = hdr->type == PDU_SRXPROXY_VERIFY_V4_REQUEST;
   // Set the BGPsec data
@@ -645,9 +649,11 @@ bool processValidationRequest(ServerConnectionHandler* self,
   // register the client as listener (only if the update already exists)
   ProxyClientMapping* clientMapping = clientID > 0 ? &self->proxyMap[clientID]
                                                    : NULL;
+  uint32_t pathID = 0;
+
   doStoreUpdate = !getUpdateResult (self->updateCache, &updateID,
                                     clientID, clientMapping,
-                                    &srxRes, &defResInfo);
+                                    &srxRes, &defResInfo, &pathID);
 
   // ----------------------------------------------------------------
   //
@@ -657,13 +663,43 @@ bool processValidationRequest(ServerConnectionHandler* self,
   // 3. CommandHandler takes this job to process in _processUpdateValidation()
   //
   // ----------------------------------------------------------------
+  // XXX NOTE XXX:   
+  // 1. Do I have to know about segment type ? AS_SEQUENCE, AS_CONFED_SEQUENCE etc
+  //
+
+  if (pathID != 0)  // if it is already stored in cEntry, then skip the generation part below
+  {
+    AS_PATH_LIST as_pl; 
+    memset(&as_pl, 0x0, sizeof(AS_PATH_LIST));
+    as_pl.asPathLength = bgpData.numberHops;
+    as_pl.asPathList = (uint32_t*)malloc(bgpData.numberHops * 4);
+
+    int i=0;
+    for (i=0; i < as_pl.asPathLength; i++)
+    {
+      as_pl.asPathList[i] = ntohl(bgpData.asPath[i]);
+    }
+
+    // path ID -  
+    //            1st convert asn to string (cf. aspath_make_str_count() or aspath_str_update()
+    //            2nd hash processing with the above string (cf. generateID fn)
+    char* strBuf;
+    int strSize = as_pl.asPathLength * 4 *2;  //  Path length * 4 byte, *2: hex string
+    strBuf = (char*)calloc(strSize, sizeof(char));
+
+    for (i=0; i < as_pl.asPathLength; i++)
+    {
+      sprintf(strBuf + (i*4*2), "%08X", as_pl.asPathList[i]);
+    }
+
+    pathID = crc32((uint8_t*)strBuf, strSize);
+    printf("CRC: %08X\n", pathID);
+  }
 
 
-
-
-
-
-
+  //
+  // TODO: store data into aspath cache with crc Key
+  //
 
 
 
@@ -687,8 +723,8 @@ bool processValidationRequest(ServerConnectionHandler* self,
     defResInfo.result.bgpsecResult = hdr->bgpsecDefRes;
     defResInfo.resSourceBGPSEC     = hdr->bgpsecResSrc;
 
-    if (!storeUpdate(self->updateCache, clientID, clientMapping,
-                     &updateID, prefix, originAS, &defResInfo, &bgpData))
+    if (!storeUpdate(self->updateCache, clientID, clientMapping, 
+              &updateID, prefix, originAS, &defResInfo, &bgpData, pathID))
     {
       RAISE_SYS_ERROR("Could not store update [0x%08X]!!", updateID);
       // Maybe check for ID conflict, if not then get result again - or just
@@ -726,6 +762,10 @@ bool processValidationRequest(ServerConnectionHandler* self,
     {
       sendFlags = sendFlags | SRX_FLAG_BGPSEC;
     }
+    if (doAspaVal)
+    {
+      sendFlags = sendFlags | SRX_FLAG_ASPA;
+    }
 
     // Now send the results we know so far;
     if (!sendVerifyNotification(svrSock, client, updateID, sendFlags,
@@ -744,10 +784,10 @@ bool processValidationRequest(ServerConnectionHandler* self,
   // not have the flags set and no additional validation has to be performed at 
   // this point therefore also filter for sendFlags, the command handler will
   // do it otherwise and we can save this effort.
-  if ((doOriginVal || doPathVal) && ((sendFlags & SRX_FLAG_ROA_AND_BGPSEC) > 0))
+  if ((doOriginVal || doPathVal || doAspaVal) && ((sendFlags & SRX_FLAG_ROA_BGPSEC_ASPA) > 0))
   {
     // Only keep the validation flags.
-    hdr->flags = sendFlags & SRX_FLAG_ROA_AND_BGPSEC;
+    hdr->flags = sendFlags & SRX_FLAG_ROA_BGPSEC_ASPA;
 
     // create the validation command!
     if (!queueCommand(self->cmdQueue, COMMAND_TYPE_SRX_PROXY, svrSock, client,

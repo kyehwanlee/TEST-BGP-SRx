@@ -220,6 +220,17 @@ static int handleErrorReport(RPKIRouterClient* client,
   return returnVal;
 }
 
+
+// 
+// ASPA validation
+//
+int handleAspaPdu()
+{
+
+  return 0;
+
+}
+
 /**
  * Processes the router key PDU 
  * 
@@ -648,6 +659,13 @@ static bool receivePDUs(RPKIRouterClient* client, bool returnAterEndOfData,
         keepGoing = !handleErrorReport(client, 
                                        (RPKIErrorReportHeader*)byteBuffer);
         break;
+      case PDU_TYPE_ASPA_PDU :
+        //
+        // TODO: ASPA validation 
+        handleAspaPdu();
+        //
+        break;
+
       case PDU_TYPE_RESERVED :
         LOG(LEVEL_ERROR, "Received reserved RPKI-PDU Type %u", 
             PDU_TYPE_RESERVED);

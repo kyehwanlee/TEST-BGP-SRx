@@ -120,6 +120,7 @@ typedef struct {
                                   // by the garbage collector.
 
   UC_UpdateData    pathData;      // This element replaces the blob.
+  uint32_t         aspathCacheID; // aspath cache key ID
 } CacheEntry;
 
 // Forward declarations
@@ -363,7 +364,7 @@ void releaseUpdateCache(UpdateCache* self)
  */
 bool getUpdateResult(UpdateCache* self, SRxUpdateID* updateID,
                      uint8_t clientID, void* clientMapping,
-                     SRxResult* srxRes, SRxDefaultResult* defaultRes)
+                     SRxResult* srxRes, SRxDefaultResult* defaultRes, uint32_t *pathID)
 {
   // The cache entry also need the addition of source and predefined result.
   CacheEntry* cEntry = NULL;
@@ -386,6 +387,9 @@ bool getUpdateResult(UpdateCache* self, SRxUpdateID* updateID,
     srxRes->bgpsecResult            = cEntry->srxResult.bgpsecResult;
     defaultRes->resSourceBGPSEC     = cEntry->defaultResult.resSourceBGPSEC;
     defaultRes->result.bgpsecResult = cEntry->defaultResult.result.bgpsecResult;
+
+    if (pathID != NULL)
+      *pathID = cEntry->aspathCacheID; 
 
     if (clientID > 0)
     {
@@ -527,7 +531,7 @@ bool _addClientReference(UpdateCache* self, CacheEntry* cEntry,
  */
 int storeUpdate(UpdateCache* self, uint8_t clientID, void* clientMapping,
                 SRxUpdateID* updateID, IPPrefix* prefix, uint32_t asn,
-                SRxDefaultResult* defRes, BGPSecData* bgpData)
+                SRxDefaultResult* defRes, BGPSecData* bgpData, uint32_t pathID)
 {
   CacheEntry* cEntry;
 
@@ -580,6 +584,7 @@ int storeUpdate(UpdateCache* self, uint8_t clientID, void* clientMapping,
 
     cEntry->updateID      = updID;
     cEntry->asn           = asn;
+    cEntry->aspathCacheID = pathID;
     cpyPrefix(&cEntry->prefix, prefix);
     cEntry->srxResult.bgpsecResult = SRx_RESULT_UNDEFINED;
     cEntry->srxResult.roaResult    = SRx_RESULT_UNDEFINED;

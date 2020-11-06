@@ -142,7 +142,9 @@ typedef uint8_t SRxVerifyFlag;
 
 #define SRX_FLAG_ROA               1
 #define SRX_FLAG_BGPSEC            2
+#define SRX_FLAG_ASPA              4
 #define SRX_FLAG_ROA_AND_BGPSEC  (SRX_FLAG_ROA | SRX_FLAG_BGPSEC)
+#define SRX_FLAG_ROA_BGPSEC_ASPA  (SRX_FLAG_ROA | SRX_FLAG_BGPSEC | SRX_FLAG_ASPA)
 #define SRX_FLAG_REQUEST_RECEIPT 128
 
 /** Router specific, unique ID that identifies the RIB-in entry or update */
@@ -170,6 +172,7 @@ typedef enum {
 typedef struct {
   uint8_t roaResult;
   uint8_t bgpsecResult;
+  uint8_t aspaResult;
 } SRxResult;
 
 /** This struct contains the validation result. */
@@ -191,6 +194,7 @@ typedef enum {
 typedef struct {
   SRxResultSource resSourceROA;     // The source of the provided ROA result
   SRxResultSource resSourceBGPSEC;  // The source of the provided BGPSEC result
+  SRxResultSource resSourceASPA;  // The source of the provided BGPSEC result
   SRxResult       result; // the default result value provided
 } SRxDefaultResult;
 

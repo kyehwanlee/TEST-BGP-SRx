@@ -104,6 +104,7 @@ typedef enum {
   PDU_TYPE_CACHE_RESET    = 8,  // 5.9
   PDU_TYPE_ROUTER_KEY     = 9,  // 5.10
   PDU_TYPE_ERROR_REPORT   = 10, // 5.11
+  PDU_TYPE_ASPA_PDU       = 11, // 5.12
   PDU_TYPE_RESERVED       = 255 // 14
 } RPKIRouterPDUType;
 

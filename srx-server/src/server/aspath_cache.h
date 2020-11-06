@@ -41,31 +41,42 @@
 #include "util/slist.h"
 #include "server/update_cache.h"
 
-//typedef void (*UpdateResultChanged)(SRxValidationResult* result);
+typedef uint32_t as_t;
+
+// AS Path List structure
+typedef struct {
+  uint32_t  pathID;
+  uint8_t   asPathLength;
+  uint32_t  *asPathList;
+  uint8_t   aspaValResult;
+
+} AS_PATH_LIST;
+
+
+
+
+typedef struct {
+  uint16_t              hops;
+  uint32_t*             asPathList;
+} AC_PathListData;
+
+
 
 /**
  * A single Update Cache.
  */
 typedef struct {  
 
-  void*           cacheTable;      // The cache data
-  UpdateCache    *pUpdateCache;
+  UpdateCache       *linkUpdateCache;
+  void              *aspathCacheTable;
+  RWLock            tableLock;
+
 } AspathCache;
 
 
-/** This structure contains the BGPsec path information for both, BGP4 and 
- * BGPsec*/
-typedef struct {
-  u_int16_t              hops;
-  u_int32_t*             listAsnPath;
-} AC_PathData;
-
-
-
-
-
-
-
+bool createAspathCache(AspathCache* self);
+void releaseAspathCache(AspathCache* self);
+void emptyAspathCache(AspathCache* self);
 
 
 
