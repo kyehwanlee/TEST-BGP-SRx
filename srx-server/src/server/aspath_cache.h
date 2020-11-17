@@ -40,6 +40,7 @@
 #include "util/rwlock.h"
 #include "util/slist.h"
 #include "server/update_cache.h"
+#include "server/aspa_trie.h"
 
 typedef uint32_t as_t;
 
@@ -70,11 +71,12 @@ typedef struct {
   UpdateCache       *linkUpdateCache;
   void              *aspathCacheTable;
   RWLock            tableLock;
+  ASPA_DBManager    *aspaDBManager;
 
 } AspathCache;
 
 
-bool createAspathCache(AspathCache* self);
+bool createAspathCache(AspathCache* self, ASPA_DBManager* aspaDBManager);
 void releaseAspathCache(AspathCache* self);
 void emptyAspathCache(AspathCache* self);
 

@@ -278,4 +278,50 @@ typedef struct {
   uint32_t    length;      // 8 Bytes of length
 } __attribute__((packed)) RPKICommonHeader;
 
+
+
+/*
+ * ASPA PDU
+
+   0          8          16         24        31
+   .-------------------------------------------.
+   | Protocol |   PDU    |                     |
+   | Version  |   Type   |         zero        |
+   |    2     |    11    |                     |
+   +-------------------------------------------+
+   |                                           |
+   |                 Length                    |
+   |                                           |
+   +-------------------------------------------+
+   |          |          |                     |
+   |  Flags   |   zero   |  Provider AS Count  |
+   |          |          |                     |
+   +-------------------------------------------+
+   |                                           |
+   |    Customer Autonomous System Number      |
+   |                                           |
+   +-------------------------------------------+
+   |                                           |
+   |   Provider Autonomous System Number(s)    |
+   |                                           |
+   ~-------------------------------------------~
+ */
+
+/**
+ * PDU Cache Reset
+ */
+typedef struct {
+  uint8_t     version;     // Version
+  uint8_t     type;        // TYPE_CACHE_RESET
+  uint16_t    reserved;    // zero
+  uint32_t    length;      // 8 Bytes
+  uint8_t     flags;
+  uint8_t     zero;
+  uint16_t    providerAsCount;
+  uint32_t    customerAsn;
+  //uint32_t    providerAsn;
+} __attribute__((packed)) RPKIAspaHeader;
+
+
+
 #endif // !__RPKI_ROUTER_H__

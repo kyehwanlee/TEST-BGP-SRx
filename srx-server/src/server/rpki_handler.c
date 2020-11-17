@@ -70,6 +70,7 @@
 #include "server/update_cache.h"
 #include "server/bgpsec_handler.h"
 #include "util/log.h"
+#include "server/aspa_trie.h"
 
 ///////////////////
 // Constants
@@ -99,6 +100,7 @@ static void handleRouterKey (uint32_t valCacheID, uint16_t session_id,
                              const char* keyInfo, void* rpkiHandler);
 static void handleEndOfData (uint32_t valCacheID, uint16_t session_id,
                              void* rpkiHandler);
+int handleAspaPdu(void* rpkiHandler);
 
 /**
  * Configure the RPKI Handler and create an RPKIRouter client.
@@ -109,6 +111,10 @@ static void handleEndOfData (uint32_t valCacheID, uint16_t session_id,
  * @param serverPort The port of the server to be connected to.
  * @return
  */
+
+
+
+
 bool createRPKIHandler (RPKIHandler* handler, PrefixCache* prefixCache,
                        const char* serverHost, int serverPort, int rpki_version)
 {
@@ -122,6 +128,7 @@ bool createRPKIHandler (RPKIHandler* handler, PrefixCache* prefixCache,
   handler->rrclParams.routerKeyCallback  = handleRouterKey;
   handler->rrclParams.connectionCallback = handleConnection;
   handler->rrclParams.endOfDataCallback  = handleEndOfData;
+  handler->rrclParams.cbHandleAspaPdu    = handleAspaPdu;
 
   handler->rrclParams.serverHost         = serverHost;
   handler->rrclParams.serverPort         = serverPort;
@@ -431,4 +438,22 @@ static void handleRouterKey (uint32_t valCacheID, uint16_t session_id,
   }
 }
 
+// 
+// ASPA validation
+//
+int handleAspaPdu(void* rpkiHandler)
+{
+  printf("+++ [%s] ASPA handler called \n", __FUNCTION__);
+  // TODO: 
+  // 1. parsing ASPA objects into AS number in forms of string
+  // 2. call DB to store
+
+  char *strAsn1="65001", *strAsn2="60002";
+  TrieNode *root = make_trienode('\0', NULL);
+  root = insert_trie(root, strAsn1, "10 20 30");
+  root = insert_trie(root, strAsn2, "100 200 400");
+
+  return 0;
+
+}
 

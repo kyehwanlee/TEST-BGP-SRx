@@ -451,6 +451,57 @@ bool sendCacheResponse(int* fdPtr, u_int8_t version)
   return sendNum(fdPtr, &pdu, sizeof(RPKICacheResetHeader));
 }
 
+
+/* 
+ * ASPA PDU (temporary)
+ */
+bool sendAspaPdu(int* fdPtr, u_int8_t version)
+{
+  int headerSize = sizeof(RPKIAspaHeader);
+  uint8_t                  aspaHeader[headerSize];
+  RPKIAspaHeader* hdr;
+
+  // TODO: 
+  //    1. DB entry generation for ASPA object data
+  //    2. Insert data into pdu to send 
+  //
+  int providerAsCount = 1;
+
+  // Create PDU
+  hdr = (RPKIAspaHeader*)aspaHeader;
+  hdr->version   = version;
+  hdr->type      = (uint8_t)PDU_TYPE_ASPA_PDU;
+  //hdr->length    = htonl(sizeof(RPKIAspaHeader));
+  hdr->flags     = 1; // 1 for announcement 
+  hdr->providerAsCount =  htons(providerAsCount); // only 1 for now
+  hdr->customerAsn = htonl(60001); // test
+  //hdr->providerAsn = htonl(60002); // test
+
+  int length = sizeof(RPKIAspaHeader) + (4 * providerAsCount);
+  hdr->length    = htonl(length);
+  
+  uint8_t pdu[length];
+  memset(pdu, 0x0, length);
+  int remain = length - headerSize;
+
+  // TODO: here need to obtain or manipulate providerASNs
+  //
+  uint32_t tempProviderAsns[1] = {60002};
+
+  for (int i=0; i< providerAsCount; i++)
+  {
+    tempProviderAsns[i] = htonl(tempProviderAsns[i]);
+  }
+
+  memcpy(pdu, aspaHeader, headerSize);
+  memcpy(pdu+headerSize, tempProviderAsns ,remain);
+
+  OUTPUTF(true, "Sending a ASPA PDU'\n");
+  return sendNum(fdPtr, &pdu, length);
+}
+
+
+
 /**
  * Send IP prefixes
  *
@@ -1058,6 +1109,7 @@ void handleClient(ServerSocket* svrSock, int sock, void* user)
       case PDU_TYPE_RESET_QUERY:
         OUTPUTF(true, "[+%lds] Received a 'Reset Query'\n", diffReq);
         sendPrefixes(&sock, 0, sessionID, true, ccl->version);
+        sendAspaPdu(&sock, ccl->version);
         break;
 
       case PDU_TYPE_ERROR_REPORT:

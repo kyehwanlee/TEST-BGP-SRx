@@ -18,9 +18,8 @@ typedef struct {
 
 //
 // TODO: to let main call this function to generate UT hash
-bool createAspathCache(AspathCache* self)
+bool createAspathCache(AspathCache* self, ASPA_DBManager* aspaDBManager)
 {
-
   printf("%S\n", __FUNCTION__);
   
   if (!createRWLock(&self->tableLock))
@@ -31,8 +30,7 @@ bool createAspathCache(AspathCache* self)
   // By default keep the hashtable null, it will be initialized with the first
   // element that will be added.
   self->aspathCacheTable = NULL;
-  
-
+  self->aspaDBManager = aspaDBManager;
  
   return true;
 }

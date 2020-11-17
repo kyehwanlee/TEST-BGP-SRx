@@ -221,15 +221,6 @@ static int handleErrorReport(RPKIRouterClient* client,
 }
 
 
-// 
-// ASPA validation
-//
-int handleAspaPdu()
-{
-
-  return 0;
-
-}
 
 /**
  * Processes the router key PDU 
@@ -660,9 +651,10 @@ static bool receivePDUs(RPKIRouterClient* client, bool returnAterEndOfData,
                                        (RPKIErrorReportHeader*)byteBuffer);
         break;
       case PDU_TYPE_ASPA_PDU :
+        printf("+++ [%s] ASPA PDU received from Rpki rtr server\n", __FUNCTION__);
         //
-        // TODO: ASPA validation 
-        handleAspaPdu();
+        // TODO: ASPA validation  
+        handleReceiveAspaPdu(client, (RPKIAspaHeader*)byteBuffer);
         //
         break;
 
@@ -1238,3 +1230,19 @@ void generalSignalProcess(void)
   sigaction(SIGPIPE, &act, NULL);
   pthread_sigmask(SIG_UNBLOCK, &errmask, NULL);
 }
+
+
+bool handleReceiveAspaPdu(RPKIRouterClient* client,
+                             RPKIAspaHeader* hdr)
+{
+  // 
+  // TODO: figure out the numbers how many provider ASes are in the received  pdu
+  //
+  //     1. parsing
+  //     2. memcpy for providerASNs if providerAsCount is greater than 1
+  //
+  client->params->cbHandleAspaPdu(client->user); // this calls 'handleAspaPdu()' in rpki_handler module
+  return true;
+}
+
+

@@ -100,6 +100,7 @@
 #include "server/srx_packet_sender.h"
 #include "server/update_cache.h"
 #include "server/aspath_cache.h"
+#include "server/aspa_trie.h"
 #include "util/directory.h"
 #include "util/log.h"
 
@@ -142,6 +143,8 @@ static SKI_CACHE*    skiCache  = NULL;
 static RPKI_QUEUE*   rpkiQueue = NULL;
 
 static AspathCache  aspathCache;
+static TrieNode     aspaTrie;
+static ASPA_DBManager aspaDBManager;
 
 /** The cache that manages keys for bgpsec. 
  * @deprecated  MIGHT BE NOT USED
@@ -307,7 +310,8 @@ static bool setupCaches()
     RAISE_ERROR("Failed to setup a cache - stopping");    
     return false;
   }
-  createAspathCache(&aspathCache);
+  initializeAspaTupleManager(&aspaDBManager);    // ASPA: ASPA object DB
+  createAspathCache(&aspathCache, &aspaDBManager); // ASPA: AS path DB 
 
   LOG(LEVEL_INFO, "- SRx Caches and RPKI Queue created");
   return true;

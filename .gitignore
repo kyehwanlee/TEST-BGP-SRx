@@ -132,3 +132,4 @@ srx-server/src/srx_server
 srx-server/src/Makefile.tag.5.1.l
 *Makefile.tag*
 
+.rpkirtr_svr.history
