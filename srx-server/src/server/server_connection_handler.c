@@ -705,7 +705,7 @@ bool processValidationRequest(ServerConnectionHandler* self,
         return false;
       }
 
-      pathId = makePathId(as_pl);
+      pathId = as_pl->pathID = makePathId(as_pl);
       printf("generated CRC value: %08X \n", pathId);
 
       // -------------------------------------------------------------------

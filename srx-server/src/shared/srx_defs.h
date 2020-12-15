@@ -143,7 +143,9 @@ typedef uint8_t SRxVerifyFlag;
 #define SRX_FLAG_ROA               1
 #define SRX_FLAG_BGPSEC            2
 #define SRX_FLAG_ASPA              4
-#define SRX_FLAG_ROA_AND_BGPSEC  (SRX_FLAG_ROA | SRX_FLAG_BGPSEC)
+#define SRX_FLAG_ROA_AND_ASPA     (SRX_FLAG_ROA | SRX_FLAG_ASPA)
+#define SRX_FLAG_ROA_AND_BGPSEC   (SRX_FLAG_ROA | SRX_FLAG_BGPSEC)
+#define SRX_FLAG_BGPSEC_AND_ASPA  (SRX_FLAG_BGPSEC | SRX_FLAG_ASPA)
 #define SRX_FLAG_ROA_BGPSEC_ASPA  (SRX_FLAG_ROA | SRX_FLAG_BGPSEC | SRX_FLAG_ASPA)
 #define SRX_FLAG_REQUEST_RECEIPT 128
 
@@ -167,6 +169,8 @@ typedef enum {
   VRT_BGPSEC = SRX_FLAG_BGPSEC,               // 2
   VRT_BOTH   = SRX_FLAG_ROA_AND_BGPSEC,       // 3
   VRT_ASPA   = SRX_FLAG_ASPA,                 // 4
+  VRT_ROAS   = SRX_FLAG_ROA_AND_ASPA,         // 5
+  VRT_BSAS   = SRX_FLAG_BGPSEC_AND_ASPA,      // 6
   VRT_ALL    = SRX_FLAG_ROA_BGPSEC_ASPA       // 7
 } ValidationResultType;
 

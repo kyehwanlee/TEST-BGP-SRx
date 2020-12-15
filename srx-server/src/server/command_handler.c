@@ -649,15 +649,25 @@ static bool _processUpdateValidation(CommandHandler* cmdHandler,
     //
     // call ASPA validation
     //
-    uint8_t afi   = 1; // temporary behavior TODO: laster should be replaced 
-    uint8_t valResult = 0;
-    valResult     = do_AspaValidation(aspl->asPathList, aspl->asPathLength, 
-        aspl->asType, afi, aspaDBManager);
+    uint8_t afi       = 1; // temporary behavior TODO: laster should be replaced 
+    uint8_t valResult = do_AspaValidation (aspl->asPathList, 
+                            aspl->asPathLength, aspl->asType, afi, aspaDBManager);
 
     printf("Validation Result(0:valid, 1:Invalid, 2:Unknown, 3:Unverifiable): %d\n",
         valResult);
 
-    srxRes_mod.aspaResult = valResult;
+    // modify Aspath Cache with the validation result
+    //
+    if (valResult != aspl->aspaValResult)
+    {
+      modifyAspaValidationResultToAspathCache (cmdHandler->aspathCache, pathId, 
+                                                valResult, aspl);
+      aspl->aspaValResult = valResult;
+    }
+
+
+    // modify Update Cache
+    srxRes_mod.aspaResult = aspl->aspaValResult;
   }
 
 

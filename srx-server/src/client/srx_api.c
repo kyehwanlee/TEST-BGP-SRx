@@ -1106,7 +1106,7 @@ void processVerifyNotify(SRXPROXY_VERIFY_NOTIFICATION* hdr, SRxProxy* proxy)
     uint8_t roaResult    = useROA ? hdr->roaResult : SRx_RESULT_UNDEFINED;
     uint8_t bgpsecResult = useBGPSEC ? hdr->bgpsecResult : SRx_RESULT_UNDEFINED;
     uint8_t aspaResult   = useASPA ? hdr->aspaResult : SRx_RESULT_UNDEFINED;
-    ValidationResultType valType = hdr->resultType & SRX_FLAG_ROA_AND_BGPSEC;
+    ValidationResultType valType = hdr->resultType & SRX_FLAG_ROA_BGPSEC_ASPA;
 
     // hasReceipt ? localID : 0 is result of BZ263
     proxy->resCallback(updateID, localID, valType, roaResult, bgpsecResult,

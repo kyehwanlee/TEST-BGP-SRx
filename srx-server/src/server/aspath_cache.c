@@ -153,6 +153,29 @@ bool deleteAspathListEntry (AS_PATH_LIST* aspl)
 
   return true;
 }
+bool modifyAspaValidationResultToAspathCache(AspathCache *self, uint32_t pathId,
+                      uint8_t modAspaResult, AS_PATH_LIST* pathlistEntry)
+{
+  bool retVal = true;
+  PathListCacheTable *plCacheTable;
+
+  if (!find_AspathList (self, pathId, &plCacheTable))
+  {
+    RAISE_SYS_ERROR("Does not exist in aspath list cache, can not modify it!");
+    retVal = false;
+  }
+  else
+  {
+    if(modAspaResult != SRx_RESULT_DONOTUSE)
+    {
+      if(modAspaResult != plCacheTable->aspaResult)
+      {
+        plCacheTable->aspaResult = modAspaResult;
+      }
+    }
+  }
+  return retVal;
+}
 
 int storeAspathList (AspathCache* self, SRxDefaultResult* defRes, 
                       uint32_t pathId, AS_TYPE asType, AS_PATH_LIST* pathlistEntry)
@@ -216,7 +239,8 @@ AS_PATH_LIST* getAspathList (AspathCache* self, uint32_t pathId, SRxResult* srxR
     aspl->aspaValResult = plCacheTable->aspaResult;
     aspl->asType        = plCacheTable->asType;
 
-    srxRes->aspaResult  = aspl->aspaValResult;
+    if (srxRes->aspaResult != aspl->aspaValResult)
+      srxRes->aspaResult  = aspl->aspaValResult;
 
   }
   else
