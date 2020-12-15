@@ -335,11 +335,11 @@ void reverse(int arr[], int i, int n)
     arr[n - i - 1] = value;
 }
 
-int do_AspaValidation(PATH_LIST* asPathList, uint8_t length, AS_TYPE asType, 
+uint8_t do_AspaValidation(PATH_LIST* asPathList, uint8_t length, AS_TYPE asType, 
                       uint8_t afi, ASPA_DBManager* aspaDBManager)
 {
   printf("\n[%s] ASPA Validation Starts\n", __FUNCTION__);
-  int result = 0;
+  uint8_t result = 0;
 
   uint32_t customerAS, providerAS, startId=0;
   bool swapFlag = false;
@@ -543,7 +543,7 @@ static bool _processUpdateValidation(CommandHandler* cmdHandler,
   SRxResult srxRes_mod;
   srxRes_mod.bgpsecResult = SRx_RESULT_DONOTUSE;
   srxRes_mod.roaResult    = SRx_RESULT_DONOTUSE; // Indicates this
-  srxRes_mod.aspaResult    = SRx_RESULT_DONOTUSE; // Indicates this
+  srxRes_mod.aspaResult   = SRx_RESULT_DONOTUSE; // Indicates this
 
     
   // Only do bgpdsec path validation if not already performed
@@ -597,9 +597,11 @@ static bool _processUpdateValidation(CommandHandler* cmdHandler,
     free(prefix);
   }
 
-  if (aspaVal && (srxRes.aspaResult == SRx_RESULT_UNDEFINED))
+  if (aspaVal && (srxRes.aspaResult == SRx_RESULT_UNDEFINED) 
+              && (defRes.result.aspaResult != SRx_RESULT_INVALID))
+                  // if defRes result aspaResult invalid means a client router put this result 
+                  // due to failed of Direct neighbor check or any other reason
   {
-
     // ----------------------------------------------------------------
     // 
     // TODO:
@@ -644,28 +646,18 @@ static bool _processUpdateValidation(CommandHandler* cmdHandler,
     AS_PATH_LIST *aspl = getAspathList (cmdHandler->aspathCache, pathId, &srxRes);
     printAsPathList(aspl);
 
-
     //
     // call ASPA validation
     //
     uint8_t afi   = 1; // temporary behavior TODO: laster should be replaced 
-    int valResult = 0;
+    uint8_t valResult = 0;
     valResult     = do_AspaValidation(aspl->asPathList, aspl->asPathLength, 
         aspl->asType, afi, aspaDBManager);
 
     printf("Validation Result(0:valid, 1:Invalid, 2:Unknown, 3:Unverifiable): %d\n",
         valResult);
 
-
-    // -------------------------------------------------------------------
-
-
-
-    // TODO: Fill the final result
-    // srxRes_mod.aspaResult = ;
-
-
-
+    srxRes_mod.aspaResult = valResult;
   }
 
 
@@ -926,9 +918,10 @@ bool broadcastResult(CommandHandler* self, SRxValidationResult* valResult)
     pdu = malloc(pduLength);
     memset(pdu,0,pduLength);
     pdu->type         = PDU_SRXPROXY_VERI_NOTIFICATION;
-    pdu->resultType   = (valResult->valType & SRX_FLAG_ROA_AND_BGPSEC);
+    pdu->resultType   = (valResult->valType & SRX_FLAG_ROA_BGPSEC_ASPA);
     pdu->roaResult    = valResult->valResult.roaResult;
     pdu->bgpsecResult = valResult->valResult.bgpsecResult;
+    pdu->aspaResult   = valResult->valResult.aspaResult;
 
     pdu->length           = htonl(pduLength);
     pdu->updateID = htonl(valResult->updateID);

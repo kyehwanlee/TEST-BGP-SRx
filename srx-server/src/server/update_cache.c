@@ -598,20 +598,25 @@ int storeUpdate(UpdateCache* self, uint8_t clientID, void* clientMapping,
     cpyPrefix(&cEntry->prefix, prefix);
     cEntry->srxResult.bgpsecResult = SRx_RESULT_UNDEFINED;
     cEntry->srxResult.roaResult    = SRx_RESULT_UNDEFINED;
+    cEntry->srxResult.aspaResult   = SRx_RESULT_UNDEFINED;
 
     if (defRes != NULL)
     {
       cEntry->defaultResult.result.roaResult    = defRes->result.roaResult;
       cEntry->defaultResult.result.bgpsecResult = defRes->result.bgpsecResult;
+      cEntry->defaultResult.result.aspaResult   = defRes->result.aspaResult;
       cEntry->defaultResult.resSourceROA        = defRes->resSourceROA;
       cEntry->defaultResult.resSourceBGPSEC     = defRes->resSourceBGPSEC;
+      cEntry->defaultResult.resSourceASPA       = defRes->resSourceASPA;
     }
     else
     {
       cEntry->defaultResult.result.roaResult    = SRx_RESULT_UNDEFINED;
       cEntry->defaultResult.result.bgpsecResult = SRx_RESULT_UNDEFINED;
+      cEntry->defaultResult.result.aspaResult   = SRx_RESULT_UNDEFINED;
       cEntry->defaultResult.resSourceROA        = SRxRS_UNKNOWN;
       cEntry->defaultResult.resSourceBGPSEC     = SRxRS_UNKNOWN;
+      cEntry->defaultResult.resSourceASPA       = SRxRS_UNKNOWN;
     }
     // Other Update relates data
     // BGPSEC
@@ -733,6 +738,7 @@ bool modifyUpdateResult(UpdateCache* self, SRxUpdateID* updateID,
     valRes.valType  = VRT_NONE;
     valRes.valResult.roaResult    = cEntry->srxResult.roaResult;
     valRes.valResult.bgpsecResult = cEntry->srxResult.bgpsecResult;
+    valRes.valResult.aspaResult   = cEntry->srxResult.aspaResult;
     //valRes.clientID		  = cEntry->clientID;
 
     // Check if ROA results can be used.
@@ -757,13 +763,25 @@ bool modifyUpdateResult(UpdateCache* self, SRxUpdateID* updateID,
       }
     }
 
+    // Check if BGPSEC results can be used.
+    if (result->aspaResult != SRx_RESULT_DONOTUSE)
+    { // Check for changes in bgpsec result
+      if (result->aspaResult != cEntry->srxResult.aspaResult)
+      {
+        valRes.valType |= VRT_ASPA;
+        cEntry->srxResult.aspaResult = result->aspaResult;
+        valRes.valResult.aspaResult = result->aspaResult;
+      }
+    }
+
+
     // check if a validation result changed.
     if (!suppressNotification && (valRes.valType != VRT_NONE))
     {
       if (self->resChangedCallback != NULL)
       {
-        // Notify of the change of validation result.
-        self->resChangedCallback(&valRes);
+        // Notify of the change of validation result.(call handleUpdateResultChange)
+        self->resChangedCallback(&valRes); 
       }
       else
       {

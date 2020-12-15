@@ -165,7 +165,9 @@ typedef enum {
   VRT_NONE   = 0,
   VRT_ROA    = SRX_FLAG_ROA,                  // 1
   VRT_BGPSEC = SRX_FLAG_BGPSEC,               // 2
-  VRT_BOTH   = SRX_FLAG_ROA_AND_BGPSEC        // 3
+  VRT_BOTH   = SRX_FLAG_ROA_AND_BGPSEC,       // 3
+  VRT_ASPA   = SRX_FLAG_ASPA,                 // 4
+  VRT_ALL    = SRX_FLAG_ROA_BGPSEC_ASPA       // 7
 } ValidationResultType;
 
 /** Return value */

@@ -2003,6 +2003,7 @@ static void notifyUpdateCacheForROAChange(UpdateCache* updCache,
     srxRes.roaResult    = newROAResult;
     srxRes.bgpsecResult = SRx_RESULT_DONOTUSE; // Indicates this
                                       // parameter must not be used
+    srxRes.aspaResult   = SRx_RESULT_DONOTUSE; 
 
     LOG(LEVEL_DEBUG, HDR "Store new ROA result[0x%02X] for update [0x%08X]",
                      pthread_self(), newROAResult, *updateID);
