@@ -76,13 +76,15 @@ static void* handleCommands(void* arg);
 bool initializeCommandHandler(CommandHandler* self, Configuration* cfg,
                               ServerConnectionHandler* svrConnHandler,
                               BGPSecHandler* bgpsecHandler,
-                              RPKIHandler* rpkiHandler, UpdateCache* updCache)
+                              RPKIHandler* rpkiHandler, UpdateCache* updCache, 
+                              AspathCache* aspathCache)
 {
   self->sysConfig = cfg;
   self->svrConnHandler = svrConnHandler;
   self->bgpsecHandler = bgpsecHandler;
   self->rpkiHandler = rpkiHandler;
   self->updCache = updCache;
+  self->aspathCache = aspathCache;
 
   // Queue can be changed every time 'start' is called
   self->queue = NULL;
@@ -315,6 +317,177 @@ bool _isSet(uint32_t bitmask, uint32_t bits)
   return (bitmask & bits) == bits;
 }
 
+// Function to reverse elements of an array
+void reverse(int arr[], int i, int n)
+{
+    // base case: end of array is reached or array index out-of-bounds
+    if (i >= n)
+        return;
+ 
+    // store next element of the array
+    int value = arr[i];
+ 
+    // reach end of the array using recursion
+    reverse(arr, i + 1, n);
+ 
+    // put elements in the call stack back into the array
+    // in correct order
+    arr[n - i - 1] = value;
+}
+
+int do_AspaValidation(PATH_LIST* asPathList, uint8_t length, AS_TYPE asType, 
+                      uint8_t afi, ASPA_DBManager* aspaDBManager)
+{
+  printf("\n[%s] ASPA Validation Starts\n", __FUNCTION__);
+  int result = 0;
+
+  uint32_t customerAS, providerAS, startId=0;
+  bool swapFlag = false;
+
+  // 
+  // TODO: Initial Check for direct neighbor
+  // XXX Issue: how to figure out 60001 and 60002 are direct neighbor in SRx server inside
+  //   
+  //    1. Direct neight decision should be taken place in a router 
+  //        This means if a router detects a first ASN in AS path doesn't belong to the list of peering routers,
+  //        do not proceed to do ASPA validation. 
+  //
+  //    2. Otherwize, SRx server needs router's peering information
+  //       It needs to have all peering router information and compare those info to the proxy client 
+  //
+  //
+  // XXX:
+  //    (Conclusion) 
+  //        Direct Neighbor Check will take place in a router. And if that case happens, 
+  //        the router sends a flag unset for ASPA validation.
+  //
+#ifdef NOT_YET
+  check_DirectNeighbor();
+#endif
+
+  //
+  // AS Set check routine
+  //
+  ASPA_ValidationResult hopResult[length];  
+
+  // initialize
+  for(int i=0; i<length; i++)
+  {
+    hopResult[i] = 0;
+  }
+
+  printf("[%s] as path type: %d\n", __FUNCTION__, asType);
+  if (asType == AS_SET || asType != AS_SEQUENCE)
+  {
+    hopResult[0] = ASPA_RESULT_UNVERIFIABLE; 
+    result |= hopResult[0];
+  }
+
+  // 
+  // TODO:  check AS Path list is Upstream
+  //        With 3rd party customer provider table ?
+#ifdef NOT_YET
+  CHECK_UP_DONWN_STREAM();
+#endif
+
+  // revert asPathList to a new array variable
+  PATH_LIST list[length];
+  memcpy(list, asPathList, sizeof(PATH_LIST) * length);
+  reverse(list, 0, length);
+
+
+  ASPA_ValidationResult currentResult;
+  bool isUpStream = true;
+
+  /*
+   *    Up Stream Validation 
+   */
+  if (isUpStream)
+  {
+    for (int i=0; i < length-1; i++)
+    {
+      if (asType == AS_SET) // if AS_SET, skip
+      {
+        hopResult[i+1] = ASPA_RESULT_UNVERIFIABLE;
+        continue;
+      }
+
+      customerAS = list[i];
+      providerAS = list[i+1];
+
+      currentResult = hopResult[i+1] = 
+        ASPA_DB_lookup(aspaDBManager->tableRoot, customerAS, providerAS, afi);
+
+      result |= currentResult;
+
+      if (currentResult == ASPA_RESULT_VALID || currentResult == ASPA_RESULT_UNKNOWN)
+        continue;
+
+      if (currentResult == ASPA_RESULT_INVALID)
+        return ASPA_RESULT_INVALID;
+
+    }
+  } // end of UpStream
+
+  /*
+   *    Down Stream Validation 
+   */
+  else 
+  {
+    uint32_t temp;
+    for (int i=0; i < length-1; i++)
+    {
+      if (asType == AS_SET) // if AS_SET, skip
+      {
+        hopResult[i+1] = ASPA_RESULT_UNVERIFIABLE;
+        continue;
+      }
+
+      customerAS = list[i];
+      providerAS = list[i+1];
+
+      if (swapFlag)
+      {
+        temp       = customerAS;
+        customerAS = providerAS;
+        providerAS = temp;
+      }
+
+      currentResult = hopResult[i+1] = 
+        ASPA_DB_lookup(aspaDBManager->tableRoot, customerAS, providerAS, afi);
+
+      result |= currentResult;
+      
+      if (currentResult == ASPA_RESULT_VALID || currentResult == ASPA_RESULT_UNKNOWN)
+        continue;
+
+      if (currentResult == ASPA_RESULT_INVALID && !swapFlag)
+      {
+        swapFlag = true;
+        continue;
+      }
+      else
+      {
+        return ASPA_RESULT_INVALID;
+      }
+    } 
+  } // end of DownStream
+
+
+  /* 
+   * Final result return
+   */
+  if (result == ASPA_RESULT_VALID)
+    return ASPA_RESULT_VALID;
+
+  if ( (result & ASPA_RESULT_UNKNOWN) && !(result & ASPA_RESULT_UNVERIFIABLE))
+    return ASPA_RESULT_UNKNOWN;
+
+  if ( (result & ASPA_RESULT_UNVERIFIABLE) && !(result & ASPA_RESULT_UNKNOWN))
+    return ASPA_RESULT_UNVERIFIABLE;
+}
+
+
 /**
  * This method is used to verify an update it is called by the command handlers
  * loop method that works through the command queue!
@@ -355,9 +528,9 @@ static bool _processUpdateValidation(CommandHandler* cmdHandler,
   SRxDefaultResult defRes;
   SRxResult srxRes;
 
-  uint32_t pathID= 0;
+  uint32_t pathId= 0;
   if(!getUpdateResult(cmdHandler->updCache, &item->dataID, 0, NULL,
-                      &srxRes, &defRes, &pathID))
+                      &srxRes, &defRes, &pathId))
   {
     RAISE_SYS_ERROR("Command handler attempts to start validation for update"
                     "[0x%08X] but it does not exist!", updateID);
@@ -424,21 +597,75 @@ static bool _processUpdateValidation(CommandHandler* cmdHandler,
     free(prefix);
   }
 
-  // ----------------------------------------------------------------
-  // 
-  // TODO:
-  // 1. fetch validation task for Aspath from AspathCache 
-  // 2. relate this job to ASPA object DB
-  // 3. validation work
-  // 4. notification
-  //
-  // ----------------------------------------------------------------
-  if (aspaVal)
+  if (aspaVal && (srxRes.aspaResult == SRx_RESULT_UNDEFINED))
   {
-    srxRes_mod.aspaResult = SRx_RESULT_DONOTUSE;
 
-    // Do Validation for ASPA
+    // ----------------------------------------------------------------
+    // 
+    // TODO:
+    // 1. fetch validation task for Aspath from AspathCache 
+    // 2. relate this job to ASPA object DB
+    // 3. validation work
+    // 4. notification
     //
+    // ----------------------------------------------------------------
+    RPKIHandler* handler = (RPKIHandler*)cmdHandler->rpkiHandler;
+    ASPA_DBManager* aspaDBManager = handler->aspaDBManager;
+    TrieNode *root = aspaDBManager->tableRoot;
+
+    //#define TEST_ASPA_DB
+#ifdef  TEST_ASPA_DB
+    printf("\n[%s] Testing ASPA object DB for AS path cache\n", __FUNCTION__);
+    print_search(root, "60001");
+    print_search(root, "60002");
+    ASPA_Object *obj = findAspaObject(root, "60002"); //test
+    printf("ASPA object: %p\n", obj);
+
+    if (obj)
+    {
+      printf("customer ASN: %d\n", obj->customerAsn);
+      printf("providerAsCount : %d\n", obj->providerAsCount);
+      printf("Address: provider asns : %p\n", obj->providerAsns);
+      if (obj->providerAsns)
+      {
+        for(int i=0; i< obj->providerAsCount; i++)
+        {
+          printf("providerAsns[%d]: %d\n", i, obj->providerAsns[i]);
+        }
+      }
+      printf("afi: %d\n", obj->afi);
+    }
+#endif // TEST_ASPA_DB
+
+    // -------------------------------------------------------------------
+    // Retrieve data from aspath cache with crc Key, path ID, here
+    //
+    printf("+ Path ID: %X\n", pathId);
+    AS_PATH_LIST *aspl = getAspathList (cmdHandler->aspathCache, pathId, &srxRes);
+    printAsPathList(aspl);
+
+
+    //
+    // call ASPA validation
+    //
+    uint8_t afi   = 1; // temporary behavior TODO: laster should be replaced 
+    int valResult = 0;
+    valResult     = do_AspaValidation(aspl->asPathList, aspl->asPathLength, 
+        aspl->asType, afi, aspaDBManager);
+
+    printf("Validation Result(0:valid, 1:Invalid, 2:Unknown, 3:Unverifiable): %d\n",
+        valResult);
+
+
+    // -------------------------------------------------------------------
+
+
+
+    // TODO: Fill the final result
+    // srxRes_mod.aspaResult = ;
+
+
+
   }
 
 

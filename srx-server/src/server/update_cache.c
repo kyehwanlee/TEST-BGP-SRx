@@ -364,7 +364,7 @@ void releaseUpdateCache(UpdateCache* self)
  */
 bool getUpdateResult(UpdateCache* self, SRxUpdateID* updateID,
                      uint8_t clientID, void* clientMapping,
-                     SRxResult* srxRes, SRxDefaultResult* defaultRes, uint32_t *pathID)
+                     SRxResult* srxRes, SRxDefaultResult* defaultRes, uint32_t *pathId)
 {
   // The cache entry also need the addition of source and predefined result.
   CacheEntry* cEntry = NULL;
@@ -388,8 +388,13 @@ bool getUpdateResult(UpdateCache* self, SRxUpdateID* updateID,
     defaultRes->resSourceBGPSEC     = cEntry->defaultResult.resSourceBGPSEC;
     defaultRes->result.bgpsecResult = cEntry->defaultResult.result.bgpsecResult;
 
-    if (pathID != NULL)
-      *pathID = cEntry->aspathCacheID; 
+    // ASPA Validation Result
+    srxRes->aspaResult            = cEntry->srxResult.aspaResult;
+    defaultRes->resSourceASPA     = cEntry->defaultResult.resSourceASPA;
+    defaultRes->result.aspaResult = cEntry->defaultResult.result.aspaResult;
+
+    if (pathId != NULL)
+      *pathId = cEntry->aspathCacheID; 
 
     if (clientID > 0)
     {
@@ -410,6 +415,11 @@ bool getUpdateResult(UpdateCache* self, SRxUpdateID* updateID,
     srxRes->bgpsecResult            = SRx_RESULT_UNDEFINED;
     defaultRes->resSourceBGPSEC     = SRxRS_DONOTUSE;
     defaultRes->result.bgpsecResult = SRx_RESULT_DONOTUSE;
+
+    // ASPA Validation Values
+    srxRes->aspaResult            = SRx_RESULT_UNDEFINED;
+    defaultRes->resSourceASPA     = SRxRS_DONOTUSE;
+    defaultRes->result.aspaResult = SRx_RESULT_DONOTUSE;
   }
 
   return retVal;
@@ -531,7 +541,7 @@ bool _addClientReference(UpdateCache* self, CacheEntry* cEntry,
  */
 int storeUpdate(UpdateCache* self, uint8_t clientID, void* clientMapping,
                 SRxUpdateID* updateID, IPPrefix* prefix, uint32_t asn,
-                SRxDefaultResult* defRes, BGPSecData* bgpData, uint32_t pathID)
+                SRxDefaultResult* defRes, BGPSecData* bgpData, uint32_t pathId)
 {
   CacheEntry* cEntry;
 
@@ -584,7 +594,7 @@ int storeUpdate(UpdateCache* self, uint8_t clientID, void* clientMapping,
 
     cEntry->updateID      = updID;
     cEntry->asn           = asn;
-    cEntry->aspathCacheID = pathID;
+    cEntry->aspathCacheID = pathId;
     cpyPrefix(&cEntry->prefix, prefix);
     cEntry->srxResult.bgpsecResult = SRx_RESULT_UNDEFINED;
     cEntry->srxResult.roaResult    = SRx_RESULT_UNDEFINED;

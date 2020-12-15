@@ -310,7 +310,7 @@ static bool setupCaches()
     RAISE_ERROR("Failed to setup a cache - stopping");    
     return false;
   }
-  initializeAspaTupleManager(&aspaDBManager);    // ASPA: ASPA object DB
+  initializeAspaDBManager(&aspaDBManager);    // ASPA: ASPA object DB
   createAspathCache(&aspathCache, &aspaDBManager); // ASPA: AS path DB 
 
   LOG(LEVEL_INFO, "- SRx Caches and RPKI Queue created");
@@ -327,7 +327,7 @@ static bool setupHandlers()
   uint8_t handlers = 0;
   bool retVal = true;
 
-  if (!createRPKIHandler (&rpkiHandler, &prefixCache,
+  if (!createRPKIHandler (&rpkiHandler, &prefixCache, &aspaDBManager,
                           config.rpki_host, config.rpki_port, 
                           config.rpki_router_protocol))
   {
@@ -351,7 +351,7 @@ static bool setupHandlers()
       {
         handlers |= SETUP_CONNECTION_HANDLER;
         if (!initializeCommandHandler (&cmdHandler, &config, &svrConnHandler,
-                                       &bgpsecHandler, &rpkiHandler, &updCache))
+                                       &bgpsecHandler, &rpkiHandler, &updCache, &aspathCache))
         {
           RAISE_ERROR("Failed to create Command Handler.");
         }

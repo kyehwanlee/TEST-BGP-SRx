@@ -654,7 +654,7 @@ static bool receivePDUs(RPKIRouterClient* client, bool returnAterEndOfData,
         printf("+++ [%s] ASPA PDU received from Rpki rtr server\n", __FUNCTION__);
         //
         // TODO: ASPA validation  
-        handleReceiveAspaPdu(client, (RPKIAspaHeader*)byteBuffer);
+        handleReceiveAspaPdu(client, (RPKIAspaHeader*)byteBuffer, pduLen);
         //
         break;
 
@@ -1232,16 +1232,39 @@ void generalSignalProcess(void)
 }
 
 
-bool handleReceiveAspaPdu(RPKIRouterClient* client,
-                             RPKIAspaHeader* hdr)
+bool handleReceiveAspaPdu(RPKIRouterClient* client, RPKIAspaHeader* hdr, uint32_t pduLen)
 {
   // 
   // TODO: figure out the numbers how many provider ASes are in the received  pdu
   //
   //     1. parsing
   //     2. memcpy for providerASNs if providerAsCount is greater than 1
+  //     3. inside hdr, there might have multiple provider asns
   //
-  client->params->cbHandleAspaPdu(client->user); // this calls 'handleAspaPdu()' in rpki_handler module
+
+  uint32_t customerAsn = ntohl(hdr->customerAsn);
+  uint16_t providerAsCount = ntohs(hdr->providerAsCount);
+  uint32_t *providerAsns;
+
+  uint8_t *byteHdr = (uint8_t*)hdr;
+  uint32_t *startp_providerAsns = (uint32_t*)(byteHdr + sizeof(RPKIAspaHeader));
+
+  providerAsns = (uint32_t*)calloc(providerAsCount, sizeof(uint32_t));
+
+  printf("\n[%s] called\n", __FUNCTION__);
+  printf("customer asn: %d\n", customerAsn);
+  printf("provider as count: %d\n", providerAsCount);
+
+  // 3. inside hdr, there might have multiple provider asns
+  for(int i=0; i< providerAsCount; i++)
+  {
+    providerAsns[i] = ntohl(startp_providerAsns[i]);
+    printf("provider asn[%d]: %d\n", i, providerAsns[i]);
+  }
+
+  // this calls 'handleAspaPdu()' in rpki_handler module
+  client->params->cbHandleAspaPdu(client->user, customerAsn, providerAsCount, 
+                                    providerAsns); 
   return true;
 }
 

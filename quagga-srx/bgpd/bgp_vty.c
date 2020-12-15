@@ -1990,6 +1990,10 @@ DEFUN (srx_evaluation,
   {
     mode |= SRX_CONFIG_EVAL_PATH;
   }
+  if (strncmp(argv[0], SRX_VTY_EVAL_ASPA, 1) == 0)
+  {
+    mode |= SRX_CONFIG_EVAL_ASPA;
+  }
 
   bgp_srx_evaluation(bgp, mode);
   return CMD_SUCCESS;

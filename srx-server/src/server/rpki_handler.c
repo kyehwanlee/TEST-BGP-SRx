@@ -100,7 +100,8 @@ static void handleRouterKey (uint32_t valCacheID, uint16_t session_id,
                              const char* keyInfo, void* rpkiHandler);
 static void handleEndOfData (uint32_t valCacheID, uint16_t session_id,
                              void* rpkiHandler);
-int handleAspaPdu(void* rpkiHandler);
+int handleAspaPdu(void* rpkiHandler, uint32_t customerAsn, 
+                    uint16_t providerAsCount, uint32_t* providerAsns);
 
 /**
  * Configure the RPKI Handler and create an RPKIRouter client.
@@ -115,11 +116,13 @@ int handleAspaPdu(void* rpkiHandler);
 
 
 
-bool createRPKIHandler (RPKIHandler* handler, PrefixCache* prefixCache,
+bool createRPKIHandler (RPKIHandler* handler, PrefixCache* prefixCache, 
+                        ASPA_DBManager* aspaDBManager,
                        const char* serverHost, int serverPort, int rpki_version)
 {
   // Attach the prefix cache
   handler->prefixCache = prefixCache;
+  handler->aspaDBManager = aspaDBManager; 
 
   // Create the RPKI/Router protocol client instance
   handler->rrclParams.prefixCallback     = handlePrefix;
@@ -441,19 +444,63 @@ static void handleRouterKey (uint32_t valCacheID, uint16_t session_id,
 // 
 // ASPA validation
 //
-int handleAspaPdu(void* rpkiHandler)
+int handleAspaPdu(void* rpkiHandler, uint32_t customerAsn, 
+                    uint16_t providerAsCount, uint32_t* providerAsns)
 {
-  printf("+++ [%s] ASPA handler called \n", __FUNCTION__);
+  printf("\n+++ [%s] ASPA handler called \n", __FUNCTION__);
+  RPKIHandler* handler = (RPKIHandler*)rpkiHandler;
+  ASPA_DBManager* aspaDBManager = handler->aspaDBManager;
   // TODO: 
   // 1. parsing ASPA objects into AS number in forms of string
   // 2. call DB to store
+  //
 
-  char *strAsn1="65001", *strAsn2="60002";
-  TrieNode *root = make_trienode('\0', NULL);
-  root = insert_trie(root, strAsn1, "10 20 30");
-  root = insert_trie(root, strAsn2, "100 200 400");
+  
+  ASPA_Object *aspaObj = newASPAObject(customerAsn, providerAsCount, providerAsns, 1);
+
+  // TODO: call newASPAObject here instead
+
+  char strTemp[6];
+  sprintf(strTemp, "%d", customerAsn);
+  printf("sting: %s\n", strTemp);
+
+  char *strAsn1="65001", *strAsn2="60003";
+  TrieNode *root = aspaDBManager->tableRoot;
+
+  root = insert_trie(root, strTemp, "10 20 30", aspaObj);
+  root = insert_trie(root, strAsn2, "100 200 400", aspaObj);
+
+  print_search(root, "60002");
+  ASPA_Object *obj = findAspaObject(root, "60002");
+  printf("ASPA object: %p\n", obj);
+
+  if (obj)
+  {
+    printf("customer ASN: %d\n", obj->customerAsn);
+    printf("providerAsCount : %d\n", obj->providerAsCount);
+    printf("Address: provider asns : %p\n", obj->providerAsns);
+    if (obj->providerAsns)
+    {
+      for(int i=0; i< obj->providerAsCount; i++)
+      {
+        printf("providerAsns[%d]: %d\n", i, obj->providerAsns[i]);
+      }
+    }
+    printf("afi: %d\n", obj->afi);
+  }
+
 
   return 0;
 
 }
+
+
+
+
+
+
+
+
+
+
 

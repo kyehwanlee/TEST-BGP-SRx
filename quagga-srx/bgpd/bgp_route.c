@@ -903,7 +903,9 @@ int checkEcomSRxValid(struct attr* attr)
  */
 void bgp_info_set_validation_result (struct bgp_info *info,
                                      ValidationResultType resType,
-                                     uint8_t roaResult, uint8_t bgpsecResult)
+                                     uint8_t roaResult, uint8_t bgpsecResult,
+                                     uint8_t aspaResult)
+
 {
   /* An internal error occurred */
   if ((resType & SRX_FLAG_ROA_AND_BGPSEC) == 0)
@@ -927,6 +929,10 @@ void bgp_info_set_validation_result (struct bgp_info *info,
     if ((resType & SRX_FLAG_BGPSEC) == SRX_FLAG_BGPSEC)
     {
       info->val_res_BGPSEC = bgpsecResult;
+    }
+    if ((resType & SRX_FLAG_ASPA) == SRX_FLAG_ASPA)
+    {
+      info->val_res_ASPA = aspaResult;  // it came from resCallback()
     }
 
     // Check if it is fully valid and if not decide if the update has to be
@@ -3001,6 +3007,10 @@ void verify_update (struct bgp *bgp, struct bgp_info *info,
   {
     info->val_res_BGPSEC = defResult->result.bgpsecResult;
   }
+  if (defResult->result.aspaResult != SRx_RESULT_DONOTUSE)
+  {
+    info->val_res_ASPA = defResult->result.aspaResult;
+  }
 
 
   // If this update has a local ID it might need to be registered. This will be
@@ -3022,6 +3032,23 @@ void verify_update (struct bgp *bgp, struct bgp_info *info,
     {
       // let SRx proxy initiate validation and get the update id */
       oas = aspath_origin_as (info->attr->aspath);
+      SRxASPathList asPathList;
+      memset(&asPathList, 0x0, sizeof(asPathList));
+  
+      struct assegment* cseg = NULL;
+      if(info->attr->aspath && info->attr->aspath->segments)
+      {
+        cseg = info->attr->aspath->segments;
+        asPathList.length = cseg->length;
+        asPathList.segments = (ASSEGMENT*)calloc(asPathList.length, sizeof(ASSEGMENT));
+        asPathList.asType = cseg->type;
+
+        for (int i=0; cseg && i<cseg->length; i++)
+        {
+          asPathList.segments[i].asn =  cseg->as[i]; 
+          printf("+ asPathList.segment[%d].asn: %d type:%d\n", i, cseg->as[i], asPathList.asType);
+        }
+      }
 
       // Prepare the prefix
       IPPrefix* prefix = malloc(sizeof(IPPrefix));
@@ -3033,14 +3060,20 @@ void verify_update (struct bgp *bgp, struct bgp_info *info,
 
 
       bool usePathVal = false;
+      bool useAspaVal = false;
       if ( CHECK_FLAG(bgp->srx_config, SRX_CONFIG_EVAL_DISTR))
       {
         usePathVal = true;
       }
+      if ( CHECK_FLAG(bgp->srx_config, SRX_CONFIG_EVAL_ASPA))
+      {
+        useAspaVal = true;
+      }
 
-      verifyUpdate(bgp->srxProxy, info->localID, true, usePathVal, defResult,
-                   prefix, oas, bgpsec);
+      verifyUpdate(bgp->srxProxy, info->localID, true, usePathVal, useAspaVal, 
+                    defResult, prefix, oas, bgpsec, asPathList);
 
+      free(asPathList.segments);
       srx_free_bgpsec_data(bgpsec);
       free(prefix);
     }
@@ -3345,6 +3378,10 @@ bgp_update_main (struct peer *peer, struct prefix *p, struct attr *attr,
       defRes->result.roaResult    = bgp->srx_default_roaVal;
       defRes->result.bgpsecResult = bgp->srx_default_bgpsecVal;
 
+      // ASPA default value
+      defRes->resSourceASPA     = SRxRS_ROUTER;
+      defRes->result.aspaResult = bgp->srx_default_aspaVal;
+
       verify_update (bgp, ri, defRes, true);
       free(defRes);
 #endif /* USE_SRX */
@@ -3415,9 +3452,10 @@ bgp_update_main (struct peer *peer, struct prefix *p, struct attr *attr,
 
 #ifdef USE_SRX
   /* Verify */
-  new->localID = getNextLocalID();
-  new->val_res_ROA     = bgp->srx_default_roaVal;
-  new->val_res_BGPSEC  = bgp->srx_default_bgpsecVal;
+  new->localID        = getNextLocalID();
+  new->val_res_ROA    = bgp->srx_default_roaVal;
+  new->val_res_BGPSEC = bgp->srx_default_bgpsecVal;
+  new->val_res_ASPA   = bgp->srx_default_aspaVal;
 
   // Here use the value of community String
   SRxDefaultResult* defRes = malloc(sizeof(SRxDefaultResult));
@@ -3429,6 +3467,10 @@ bgp_update_main (struct peer *peer, struct prefix *p, struct attr *attr,
   defRes->resSourceBGPSEC     = SRxRS_ROUTER;
   defRes->result.roaResult    = bgp->srx_default_roaVal;
   defRes->result.bgpsecResult = bgp->srx_default_bgpsecVal;
+
+  // ASPA default value
+  defRes->resSourceASPA     = SRxRS_ROUTER;
+  defRes->result.aspaResult = bgp->srx_default_aspaVal;
 
   verify_update (bgp, new, defRes, true);
   free(defRes);

@@ -1288,6 +1288,7 @@ void doVerify(bool log, char** argPtr)
 
 
   BGPSecData       bgpsec;
+  SRxASPathList asPathList;
 
   char ipString[255];
   char* ipStringPtr = ipString;
@@ -1407,8 +1408,8 @@ void doVerify(bool log, char** argPtr)
   // The method verifyUpdate will go into wait mode if receipt is requested.
   verifyUpdate(proxy, localID,
                (method & SRX_FLAG_ROA) == SRX_FLAG_ROA,
-               (method & SRX_FLAG_BGPSEC) == SRX_FLAG_BGPSEC,
-               &defResult, &prefix, as32, &bgpsec);
+               (method & SRX_FLAG_BGPSEC) == SRX_FLAG_BGPSEC, false,
+               &defResult, &prefix, as32, &bgpsec, asPathList);
 }
 
 void doSign(bool log, char** argPtr)

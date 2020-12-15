@@ -275,7 +275,8 @@ typedef struct {
    * @since 0.5.0.3 */
   bool        allowDowngrade;
 
-  int (*cbHandleAspaPdu)(void* user);
+  int (*cbHandleAspaPdu)(void* user, uint32_t cusAsn, uint16_t provAsCount, 
+                            uint32_t* provAsns);
 
 } RPKIRouterClientParams;
 
@@ -397,7 +398,7 @@ bool sendErrorReport(RPKIRouterClient* self, u_int16_t errCode,
                             char* errText, u_int32_t lenErrText);
 
 bool handleReceiveAspaPdu(RPKIRouterClient* client,
-                             RPKIAspaHeader* hdr);
+                             RPKIAspaHeader* hdr, uint32_t length);
 
 // @TODO: fix this not so nice work around
 int g_rpki_single_thread_client_fd;

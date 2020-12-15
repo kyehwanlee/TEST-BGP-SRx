@@ -47,6 +47,7 @@
 #include "server/prefix_cache.h"
 #include "server/rpki_router_client.h"
 #include "util/prefix.h"
+#include "server/aspa_trie.h"
 
 /**
  * A single RPKI/Router Handler.
@@ -55,6 +56,7 @@ typedef struct {
   PrefixCache*            prefixCache;
   RPKIRouterClientParams  rrclParams;
   RPKIRouterClient        rrclInstance;
+  ASPA_DBManager*         aspaDBManager;
 } RPKIHandler;
 
 /**
@@ -68,6 +70,7 @@ typedef struct {
  * @return \c true = all went through, \c false = an error occurred
  */
 bool createRPKIHandler(RPKIHandler* self, PrefixCache* prefixCache,
+                       ASPA_DBManager* aspaDBManager,
                        const char* serverHost, int serverPort, int version);
 
 /**

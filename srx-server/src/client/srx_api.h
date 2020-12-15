@@ -178,6 +178,7 @@ typedef bool (*ValidationReady)(SRxUpdateID          updateID,
                                 ValidationResultType valType,
                                 uint8_t              roaResult,
                                 uint8_t              bgpsecResult,
+                                uint8_t              aspaResult,
                                 void* userPtr);
 
 /**
@@ -434,10 +435,10 @@ bool reconnectWithSRx(SRxProxy* proxy);
  *         connected.
  */
 void verifyUpdate(SRxProxy* proxy, uint32_t localID,
-                  bool usePrefixOriginVal, bool usePathVal,
+                  bool usePrefixOriginVal, bool usePathVal, bool useAspaVal,
                   SRxDefaultResult* defaultResult,
                   IPPrefix* prefix, uint32_t as32,
-                  BGPSecData* bgpsec);
+                  BGPSecData* bgpsec, SRxASPathList asPathList);
 
 /**
  * This method generates a signature request. The signature will be returned

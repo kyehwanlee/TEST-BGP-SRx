@@ -209,4 +209,31 @@ typedef enum {
 
 #define NUM_TRANS 3
 
+typedef enum {
+  AS_SET             = 1,
+  AS_SEQUENCE        = 2,
+  AS_CONFED_SEQUENCE = 3,
+  AS_CONFED_SET      = 4
+} AS_TYPE;
+
+typedef struct {
+  uint32_t asn;
+} ASSEGMENT;
+
+typedef struct {
+  uint8_t     length;
+  ASSEGMENT*  segments;
+  AS_TYPE     asType;  // SEQUENCE, AS_SET, 
+} SRxASPathList;
+
+typedef enum {
+  ASPA_RESULT_VALID        = 0,
+  ASPA_RESULT_INVALID      = 1,
+  ASPA_RESULT_UNKNOWN      = 2,
+  ASPA_RESULT_UNVERIFIABLE = 4,
+  ASPA_RESULT_UNDEFINED    = 8
+} ASPA_ValidationResult;
+
+
+
 #endif // !__SRX_DEFS_H__

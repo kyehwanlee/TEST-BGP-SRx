@@ -581,6 +581,7 @@ bool processValidationRequest(ServerConnectionHandler* self,
   // initialize the val pointer - it will be adjusted within the correct
   // request type.
   uint8_t* valPtr = (uint8_t*)hdr;
+  AS_TYPE asType;
   if (v4)
   {
     SRXPROXY_VERIFY_V4_REQUEST* v4Hdr = (SRXPROXY_VERIFY_V4_REQUEST*)hdr;
@@ -592,9 +593,11 @@ bool processValidationRequest(ServerConnectionHandler* self,
     bgpData.numberHops  = ntohs(v4Hdr->bgpsecValReqData.numHops);
     bgpData.attr_length = ntohs(v4Hdr->bgpsecValReqData.attrLen);
     // Now in network format as required.
-    bgpData.afi         = v4Hdr->bgpsecValReqData.valPrefix.afi;
-    bgpData.safi        = v4Hdr->bgpsecValReqData.valPrefix.safi;
-    bgpData.local_as    = v4Hdr->bgpsecValReqData.valData.local_as;
+    bgpData.afi      = v4Hdr->bgpsecValReqData.valPrefix.afi;
+    bgpData.safi     = v4Hdr->bgpsecValReqData.valPrefix.safi;
+    bgpData.local_as = v4Hdr->bgpsecValReqData.valData.local_as;
+    asType           = ntohl(v4Hdr->asType);
+    printf("+ [server] as type: %d\n", asType);
   }
   else
   {
@@ -611,6 +614,7 @@ bool processValidationRequest(ServerConnectionHandler* self,
     bgpData.safi        = v6Hdr->bgpsecValReqData.valPrefix.safi;
     bgpData.local_as    = v6Hdr->bgpsecValReqData.valData.local_as;
   }
+
 
   // Check if AS path exists and if so then set it
   if (bgpData.numberHops != 0)
@@ -649,59 +653,16 @@ bool processValidationRequest(ServerConnectionHandler* self,
   // register the client as listener (only if the update already exists)
   ProxyClientMapping* clientMapping = clientID > 0 ? &self->proxyMap[clientID]
                                                    : NULL;
-  uint32_t pathID = 0;
+
+  printf("\n[%s] called and ASpath cache starts \n", __FUNCTION__);
+  uint32_t pathId = 0;
 
   doStoreUpdate = !getUpdateResult (self->updateCache, &updateID,
                                     clientID, clientMapping,
-                                    &srxRes, &defResInfo, &pathID);
-
-  // ----------------------------------------------------------------
-  //
-  // TODO:  
-  // 1. here get Update result for ASPA and 
-  // 2. put a task into Aspath Cache
-  // 3. CommandHandler takes this job to process in _processUpdateValidation()
-  //
-  // ----------------------------------------------------------------
-  // XXX NOTE XXX:   
-  // 1. Do I have to know about segment type ? AS_SEQUENCE, AS_CONFED_SEQUENCE etc
-  //
-
-  if (pathID != 0)  // if it is already stored in cEntry, then skip the generation part below
-  {
-    AS_PATH_LIST as_pl; 
-    memset(&as_pl, 0x0, sizeof(AS_PATH_LIST));
-    as_pl.asPathLength = bgpData.numberHops;
-    as_pl.asPathList = (uint32_t*)malloc(bgpData.numberHops * 4);
-
-    int i=0;
-    for (i=0; i < as_pl.asPathLength; i++)
-    {
-      as_pl.asPathList[i] = ntohl(bgpData.asPath[i]);
-    }
-
-    // path ID -  
-    //            1st convert asn to string (cf. aspath_make_str_count() or aspath_str_update()
-    //            2nd hash processing with the above string (cf. generateID fn)
-    char* strBuf;
-    int strSize = as_pl.asPathLength * 4 *2;  //  Path length * 4 byte, *2: hex string
-    strBuf = (char*)calloc(strSize, sizeof(char));
-
-    for (i=0; i < as_pl.asPathLength; i++)
-    {
-      sprintf(strBuf + (i*4*2), "%08X", as_pl.asPathList[i]);
-    }
-
-    pathID = crc32((uint8_t*)strBuf, strSize);
-    printf("CRC: %08X\n", pathID);
-  }
+                                    &srxRes, &defResInfo, &pathId);
 
 
-  //
-  // TODO: store data into aspath cache with crc Key
-  //
-
-
+  // -------------------------------------------------------------------
 
   if (doStoreUpdate)
   {
@@ -723,8 +684,40 @@ bool processValidationRequest(ServerConnectionHandler* self,
     defResInfo.result.bgpsecResult = hdr->bgpsecDefRes;
     defResInfo.resSourceBGPSEC     = hdr->bgpsecResSrc;
 
+
+    // ----------------------------------------------------------------
+    // XXX NOTE XXX:   
+    // 1. here get Update result for ASPA and 
+    // 2. put a task into Aspath Cache
+    // 3. CommandHandler takes this job to process in _processUpdateValidation()
+    //
+    // ----------------------------------------------------------------
+    //
+    defResInfo.result.aspaResult = hdr->aspaDefRes;
+    defResInfo.resSourceASPA     = hdr->aspaResSrc;
+
+    if (pathId == 0)  // if it is already stored in cEntry, then skip the generation part below
+    {
+      AS_PATH_LIST *as_pl = newAspathListEntry(bgpData.numberHops, bgpData.asPath, asType, true);
+      if(!as_pl)
+      {
+        printf(" memory allocation for AS path list entry resulted in fault \n");
+        return false;
+      }
+
+      pathId = makePathId(as_pl);
+      printf("generated CRC value: %08X \n", pathId);
+
+      // -------------------------------------------------------------------
+      //
+      // store data into aspath cache with crc Key here
+      //
+      storeAspathList(self->aspathCache, &defResInfo, pathId, asType, as_pl);
+      srxRes.aspaResult   = defResInfo.result.aspaResult;
+    }
+
     if (!storeUpdate(self->updateCache, clientID, clientMapping, 
-              &updateID, prefix, originAS, &defResInfo, &bgpData, pathID))
+              &updateID, prefix, originAS, &defResInfo, &bgpData, pathId))
     {
       RAISE_SYS_ERROR("Could not store update [0x%08X]!!", updateID);
       // Maybe check for ID conflict, if not then get result again - or just
@@ -770,7 +763,7 @@ bool processValidationRequest(ServerConnectionHandler* self,
     // Now send the results we know so far;
     if (!sendVerifyNotification(svrSock, client, updateID, sendFlags,
                                 requestToken, srxRes.roaResult,
-                                srxRes.bgpsecResult,
+                                srxRes.bgpsecResult, srxRes.aspaResult,
                                 !self->sysConfig->mode_no_sendqueue))
     {
       RAISE_ERROR("Could not send the initial verify notification for update"

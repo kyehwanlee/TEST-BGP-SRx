@@ -5,7 +5,7 @@
 #include <stdbool.h>
 #include "server/aspa_trie.h"
 
-bool initializeAspaTupleManager(ASPA_DBManager* aspaDBManager) 
+bool initializeAspaDBManager(ASPA_DBManager* aspaDBManager) 
 {
    aspaDBManager->tableRoot = newAspaTrie();
 
@@ -14,7 +14,7 @@ bool initializeAspaTupleManager(ASPA_DBManager* aspaDBManager)
 
 TrieNode* newAspaTrie(void) 
 {
-  TrieNode *rootNode = make_trienode('\0', NULL);
+  TrieNode *rootNode = make_trienode('\0', NULL, NULL);
   return rootNode;
 }
 
@@ -39,8 +39,22 @@ ASPA_Object* newASPAObject(uint32_t cusAsn, uint16_t pAsCount, uint32_t* provAsn
 
 }
 
+bool deleteASPAObject(ASPA_Object *obj)
+{
+  if(obj)
+  {
+    if (obj->providerAsns)
+    {
+      free(obj->providerAsns);
+    }
+    free (obj);
+    return true;
+  }
+  return false;
+}
 
-TrieNode* make_trienode(char data, char* userData ) {
+
+TrieNode* make_trienode(char data, char* userData, ASPA_Object* obj) {
     // Allocate memory for a TrieNode
     TrieNode* node = (TrieNode*) calloc (1, sizeof(TrieNode));
     int i=0;
@@ -49,6 +63,7 @@ TrieNode* make_trienode(char data, char* userData ) {
     node->is_leaf = 0;
     node->data = data;
     node->userData = userData? userData:NULL;
+    node->aspaObjects = obj;
     return node;
 }
 
@@ -66,7 +81,11 @@ void free_trienode(TrieNode* node) {
     free(node);
 }
 
-TrieNode* insert_trie(TrieNode* root, char* word, char* userData) {
+// TODO: need to have parameters
+//      1. aspa object structure
+//      2. 
+//
+TrieNode* insert_trie(TrieNode* root, char* word, char* userData, ASPA_Object* obj) {
     // Inserts the word onto the Trie
     // ASSUMPTION: The word only has lower case characters
     TrieNode* temp = root;
@@ -78,7 +97,7 @@ TrieNode* insert_trie(TrieNode* root, char* word, char* userData) {
         if (temp->children[idx] == NULL) {
             // If the corresponding child doesn't exist,
             // simply create that child!
-            temp->children[idx] = make_trienode(word[i], userData);
+            temp->children[idx] = make_trienode(word[i], userData, obj);
         }
         else {
             // Do nothing. The node already exists
@@ -110,7 +129,27 @@ int search_trie(TrieNode* root, char* word)
     return 0;
 }
 
-void print_trie(TrieNode* root) {
+ASPA_Object* findAspaObject(TrieNode* root, char* word)
+{
+    ASPA_Object *obj;
+    TrieNode* temp = root;
+
+    for(int i=0; word[i]!='\0'; i++)
+    {
+        int position = word[i] - '0';
+        if (temp->children[position] == NULL)
+            return NULL;
+        temp = temp->children[position];
+    }
+    if (temp != NULL && temp->is_leaf == 1)
+    {
+        obj = temp->aspaObjects;
+        return obj;
+    }
+    return NULL;
+}
+
+void print_trie(TrieNode* root) {/*{{{*/
     // Prints the nodes of the trie
     if (!root)
         return;
@@ -128,9 +167,44 @@ void print_search(TrieNode* root, char* word) {
         printf("Not Found\n");
     else
         printf("Found!\n");
+}/*}}}*/
+
+ASPA_ValidationResult ASPA_DB_lookup(TrieNode* root, uint32_t customerAsn, uint32_t providerAsn, uint8_t afi )
+{
+  printf("\n[%s] called \n", __FUNCTION__);
+  char strCusAsn[6] = {};
+  sprintf(strCusAsn, "%d", customerAsn);  
+
+  ASPA_Object *obj = findAspaObject(root, strCusAsn);
+
+  if (!obj) // if there is no object item
+  {
+    return ASPA_RESULT_UNKNOWN;
+  }
+  else // found object
+  {
+    printf("customer ASN: %d\n", obj->customerAsn);
+    printf("providerAsCount : %d\n", obj->providerAsCount);
+    printf("Address: provider asns : %p\n", obj->providerAsns);
+    printf("afi: %d\n", obj->afi);
+
+    if (obj->providerAsns)
+    {
+      for(int i=0; i< obj->providerAsCount; i++)
+      {
+        printf("providerAsns[%d]: %d\n", i, obj->providerAsns[i]);
+        if (obj->providerAsns[i] == providerAsn && obj->afi == afi)
+        {
+          return ASPA_RESULT_VALID;
+        }
+      }
+  
+      return ASPA_RESULT_INVALID;
+    }
+  }
+  return ASPA_RESULT_UNDEFINED;
+
 }
-
-
 
 
 

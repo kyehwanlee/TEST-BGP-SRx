@@ -465,7 +465,7 @@ bool sendAspaPdu(int* fdPtr, u_int8_t version)
   //    1. DB entry generation for ASPA object data
   //    2. Insert data into pdu to send 
   //
-  int providerAsCount = 1;
+  int providerAsCount = 2;
 
   // Create PDU
   hdr = (RPKIAspaHeader*)aspaHeader;
@@ -474,7 +474,7 @@ bool sendAspaPdu(int* fdPtr, u_int8_t version)
   //hdr->length    = htonl(sizeof(RPKIAspaHeader));
   hdr->flags     = 1; // 1 for announcement 
   hdr->providerAsCount =  htons(providerAsCount); // only 1 for now
-  hdr->customerAsn = htonl(60001); // test
+  hdr->customerAsn = htonl(60004); // test
   //hdr->providerAsn = htonl(60002); // test
 
   int length = sizeof(RPKIAspaHeader) + (4 * providerAsCount);
@@ -486,7 +486,7 @@ bool sendAspaPdu(int* fdPtr, u_int8_t version)
 
   // TODO: here need to obtain or manipulate providerASNs
   //
-  uint32_t tempProviderAsns[1] = {60002};
+  uint32_t tempProviderAsns[2] = {60002, 60003};
 
   for (int i=0; i< providerAsCount; i++)
   {

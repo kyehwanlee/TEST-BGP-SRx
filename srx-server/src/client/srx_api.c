@@ -634,7 +634,8 @@ void processDeleteUpdate(SRxProxy* proxy, SRXPROXY_DELETE_UPDATE* hdr);
  */
 uint8_t* createV4Request(uint8_t* pdu, SRxVerifyFlag method, uint32_t rToken,
                          SRxDefaultResult* defaultResult, IPPrefix* prefix,
-                         uint32_t as32, BGPSecData* bgpsec)
+                         uint32_t as32, BGPSecData* bgpsec, 
+                         SRxASPathList asPathList)
 {
   uint32_t bgpsecLength = 0;
   uint16_t numHops      = 0;
@@ -648,25 +649,28 @@ uint8_t* createV4Request(uint8_t* pdu, SRxVerifyFlag method, uint32_t rToken,
   uint32_t length = sizeof(SRXPROXY_VERIFY_V4_REQUEST) + bgpsecLength;
   SRXPROXY_VERIFY_V4_REQUEST* hdr = (SRXPROXY_VERIFY_V4_REQUEST*)pdu;
 
-  hdr->common.type          = PDU_SRXPROXY_VERIFY_V4_REQUEST;
-  hdr->common.flags         = method;
-  hdr->common.roaResSrc     = defaultResult->resSourceROA;
-  hdr->common.bgpsecResSrc  = defaultResult->resSourceBGPSEC;
-  hdr->common.length        = htonl(length);
-  hdr->common.roaDefRes     = defaultResult->result.roaResult;
-  hdr->common.bgpsecDefRes  = defaultResult->result.bgpsecResult;
-  hdr->common.prefixLen     = prefix->length;
-  hdr->common.requestToken  = htonl(rToken);
-  hdr->prefixAddress = prefix->ip.addr.v4;
-  hdr->originAS      = htonl(as32);
-  hdr->bgpsecLength  = htonl(bgpsecLength);
+  hdr->common.type         = PDU_SRXPROXY_VERIFY_V4_REQUEST;
+  hdr->common.flags        = method;
+  hdr->common.roaResSrc    = defaultResult->resSourceROA;
+  hdr->common.bgpsecResSrc = defaultResult->resSourceBGPSEC;
+  hdr->common.aspaResSrc   = defaultResult->resSourceASPA;
+  hdr->common.length       = htonl(length);
+  hdr->common.roaDefRes    = defaultResult->result.roaResult;
+  hdr->common.bgpsecDefRes = defaultResult->result.bgpsecResult;
+  hdr->common.aspaDefRes   = defaultResult->result.aspaResult;
+  hdr->common.prefixLen    = prefix->length;
+  hdr->common.requestToken = htonl(rToken);
+  hdr->prefixAddress       = prefix->ip.addr.v4;
+  hdr->originAS            = htonl(as32);
+  hdr->bgpsecLength        = htonl(bgpsecLength);
 
   // Now store the number of hops.
-  hdr->bgpsecValReqData.numHops = htons(numHops);
-  hdr->bgpsecValReqData.attrLen = htons(attrLength);
-  hdr->bgpsecValReqData.valPrefix.afi  = bgpsec->afi;
-  hdr->bgpsecValReqData.valPrefix.safi = bgpsec->safi;
+  hdr->bgpsecValReqData.numHops          = htons(numHops);
+  hdr->bgpsecValReqData.attrLen          = htons(attrLength);
+  hdr->bgpsecValReqData.valPrefix.afi    = bgpsec->afi;
+  hdr->bgpsecValReqData.valPrefix.safi   = bgpsec->safi;
   hdr->bgpsecValReqData.valData.local_as = htonl(bgpsec->local_as);
+  hdr->asType                            = htonl(asPathList.asType);
 
   if ((numHops + attrLength) != 0)
   {
@@ -754,10 +758,10 @@ uint8_t* createV6Request(uint8_t* pdu, SRxVerifyFlag method, uint32_t rToken,
  *
  */
 void verifyUpdate(SRxProxy* proxy, uint32_t localID,
-                  bool usePrefixOriginVal, bool usePathVal,
+                  bool usePrefixOriginVal, bool usePathVal, bool useAspaVal,
                   SRxDefaultResult* defaultResult,
                   IPPrefix* prefix, uint32_t as32,
-                  BGPSecData* bgpsec)
+                  BGPSecData* bgpsec, SRxASPathList asPathList)
 {
   if (!isConnected(proxy))
   {
@@ -765,10 +769,16 @@ void verifyUpdate(SRxProxy* proxy, uint32_t localID,
                 pthread_self());
     return;
   }
+  printf("+ [proxy] asPathList.length: %d\n", asPathList.length);
+  printf("+ [proxy] asPathList.asType: %d\n", asPathList.asType);
+        
+  for (int i=0; i< asPathList.length; i++)
+      printf("+ [proxy] asPathList.asn: %d\n", asPathList.segments[i].asn);
 
   // Specify the verify request method.
   uint8_t method =   (usePrefixOriginVal ? SRX_FLAG_ROA : 0)
                    | (usePathVal ? SRX_FLAG_BGPSEC : 0)
+                   | (useAspaVal ? SRX_FLAG_ASPA : 0)
                    | (localID != 0 ? SRX_FLAG_REQUEST_RECEIPT : 0);
 
   bool isV4 = prefix->ip.version == 4;
@@ -792,7 +802,7 @@ void verifyUpdate(SRxProxy* proxy, uint32_t localID,
   // Generate VERIFY PACKET
   if (isV4)
   {
-    createV4Request(pdu, method, requestToken, defaultResult, prefix, as32, bgpsec);
+    createV4Request(pdu, method, requestToken, defaultResult, prefix, as32, bgpsec, asPathList);
   }
   else
   {
@@ -1068,6 +1078,7 @@ void processVerifyNotify(SRXPROXY_VERIFY_NOTIFICATION* hdr, SRxProxy* proxy)
                       == SRX_FLAG_REQUEST_RECEIPT;
     bool useROA     = (hdr->resultType & SRX_FLAG_ROA) == SRX_FLAG_ROA;
     bool useBGPSEC  = (hdr->resultType & SRX_FLAG_BGPSEC) == SRX_FLAG_BGPSEC;
+    bool useASPA    = (hdr->resultType & SRX_FLAG_ASPA) == SRX_FLAG_ASPA;
 
     uint32_t localID = ntohl(hdr->requestToken);
     SRxUpdateID updateID = ntohl(hdr->updateID);
@@ -1094,11 +1105,12 @@ void processVerifyNotify(SRXPROXY_VERIFY_NOTIFICATION* hdr, SRxProxy* proxy)
 
     uint8_t roaResult    = useROA ? hdr->roaResult : SRx_RESULT_UNDEFINED;
     uint8_t bgpsecResult = useBGPSEC ? hdr->bgpsecResult : SRx_RESULT_UNDEFINED;
+    uint8_t aspaResult   = useASPA ? hdr->aspaResult : SRx_RESULT_UNDEFINED;
     ValidationResultType valType = hdr->resultType & SRX_FLAG_ROA_AND_BGPSEC;
 
     // hasReceipt ? localID : 0 is result of BZ263
     proxy->resCallback(updateID, localID, valType, roaResult, bgpsecResult,
-                       proxy->userPtr);
+                       aspaResult, proxy->userPtr); // call handleSRxValidationResult
   }
   else
   {

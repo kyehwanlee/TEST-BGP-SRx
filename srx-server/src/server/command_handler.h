@@ -44,6 +44,7 @@
 #include "server/rpki_handler.h"
 #include "server/server_connection_handler.h"
 #include "server/update_cache.h"
+#include "server/aspath_cache.h"
 #include "shared/srx_packets.h"
 #include "util/packet.h"
 #include "util/server_socket.h"
@@ -63,6 +64,7 @@ typedef struct {
   BGPSecHandler*            bgpsecHandler;
   RPKIHandler*              rpkiHandler;
   UpdateCache*              updCache;
+  AspathCache*              aspathCache;
 
   // The system configuration.
   Configuration*            sysConfig;
@@ -89,7 +91,8 @@ typedef struct {
 bool initializeCommandHandler(CommandHandler* self, Configuration* cfg,
                               ServerConnectionHandler* svrConnHandler,
                               BGPSecHandler* bgpsecHandler, 
-                              RPKIHandler* rpkiHandler, UpdateCache* updCache);
+                              RPKIHandler* rpkiHandler, UpdateCache* updCache,
+                              AspathCache* aspathCache);
 
 /**
  * Frees all allocated resources.

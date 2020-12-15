@@ -71,7 +71,7 @@ Software Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
 bool handleSRxValidationResult (SRxUpdateID updateID, uint32_t localID,
                                 ValidationResultType valType,
                                 uint8_t roaResult, uint8_t bgpsecResult,
-                                void* bgpRouter);
+                                uint8_t aspaResult, void* bgpRouter);
 void handleSRxSignatures(SRxUpdateID updateID, BGPSecCallbackData* data,
                                        void* bgpRouter);
 void handleSRxSynchRequest(void* bgpRouter);
@@ -794,6 +794,11 @@ int bgp_srx_evaluation (struct bgp *bgp, int mode)
     case SRX_CONFIG_EVAL_ORIGIN:
       srx_config_unset (bgp, SRX_CONFIG_EVAL_DISTR);
       srx_config_set   (bgp, SRX_CONFIG_EVAL_ORIGIN);
+      break;
+    case SRX_CONFIG_EVAL_ASPA: // work along with origin validation
+      srx_config_unset (bgp, SRX_CONFIG_EVAL_DISTR);
+      srx_config_set   (bgp, SRX_CONFIG_EVAL_ORIGIN);
+      srx_config_set   (bgp, SRX_CONFIG_EVAL_ASPA);
       break;
     default:
       zlog_err("Invalid srx evaluation flag %u passed, ignore it!", mode);
@@ -2410,7 +2415,7 @@ void handleSRxMessages(SRxProxyCommCode mainCode, int subCode, void* userPtr)
 bool handleSRxValidationResult (SRxUpdateID updateID, uint32_t localID,
                                 ValidationResultType valType,
                                 uint8_t roaResult, uint8_t bgpsecResult,
-                                void* bgpRouter)
+                                uint8_t aspaResult, void* bgpRouter)
 {
   struct bgp_info* info;
   struct bgp*      bgp   = (struct bgp*)bgpRouter;
@@ -2464,7 +2469,7 @@ bool handleSRxValidationResult (SRxUpdateID updateID, uint32_t localID,
         valType |= VRT_BGPSEC;
       }
 
-      bgp_info_set_validation_result (info, valType, roaResult, bgpsecResult);
+      bgp_info_set_validation_result (info, valType, roaResult, bgpsecResult, aspaResult);
       retVal = true;
     }
   }
@@ -2475,7 +2480,7 @@ bool handleSRxValidationResult (SRxUpdateID updateID, uint32_t localID,
     if (info)
     {
       // Set the Update validation result values
-      bgp_info_set_validation_result (info, valType, roaResult, bgpsecResult);
+      bgp_info_set_validation_result (info, valType, roaResult, bgpsecResult, aspaResult);
       retVal = true;
     }
   }
@@ -2594,6 +2599,7 @@ void srx_set_default(struct bgp *bgp)
   // Set the default result values.
   bgp->srx_default_roaVal    = SRx_RESULT_UNDEFINED;
   bgp->srx_default_bgpsecVal = SRx_RESULT_UNDEFINED;
+  bgp->srx_default_aspaVal   = SRx_RESULT_UNDEFINED;
 
 
   bgp->srxProxy = createSRxProxy(handleSRxValidationResult, handleSRxSignatures,

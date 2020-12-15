@@ -59,6 +59,7 @@ Software Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
 
 #define SRX_VTY_EVAL_ORIGIN_ONLY "origin_only"
 #define SRX_VTY_EVAL_BGPSEC      "bgpsec"
+#define SRX_VTY_EVAL_ASPA        "aspa"
 
 #define SRX_VTY_PARAM_CONNECT_SRV  0
 #define SRX_VTY_PARAM_CONNECT_PORT 1
@@ -425,10 +426,11 @@ struct bgp
 
   /* SRX Configuration */
   u_int16_t srx_config;
+#define SRX_CONFIG_EVAL_ASPA     (1 << 0)
 #define SRX_CONFIG_EVAL_ORIGIN   (1 << 1)
 // Below must be set in combination with VALORIGIN
 #define SRX_CONFIG_EVAL_PATH     (1 << 2)
-#define SRX_CONFIG_EVALUATE      (SRX_CONFIG_EVAL_ORIGIN | SRX_CONFIG_EVAL_PATH)
+#define SRX_CONFIG_EVALUATE      (SRX_CONFIG_EVAL_ORIGIN | SRX_CONFIG_EVAL_PATH | SRX_CONFIG_EVAL_ASPA)
 
 #define SRX_CONFIG_EVAL_DISTR    ((1 << 3) | SRX_CONFIG_EVALUATE)
 #define SRX_CONFIG_DISPLAY_INFO  (1 << 4)
@@ -541,6 +543,7 @@ struct bgp
 
   uint16_t srx_default_roaVal;
   uint16_t srx_default_bgpsecVal;
+  uint16_t srx_default_aspaVal;
 
   /* Instance variables */
   SRxProxy* srxProxy;
