@@ -84,7 +84,7 @@ AS_PATH_LIST* newAspathListEntry (uint32_t length, uint32_t* pathData, AS_TYPE a
 int storeAspathList (AspathCache* self, SRxDefaultResult* defRes, uint32_t pathId, AS_TYPE, AS_PATH_LIST* pathlistEntry);
 AS_PATH_LIST* getAspathList (AspathCache* self, uint32_t pathId, SRxResult* srxRes);
 void printAsPathList(AS_PATH_LIST* aspl);
-uint32_t makePathId (AS_PATH_LIST* as_pl);
+uint32_t makePathId (uint8_t asPathLength, PATH_LIST* asPathList, bool bBigEndian);
 
 
 

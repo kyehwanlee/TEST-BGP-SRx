@@ -661,6 +661,50 @@ bool processValidationRequest(ServerConnectionHandler* self,
                                     clientID, clientMapping,
                                     &srxRes, &defResInfo, &pathId);
 
+    
+  // TODO: test algorithm below
+  //
+  AS_PATH_LIST *aspl;
+  if (pathId == 0)  // if not found in  cEntry
+  {
+    pathId = makePathId(bgpData.numberHops, bgpData.asPath, true);
+    printf("generated CRC value: %08X \n", pathId);
+
+    // to see if there is already exist or not in AS path Cache with path id
+    aspl = getAspathList (self->aspathCache, pathId, &srxRes); 
+    
+    // AS Path List already exist in Cache
+    if(aspl)
+    {
+      // once found aspa result value in Cache, no need to validate operation
+      printf(" ASPA validation Result Already exist: %d\n", srxRes.aspaResult);
+
+      // then disable validation operation
+      doAspaVal = false;
+
+    }
+    // AS Path List not exist in Cache
+    else
+    {
+      aspl = newAspathListEntry(bgpData.numberHops, bgpData.asPath, asType, true);
+      if(!aspl)
+      {
+        printf(" memory allocation for AS path list entry resulted in fault \n");
+        return false;
+      }
+  
+      if (doStoreUpdate)
+      {
+        defResInfo.result.aspaResult = hdr->aspaDefRes;
+        defResInfo.resSourceASPA     = hdr->aspaResSrc;
+      }
+      
+      storeAspathList(self->aspathCache, &defResInfo, pathId, asType, aspl);
+      srxRes.aspaResult   = defResInfo.result.aspaResult;
+
+    }
+  }
+      
 
   // -------------------------------------------------------------------
 
@@ -684,37 +728,6 @@ bool processValidationRequest(ServerConnectionHandler* self,
     defResInfo.result.bgpsecResult = hdr->bgpsecDefRes;
     defResInfo.resSourceBGPSEC     = hdr->bgpsecResSrc;
 
-
-    // ----------------------------------------------------------------
-    // XXX NOTE XXX:   
-    // 1. here get Update result for ASPA and 
-    // 2. put a task into Aspath Cache
-    // 3. CommandHandler takes this job to process in _processUpdateValidation()
-    //
-    // ----------------------------------------------------------------
-    //
-    defResInfo.result.aspaResult = hdr->aspaDefRes;
-    defResInfo.resSourceASPA     = hdr->aspaResSrc;
-
-    if (pathId == 0)  // if it is already stored in cEntry, then skip the generation part below
-    {
-      AS_PATH_LIST *as_pl = newAspathListEntry(bgpData.numberHops, bgpData.asPath, asType, true);
-      if(!as_pl)
-      {
-        printf(" memory allocation for AS path list entry resulted in fault \n");
-        return false;
-      }
-
-      pathId = as_pl->pathID = makePathId(as_pl);
-      printf("generated CRC value: %08X \n", pathId);
-
-      // -------------------------------------------------------------------
-      //
-      // store data into aspath cache with crc Key here
-      //
-      storeAspathList(self->aspathCache, &defResInfo, pathId, asType, as_pl);
-      srxRes.aspaResult   = defResInfo.result.aspaResult;
-    }
 
     if (!storeUpdate(self->updateCache, clientID, clientMapping, 
               &updateID, prefix, originAS, &defResInfo, &bgpData, pathId))

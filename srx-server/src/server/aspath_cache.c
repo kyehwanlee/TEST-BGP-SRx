@@ -220,6 +220,9 @@ int storeAspathList (AspathCache* self, SRxDefaultResult* defRes,
   return retVal;
 }
 
+// key : path id to find AS path cache record
+// return: a new AS PATH LIST structure
+//
 AS_PATH_LIST* getAspathList (AspathCache* self, uint32_t pathId, SRxResult* srxRes)
 {
   if (!pathId)
@@ -228,11 +231,12 @@ AS_PATH_LIST* getAspathList (AspathCache* self, uint32_t pathId, SRxResult* srxR
     return NULL;
   }
 
-  AS_PATH_LIST *aspl= (AS_PATH_LIST*)calloc(1, sizeof(AS_PATH_LIST));
+  AS_PATH_LIST *aspl = NULL;
   PathListCacheTable *plCacheTable;
   
   if (find_AspathList (self, pathId, &plCacheTable))
   {
+    aspl = (AS_PATH_LIST*)calloc(1, sizeof(AS_PATH_LIST));
     aspl->pathID        = plCacheTable->pathId;
     aspl->asPathLength  = plCacheTable->data.hops;
     aspl->asPathList    = plCacheTable->data.asPathList;
@@ -241,36 +245,37 @@ AS_PATH_LIST* getAspathList (AspathCache* self, uint32_t pathId, SRxResult* srxR
 
     if (srxRes->aspaResult != aspl->aspaValResult)
       srxRes->aspaResult  = aspl->aspaValResult;
-
   }
   else
   {
     srxRes->aspaResult = SRx_RESULT_UNDEFINED;
-    free(aspl);
-    aspl = NULL;
   }
 
   return aspl;
 }
 
 
-uint32_t makePathId (AS_PATH_LIST* as_pl)
+uint32_t makePathId (uint8_t asPathLength, PATH_LIST* asPathList, bool bBigEndian)
 {
   uint32_t pathId=0;
   char* strBuf;
 
-  if (!as_pl)
+  if (!asPathList)
   {
     printf("as path list is NULL, making CRC failure\n");
     return 0;
   }
 
-  int strSize = as_pl->asPathLength * 4 *2;  //  Path length * 4 byte, *2: hex string
+  int strSize = asPathLength * 4 *2;  //  Path length * 4 byte, *2: hex string
   strBuf = (char*)calloc(strSize, sizeof(char));
 
-  for (int i=0; i < as_pl->asPathLength; i++)
+  for (int i=0; i < asPathLength; i++)
   {
-    sprintf(strBuf + (i*4*2), "%08X", as_pl->asPathList[i]);
+    if(bBigEndian)
+      sprintf(strBuf + (i*4*2), "%08X", ntohl(asPathList[i]));
+    else
+      sprintf(strBuf + (i*4*2), "%08X", asPathList[i]);
+
   }
 
   pathId = crc32((uint8_t*)strBuf, strSize);
