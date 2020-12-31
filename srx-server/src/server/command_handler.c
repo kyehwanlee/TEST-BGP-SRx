@@ -597,6 +597,9 @@ static bool _processUpdateValidation(CommandHandler* cmdHandler,
     free(prefix);
   }
 
+  //
+  // ASPA validation
+  //
   if (aspaVal && (srxRes.aspaResult == SRx_RESULT_UNDEFINED) 
               && (defRes.result.aspaResult != SRx_RESULT_INVALID))
                   // if defRes result aspaResult invalid means a client router put this result 
@@ -665,11 +668,20 @@ static bool _processUpdateValidation(CommandHandler* cmdHandler,
       aspl->aspaValResult = valResult;
     }
 
-
     // modify Update Cache
     srxRes_mod.aspaResult = aspl->aspaValResult;
   }
 
+  //
+  // in case, path id already exists in AS Path Cache and srx result already 
+  // has the validation result which was generated previously with the same path list 
+  //
+  if (aspaVal && srxRes.aspaResult != SRx_RESULT_UNDEFINED
+              && (defRes.result.aspaResult != SRx_RESULT_INVALID))
+  {
+    // modify Update Cache
+    srxRes_mod.aspaResult = srxRes.aspaResult; // srx Res came from UpdateCache (cEntry)
+  }
 
 
 

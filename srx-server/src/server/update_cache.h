@@ -435,4 +435,7 @@ bool detectCollision(UpdateCache* self, SRxUpdateID* updateID, IPPrefix* prefix,
  * 
  */
 void outputUpdateCacheAsXML(UpdateCache* self, FILE* stream, int maxBlob);
+
+bool modifyUpdateCacheResultWithAspaVal(UpdateCache* self, SRxUpdateID* updateID,
+                        SRxResult* srxResult_aspa);
 #endif // !__UPDATE_CACHE_H__

@@ -6826,6 +6826,16 @@ static void srx_route_vty_validation_out(struct vty *vty,
     {
       vty_out (vty, "-");
     }
+    vty_out (vty, ",");
+    if ((bgp->srx_config & SRX_CONFIG_EVAL_ASPA) != 0)
+    {
+      // print ASPA validation.
+      srx_validation_vty_short_out(vty, binfo->val_res_ASPA);
+    }
+    else
+    {
+      vty_out (vty, "-");
+    }
     vty_out (vty, ") ");
 
     // Determine local pref policy
@@ -7621,10 +7631,10 @@ route_vty_out_detail (struct vty *vty, struct bgp *bgp, struct prefix *p,
 #ifdef USE_SRX
 #define BGP_SRX_SHOW_SCODE_HEADER "Validation:    v - valid, n - notfound, i - invalid, ? - undefined%s" \
                                   "SRx Status:    I - route ignored, D - SRx evaluation deactivated%s" \
-                                  "SRxVal Format: validation result (origin validation, path validation)%s"
+                                  "SRxVal Format: validation result (origin validation, path validation, aspa validation)%s"
 //#define BGP_SRX_SHOW_HEADER       "   SRx Data      Network          Next Hop            Metric  LocPrf Weight Path%s"
-#define BGP_SRX_SHOW_HEADER       "   Ident    SRxVal SRxLP Status Network          Next Hop            Metric  LocPrf Weight Path%s"
-//                                    12345678 i(v,i) +1000   I
+#define BGP_SRX_SHOW_HEADER       "   Ident    SRxVal   SRxLP Status Network          Next Hop            Metric  LocPrf Weight Path%s"
+//                                    12345678 i(v,i,v) +1000   I
 #endif /* USE_SRX */
 #define BGP_SHOW_SCODE_HEADER "Status codes: s suppressed, d damped, h history, * valid, > best, i - internal,%s              r RIB-failure, S Stale, R Removed%s"
 #define BGP_SHOW_OCODE_HEADER "Origin codes: i - IGP, e - EGP, ? - incomplete%s%s"

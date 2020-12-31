@@ -763,14 +763,15 @@ bool modifyUpdateResult(UpdateCache* self, SRxUpdateID* updateID,
       }
     }
 
-    // Check if BGPSEC results can be used.
+    // Check if ASPA results can be used.
     if (result->aspaResult != SRx_RESULT_DONOTUSE)
-    { // Check for changes in bgpsec result
+    { 
+      valRes.valType |= VRT_ASPA;
+      valRes.valResult.aspaResult = result->aspaResult;
+
       if (result->aspaResult != cEntry->srxResult.aspaResult)
       {
-        valRes.valType |= VRT_ASPA;
         cEntry->srxResult.aspaResult = result->aspaResult;
-        valRes.valResult.aspaResult = result->aspaResult;
       }
     }
 
@@ -794,6 +795,37 @@ bool modifyUpdateResult(UpdateCache* self, SRxUpdateID* updateID,
     unlockMutex(&self->itemMutex);
   }
 
+  return retVal;
+}
+    
+bool modifyUpdateCacheResultWithAspaVal(UpdateCache* self, SRxUpdateID* updateID,
+                        SRxResult* srxResult_aspa)
+{
+
+  CacheEntry* cEntry;
+  bool retVal = true;
+  SRxUpdateID updID = *updateID;
+
+  if (!tableFind(self, updID, &cEntry))
+  {
+    RAISE_SYS_ERROR("Does not exist in update cache, can not modify aspa result!");
+    retVal = false;
+  }
+  else
+  {
+    lockMutex(&self->itemMutex);
+
+    // Check if ASPA srxResult_aspas can be used.
+    if (srxResult_aspa->aspaResult != SRx_RESULT_DONOTUSE)
+    { // Check for changes in bgpsec srxResult_aspa
+      if (srxResult_aspa->aspaResult != cEntry->srxResult.aspaResult)
+      {
+        cEntry->srxResult.aspaResult = srxResult_aspa->aspaResult;
+      }
+    }
+
+    unlockMutex(&self->itemMutex);
+  }
   return retVal;
 }
 

@@ -665,22 +665,37 @@ bool processValidationRequest(ServerConnectionHandler* self,
   // TODO: test algorithm below
   //
   AS_PATH_LIST *aspl;
+  SRxResult srxRes_aspa; 
+  bool modifyUpdateCacheWithAspaValue = false;
+
   if (pathId == 0)  // if not found in  cEntry
   {
     pathId = makePathId(bgpData.numberHops, bgpData.asPath, true);
     printf("generated CRC value: %08X \n", pathId);
 
     // to see if there is already exist or not in AS path Cache with path id
-    aspl = getAspathList (self->aspathCache, pathId, &srxRes); 
+    aspl = getAspathList (self->aspathCache, pathId, &srxRes_aspa);
     
     // AS Path List already exist in Cache
     if(aspl)
     {
       // once found aspa result value in Cache, no need to validate operation
-      printf(" ASPA validation Result Already exist: %d\n", srxRes.aspaResult);
+      //  this value is some value not undefined
+      if (srxRes_aspa.aspaResult == SRx_RESULT_UNDEFINED)
+      {
+        printf(" Error value occurred. Cached ASPA result should not be UNDEFINED\n");
+      }
+      printf(" ASPA validation Result Already exist: %d\n", srxRes_aspa.aspaResult);
 
       // then disable validation operation
-      doAspaVal = false;
+      //doAspaVal = false;
+
+      // TODO: modify UpdateCache's srx Res -> aspaResult with srxRes_aspa.aspaResult
+      // !!! But UpdateCache's cEntry here dosen't exist yet
+      //
+      // maybe after calling storeUpdate, put this value into cEntry directly
+      modifyUpdateCacheWithAspaValue = true;
+      srxRes.aspaResult = srxRes_aspa.aspaResult;
 
     }
     // AS Path List not exist in Cache
@@ -745,6 +760,14 @@ bool processValidationRequest(ServerConnectionHandler* self,
   }
   free(prefix);
   prefix = NULL;
+
+  if (modifyUpdateCacheWithAspaValue)
+  {
+    // modify UpdateCache with srxRes_aspa.aspaResult, then later this value 
+    // in UpdateCahe will be used 
+    modifyUpdateCacheResultWithAspaVal(self->updateCache, &updateID, &srxRes_aspa);
+
+  }
 
   // Just check if the client has the correct values for the requested results
   if (doOriginVal && (hdr->roaDefRes != srxRes.roaResult))
