@@ -258,7 +258,7 @@ AS_PATH_LIST* getAspathList (AspathCache* self, uint32_t pathId, SRxResult* srxR
 uint32_t makePathId (uint8_t asPathLength, PATH_LIST* asPathList, bool bBigEndian)
 {
   uint32_t pathId=0;
-  char* strBuf;
+  char* strBuf = NULL;
 
   if (!asPathList)
   {
@@ -268,6 +268,11 @@ uint32_t makePathId (uint8_t asPathLength, PATH_LIST* asPathList, bool bBigEndia
 
   int strSize = asPathLength * 4 *2;  //  Path length * 4 byte, *2: hex string
   strBuf = (char*)calloc(strSize, sizeof(char));
+  if (!strBuf)
+  {
+    printf("memory allocation error\n");
+    return 0;
+  }
 
   for (int i=0; i < asPathLength; i++)
   {
@@ -281,7 +286,10 @@ uint32_t makePathId (uint8_t asPathLength, PATH_LIST* asPathList, bool bBigEndia
   pathId = crc32((uint8_t*)strBuf, strSize);
   printf("CRC: %08X strings: %s\n", pathId, strBuf);
 
-  free(strBuf);
+  if (strBuf)
+  {
+    free(strBuf);
+  }
 
   return pathId;
 }

@@ -171,7 +171,7 @@ void print_search(TrieNode* root, char* word) {
 
 ASPA_ValidationResult ASPA_DB_lookup(TrieNode* root, uint32_t customerAsn, uint32_t providerAsn, uint8_t afi )
 {
-  printf("\n[%s] called \n", __FUNCTION__);
+  printf("++ [%s] called \n", __FUNCTION__);
   char strCusAsn[6] = {};
   sprintf(strCusAsn, "%d", customerAsn);  
 
@@ -183,16 +183,16 @@ ASPA_ValidationResult ASPA_DB_lookup(TrieNode* root, uint32_t customerAsn, uint3
   }
   else // found object
   {
-    printf("customer ASN: %d\n", obj->customerAsn);
-    printf("providerAsCount : %d\n", obj->providerAsCount);
-    printf("Address: provider asns : %p\n", obj->providerAsns);
-    printf("afi: %d\n", obj->afi);
+    printf("++ customer ASN: %d\n", obj->customerAsn);
+    printf("++ providerAsCount : %d\n", obj->providerAsCount);
+    printf("++ Address: provider asns : %p\n", obj->providerAsns);
+    printf("++ afi: %d\n", obj->afi);
 
     if (obj->providerAsns)
     {
       for(int i=0; i< obj->providerAsCount; i++)
       {
-        printf("providerAsns[%d]: %d\n", i, obj->providerAsns[i]);
+        printf("++ providerAsns[%d]: %d\n", i, obj->providerAsns[i]);
         if (obj->providerAsns[i] == providerAsn && obj->afi == afi)
         {
           return ASPA_RESULT_VALID;

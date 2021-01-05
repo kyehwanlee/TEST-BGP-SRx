@@ -443,52 +443,53 @@ static void handleRouterKey (uint32_t valCacheID, uint16_t session_id,
 
 // 
 // ASPA validation
+// work1. parsing ASPA objects into AS number in forms of string
+// work2. call DB to store
 //
 int handleAspaPdu(void* rpkiHandler, uint32_t customerAsn, 
                     uint16_t providerAsCount, uint32_t* providerAsns)
 {
-  printf("\n+++ [%s] ASPA handler called \n", __FUNCTION__);
+  printf("\n+ [%s] ASPA handler called for registering ASPA object(s) into DB \n", __FUNCTION__);
   RPKIHandler* handler = (RPKIHandler*)rpkiHandler;
   ASPA_DBManager* aspaDBManager = handler->aspaDBManager;
-  // TODO: 
-  // 1. parsing ASPA objects into AS number in forms of string
-  // 2. call DB to store
-  //
 
   
+  // call new ASPAObject here instead
   ASPA_Object *aspaObj = newASPAObject(customerAsn, providerAsCount, providerAsns, 1);
 
-  // TODO: call newASPAObject here instead
 
-  char strTemp[6];
-  sprintf(strTemp, "%d", customerAsn);
-  printf("sting: %s\n", strTemp);
+  char strWord[6];
+  sprintf(strWord, "%d", customerAsn);
+  printf("+ key string to search in DB: %s\n", strWord);
 
-  char *strAsn1="65001", *strAsn2="60003";
+  //char *strAsn1="65001", *strAsn2="60003";
   TrieNode *root = aspaDBManager->tableRoot;
 
-  root = insert_trie(root, strTemp, "10 20 30", aspaObj);
-  root = insert_trie(root, strAsn2, "100 200 400", aspaObj);
+  root = insert_trie(root, strWord, "User Data:10 20 30", aspaObj);
+  //root = insert_trie(root, strAsn2, "100 200 400", aspaObj); // test
 
-  print_search(root, "60002");
-  ASPA_Object *obj = findAspaObject(root, "60002");
-  printf("ASPA object: %p\n", obj);
+#define SEARCH_TEST
+#ifdef  SEARCH_TEST
+  //print_search(root, "60002");
+  //ASPA_Object *obj = findAspaObject(root, "60002");
+  ASPA_Object *obj = findAspaObject(root, strWord);
 
   if (obj)
   {
-    printf("customer ASN: %d\n", obj->customerAsn);
-    printf("providerAsCount : %d\n", obj->providerAsCount);
-    printf("Address: provider asns : %p\n", obj->providerAsns);
+    printf("+ Testing for searching ASPA object in DB: %p ...\n", obj);
+    printf("++ customer ASN: %d\n", obj->customerAsn);
+    printf("++ providerAsCount : %d\n", obj->providerAsCount);
+    printf("++ Address: provider asns : %p\n", obj->providerAsns);
     if (obj->providerAsns)
     {
       for(int i=0; i< obj->providerAsCount; i++)
       {
-        printf("providerAsns[%d]: %d\n", i, obj->providerAsns[i]);
+        printf("++ providerAsns[%d]: %d\n", i, obj->providerAsns[i]);
       }
     }
-    printf("afi: %d\n", obj->afi);
+    printf("++ afi: %d\n", obj->afi);
   }
-
+#endif
 
   return 0;
 

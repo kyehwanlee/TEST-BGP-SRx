@@ -769,11 +769,11 @@ void verifyUpdate(SRxProxy* proxy, uint32_t localID,
                 pthread_self());
     return;
   }
-  printf("+ [proxy] asPathList.length: %d\n", asPathList.length);
-  printf("+ [proxy] asPathList.asType: %d\n", asPathList.asType);
+  printf("+ [proxy: %s] asPathList.length: %d\n", __FUNCTION__, asPathList.length);
+  printf("+ [proxy: %s] asPathList.asType: %d\n", __FUNCTION__, asPathList.asType);
         
   for (int i=0; i< asPathList.length; i++)
-      printf("+ [proxy] asPathList.asn: %d\n", asPathList.segments[i].asn);
+      printf("+ [proxy: %s] asPathList.asn: %d\n", __FUNCTION__, asPathList.segments[i].asn);
 
   // Specify the verify request method.
   uint8_t method =   (usePrefixOriginVal ? SRX_FLAG_ROA : 0)

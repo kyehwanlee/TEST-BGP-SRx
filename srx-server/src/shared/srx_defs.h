@@ -206,11 +206,13 @@ typedef struct {
 
 /** SRx Default Result (DR) Types */
 typedef enum {
-  SRx_RESULT_VALID     = 0, // ROA & BGPSEC
-  SRx_RESULT_NOTFOUND  = 1, // ONLY FOR ROA
-  SRx_RESULT_INVALID   = 2, // ROA & BGPSEC
-  SRx_RESULT_UNDEFINED = 3, // ROA & BGPSEC (if no result is available)
-  SRx_RESULT_DONOTUSE  = 4  // ONLY FOR INTERNAL USE WITHIN SRx Server.
+  SRx_RESULT_VALID        = 0, // ROA & BGPSEC
+  SRx_RESULT_NOTFOUND     = 1, // ONLY FOR ROA
+  SRx_RESULT_INVALID      = 2, // ROA & BGPSEC
+  SRx_RESULT_UNDEFINED    = 3, // ROA & BGPSEC (if no result is available)
+  SRx_RESULT_DONOTUSE     = 4, // ONLY FOR INTERNAL USE WITHIN SRx Server.
+  SRx_RESULT_UNKNOWN      = 5,  // ASPA Validation
+  SRx_RESULT_UNVERIFIABLE = 6  // ASPA Validation
 } SRxValidationResultVal;
 
 #define NUM_TRANS 3
@@ -235,9 +237,10 @@ typedef struct {
 typedef enum {
   ASPA_RESULT_VALID        = 0,
   ASPA_RESULT_INVALID      = 1,
-  ASPA_RESULT_UNKNOWN      = 2,
-  ASPA_RESULT_UNVERIFIABLE = 4,
-  ASPA_RESULT_UNDEFINED    = 8
+  ASPA_RESULT_UNDEFINED    = 2,
+  ASPA_RESULT_UNKNOWN      = 4,
+  ASPA_RESULT_UNVERIFIABLE = 8,
+  ASPA_RESULT_NIBBLE_ZERO  = 16
 } ASPA_ValidationResult;
 
 

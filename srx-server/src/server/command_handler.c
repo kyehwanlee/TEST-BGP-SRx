@@ -339,7 +339,7 @@ uint8_t do_AspaValidation(PATH_LIST* asPathList, uint8_t length, AS_TYPE asType,
                       uint8_t afi, ASPA_DBManager* aspaDBManager)
 {
   printf("\n[%s] ASPA Validation Starts\n", __FUNCTION__);
-  uint8_t result = 0;
+  uint8_t result = ASPA_RESULT_NIBBLE_ZERO; // for being distinguished with 0 (ASPA_RESULT_VALID)
 
   uint32_t customerAS, providerAS, startId=0;
   bool swapFlag = false;
@@ -404,27 +404,32 @@ uint8_t do_AspaValidation(PATH_LIST* asPathList, uint8_t length, AS_TYPE asType,
    */
   if (isUpStream)
   {
+    printf("+ Upstream Validation start\n");
+    printf("+ Lookup Result(0:valid, 1:Invalid, 2:Undefined 4:Unknown, 8:Unverifiable)\n");
     for (int i=0; i < length-1; i++)
     {
       if (asType == AS_SET) // if AS_SET, skip
       {
         hopResult[i+1] = ASPA_RESULT_UNVERIFIABLE;
+        printf("+ validation  - Unverifiable detected\n");
         continue;
       }
 
       customerAS = list[i];
       providerAS = list[i+1];
+      printf("+ customer AS: %d\t provider AS: %d\n", customerAS, providerAS);
 
       currentResult = hopResult[i+1] = 
         ASPA_DB_lookup(aspaDBManager->tableRoot, customerAS, providerAS, afi);
 
       result |= currentResult;
+      printf("+ current lookup result: %x Accured Result: %x\n", currentResult, result);
 
       if (currentResult == ASPA_RESULT_VALID || currentResult == ASPA_RESULT_UNKNOWN)
         continue;
 
       if (currentResult == ASPA_RESULT_INVALID)
-        return ASPA_RESULT_INVALID;
+        return SRx_RESULT_INVALID;
 
     }
   } // end of UpStream
@@ -434,6 +439,7 @@ uint8_t do_AspaValidation(PATH_LIST* asPathList, uint8_t length, AS_TYPE asType,
    */
   else 
   {
+    printf("+ Downstream Validation start\n");
     uint32_t temp;
     for (int i=0; i < length-1; i++)
     {
@@ -468,7 +474,7 @@ uint8_t do_AspaValidation(PATH_LIST* asPathList, uint8_t length, AS_TYPE asType,
       }
       else
       {
-        return ASPA_RESULT_INVALID;
+        return SRx_RESULT_INVALID;
       }
     } 
   } // end of DownStream
@@ -478,13 +484,13 @@ uint8_t do_AspaValidation(PATH_LIST* asPathList, uint8_t length, AS_TYPE asType,
    * Final result return
    */
   if (result == ASPA_RESULT_VALID)
-    return ASPA_RESULT_VALID;
+    return SRx_RESULT_VALID;
 
   if ( (result & ASPA_RESULT_UNKNOWN) && !(result & ASPA_RESULT_UNVERIFIABLE))
-    return ASPA_RESULT_UNKNOWN;
+    return SRx_RESULT_UNKNOWN;
 
   if ( (result & ASPA_RESULT_UNVERIFIABLE) && !(result & ASPA_RESULT_UNKNOWN))
-    return ASPA_RESULT_UNVERIFIABLE;
+    return SRx_RESULT_UNVERIFIABLE;
 }
 
 
@@ -602,8 +608,9 @@ static bool _processUpdateValidation(CommandHandler* cmdHandler,
   //
   if (aspaVal && (srxRes.aspaResult == SRx_RESULT_UNDEFINED) 
               && (defRes.result.aspaResult != SRx_RESULT_INVALID))
-                  // if defRes result aspaResult invalid means a client router put this result 
-                  // due to failed of Direct neighbor check or any other reason
+                  // if defRes result aspaResult is invalid, this means that a 
+                  // client router put this result in due to the failure 
+                  // of Direct neighbor check or any other reason.
   {
     // ----------------------------------------------------------------
     // 
@@ -649,27 +656,35 @@ static bool _processUpdateValidation(CommandHandler* cmdHandler,
     AS_PATH_LIST *aspl = getAspathList (cmdHandler->aspathCache, pathId, &srxRes);
     printAsPathList(aspl);
 
-    //
-    // call ASPA validation
-    //
-    uint8_t afi       = 1; // temporary behavior TODO: laster should be replaced 
-    uint8_t valResult = do_AspaValidation (aspl->asPathList, 
-                            aspl->asPathLength, aspl->asType, afi, aspaDBManager);
-
-    printf("Validation Result(0:valid, 1:Invalid, 2:Unknown, 3:Unverifiable): %d\n",
-        valResult);
-
-    // modify Aspath Cache with the validation result
-    //
-    if (valResult != aspl->aspaValResult)
+    if (aspl)
     {
-      modifyAspaValidationResultToAspathCache (cmdHandler->aspathCache, pathId, 
-                                                valResult, aspl);
-      aspl->aspaValResult = valResult;
-    }
+      //
+      // call ASPA validation
+      //
+      uint8_t afi       = 1; // temporary behavior TODO: laster should be replaced 
+      uint8_t valResult = do_AspaValidation (aspl->asPathList, 
+          aspl->asPathLength, aspl->asType, afi, aspaDBManager);
 
-    // modify Update Cache
-    srxRes_mod.aspaResult = aspl->aspaValResult;
+      printf("Validation Result(0:valid, 2:Invalid, 3:Undefined 5:Unknown, 6:Unverifiable): %d\n",
+          valResult);
+
+      // modify Aspath Cache with the validation result
+      //
+      if (valResult != aspl->aspaValResult)
+      {
+        modifyAspaValidationResultToAspathCache (cmdHandler->aspathCache, pathId, 
+            valResult, aspl);
+        aspl->aspaValResult = valResult;
+      }
+
+      // modify Update Cache
+      srxRes_mod.aspaResult = aspl->aspaValResult;
+          
+    }
+    else
+    {
+      printf("Something went wrong... path list was not registered\n");
+    }
   }
 
   //
@@ -682,8 +697,6 @@ static bool _processUpdateValidation(CommandHandler* cmdHandler,
     // modify Update Cache
     srxRes_mod.aspaResult = srxRes.aspaResult; // srx Res came from UpdateCache (cEntry)
   }
-
-
 
 
   // Now check if the update changed - In a future version check if bgpsecResult

@@ -2422,6 +2422,10 @@ bool handleSRxValidationResult (SRxUpdateID updateID, uint32_t localID,
 
   bool retVal = false;
 
+  zlog_info ("[%s] notified Aspa Validation Result: %x \n \
+      (0:valid, 2:Invalid, 3:Undefined 5:Unknown, 6:Unverifiable)\n",
+      __FUNCTION__, aspaResult);
+
   if (localID != 0) // update & requestToken substitution
   {
     info = bgp_info_fetch(bgp->info_lid_hash, localID);

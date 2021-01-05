@@ -1251,15 +1251,15 @@ bool handleReceiveAspaPdu(RPKIRouterClient* client, RPKIAspaHeader* hdr, uint32_
 
   providerAsns = (uint32_t*)calloc(providerAsCount, sizeof(uint32_t));
 
-  printf("\n[%s] called\n", __FUNCTION__);
-  printf("customer asn: %d\n", customerAsn);
-  printf("provider as count: %d\n", providerAsCount);
+  printf("\n+ [%s] called to receive ASPA Object PDU from rpki cache\n", __FUNCTION__);
+  printf("+ customer asn: %d\n", customerAsn);
+  printf("+ provider as count: %d\n", providerAsCount);
 
   // 3. inside hdr, there might have multiple provider asns
   for(int i=0; i< providerAsCount; i++)
   {
     providerAsns[i] = ntohl(startp_providerAsns[i]);
-    printf("provider asn[%d]: %d\n", i, providerAsns[i]);
+    printf("+ provider asn[%d]: %d\n", i, providerAsns[i]);
   }
 
   // this calls 'handleAspaPdu()' in rpki_handler module

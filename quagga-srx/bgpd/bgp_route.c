@@ -6765,6 +6765,12 @@ static void srx_validation_vty_short_out(struct vty *vty, int state)
     case SRx_RESULT_UNDEFINED:
       vty_out (vty, "?");
       break;
+    case SRx_RESULT_UNKNOWN:
+      vty_out (vty, "u");
+      break;
+    case SRx_RESULT_UNVERIFIABLE:
+      vty_out (vty, "f");
+      break;
     default:
       vty_out (vty, "-");
   }
