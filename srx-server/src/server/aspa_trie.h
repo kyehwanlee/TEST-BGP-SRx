@@ -30,6 +30,7 @@ struct TrieNode {
 
 typedef struct {
   TrieNode *tableRoot;
+  uint32_t count;
 
 } ASPA_DBManager;
 

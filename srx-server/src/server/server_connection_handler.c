@@ -597,7 +597,7 @@ bool processValidationRequest(ServerConnectionHandler* self,
     bgpData.safi     = v4Hdr->bgpsecValReqData.valPrefix.safi;
     bgpData.local_as = v4Hdr->bgpsecValReqData.valData.local_as;
     asType           = ntohl(v4Hdr->asType);
-    printf("+ [server] as type: %d\n", asType);
+    printf("\n+ [%s] Validation Request Received in AS type: %d\n", __FUNCTION__, asType);
   }
   else
   {
@@ -710,7 +710,7 @@ bool processValidationRequest(ServerConnectionHandler* self,
   
       if (doStoreUpdate)
       {
-        defResInfo.result.aspaResult = hdr->aspaDefRes;
+        defResInfo.result.aspaResult = hdr->aspaDefRes; // router's input value (Undefined, Unverifiable, Invalid)
         defResInfo.resSourceASPA     = hdr->aspaResSrc;
       }
       

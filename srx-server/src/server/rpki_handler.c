@@ -442,7 +442,7 @@ static void handleRouterKey (uint32_t valCacheID, uint16_t session_id,
 }
 
 // 
-// ASPA validation
+// ASPA validation (called from params -> cbHandleAspaPdu in handleReceiveAspaPdu function)
 // work1. parsing ASPA objects into AS number in forms of string
 // work2. call DB to store
 //
@@ -460,15 +460,15 @@ int handleAspaPdu(void* rpkiHandler, uint32_t customerAsn,
 
   char strWord[6];
   sprintf(strWord, "%d", customerAsn);
-  printf("+ key string to search in DB: %s\n", strWord);
+  printf("+ received a new ASPA object, search key in DB: %s\n", strWord);
 
   //char *strAsn1="65001", *strAsn2="60003";
   TrieNode *root = aspaDBManager->tableRoot;
 
-  root = insert_trie(root, strWord, "User Data:10 20 30", aspaObj);
+  root = insert_trie(root, strWord, strWord, aspaObj);
   //root = insert_trie(root, strAsn2, "100 200 400", aspaObj); // test
 
-#define SEARCH_TEST
+//#define SEARCH_TEST
 #ifdef  SEARCH_TEST
   //print_search(root, "60002");
   //ASPA_Object *obj = findAspaObject(root, "60002");
@@ -489,6 +489,15 @@ int handleAspaPdu(void* rpkiHandler, uint32_t customerAsn,
     }
     printf("++ afi: %d\n", obj->afi);
   }
+#endif
+
+//#define ASPA_OBJECT_DB_TEST
+#if defined(ASPA_OBJECT_DB_TEST)
+  root = insert_trie(root, "60001", "TESTING userData 60001", aspaObj);
+  root = insert_trie(root, "65500", "TESTING userData 65500", aspaObj);
+
+  printf("++ total ASPA object DB entry: %d \n", getCountTrieNode());
+  printAllLeafNode(root);
 #endif
 
   return 0;

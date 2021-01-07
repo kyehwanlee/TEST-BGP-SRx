@@ -266,7 +266,7 @@ uint32_t makePathId (uint8_t asPathLength, PATH_LIST* asPathList, bool bBigEndia
     return 0;
   }
 
-  int strSize = asPathLength * 4 *2;  //  Path length * 4 byte, *2: hex string
+  int strSize = asPathLength * 4 *2 +1;  //  Path length * 4 byte, *2: hex string
   strBuf = (char*)calloc(strSize, sizeof(char));
   if (!strBuf)
   {
@@ -294,11 +294,76 @@ uint32_t makePathId (uint8_t asPathLength, PATH_LIST* asPathList, bool bBigEndia
   return pathId;
 }
 
+void printPathListCacheTableEntry(PathListCacheTable *cacheEntry)
+{
+  if (cacheEntry)
+  {
+    printf("path ID           : %08X \n" , cacheEntry->pathId);
+    printf("length (hops)     : %d \n"   , cacheEntry->data.hops);
+    printf("Validation Result : %d \n"   , cacheEntry->aspaResult);
+    printf("\t(0:valid, 2:Invalid, 3:Undefined 5:Unknown, 6:Unverifiable)\n");
+    printf("AS Path Type      : %d \n"   , cacheEntry->asType);
+
+    if (cacheEntry->data.asPathList)
+    {
+      for(int i=0; i<cacheEntry->data.hops; i++)
+      {
+        printf("- Path List[%d]: %d \n", i, cacheEntry->data.asPathList[i]);
+      }
+    }
+    else
+    {
+        printf("Path List: Doesn't exist \n");
+    }
+  }
+  else
+  {
+    printf("No Entry exist\n");
+  }
+  printf("\n");
+}
 
 
 
+uint8_t getCountAsPathCache(AspathCache *self)
+{
+  uint8_t numRecords = 0;
+
+  acquireWriteLock(&self->tableLock);
+  numRecords = HASH_COUNT((PathListCacheTable*)self->aspathCacheTable);
+  unlockWriteLock(&self->tableLock);
+
+  return numRecords;
+}
+
+int idSort(PathListCacheTable *a, PathListCacheTable *b) 
+{
+  return (a->pathId - b->pathId);
+}
+
+void sortByPathId(AspathCache *self)
+{
+  acquireWriteLock(&self->tableLock);
+  HASH_SORT(*((PathListCacheTable**)&self->aspathCacheTable), idSort);
+  unlockWriteLock(&self->tableLock);
+}
 
 
+void printAllAsPathCache(AspathCache *self)
+{
+  PathListCacheTable *currCacheTable, *tmp;
+
+  //sortByPathId(self);
+
+  acquireWriteLock(&self->tableLock);
+  HASH_ITER(hh, (PathListCacheTable*)self->aspathCacheTable, currCacheTable, tmp) 
+  {
+    printf("\n");
+    printPathListCacheTableEntry(currCacheTable);
+    printf("\n");
+  }
+  unlockWriteLock(&self->tableLock);
+}
 
 
 

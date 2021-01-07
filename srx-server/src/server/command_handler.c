@@ -665,7 +665,7 @@ static bool _processUpdateValidation(CommandHandler* cmdHandler,
       uint8_t valResult = do_AspaValidation (aspl->asPathList, 
           aspl->asPathLength, aspl->asType, afi, aspaDBManager);
 
-      printf("Validation Result(0:valid, 2:Invalid, 3:Undefined 5:Unknown, 6:Unverifiable): %d\n",
+      printf("Validation Result(0:valid, 2:Invalid, 3:Undefined 4:DonotUse 5:Unknown, 6:Unverifiable): %d\n",
           valResult);
 
       // modify Aspath Cache with the validation result
@@ -714,6 +714,34 @@ static bool _processUpdateValidation(CommandHandler* cmdHandler,
                       updateID);
     }    
   }
+
+//#define HASH_TEST
+#if defined (HASH_TEST)
+  AS_PATH_LIST* pAspathList; 
+  pAspathList               = (AS_PATH_LIST*)calloc(1, sizeof(AS_PATH_LIST));
+  pAspathList->asPathLength = 1;
+  pAspathList->asPathList   = (uint32_t*)calloc(1, sizeof(uint32_t));
+  pAspathList->asType       = 2;
+  pAspathList->asPathList[0] = 65001;
+  pAspathList->pathID   = 0x0006;
+  storeAspathList(cmdHandler->aspathCache, &defRes, 0x0006, 2, pAspathList);
+  pAspathList->pathID   = 0x0002;
+  storeAspathList(cmdHandler->aspathCache, &defRes, 0x0002, 1, pAspathList);
+  pAspathList->pathID   = 0x0003;
+  storeAspathList(cmdHandler->aspathCache, &defRes, 0x0003, 2, pAspathList);
+  pAspathList->pathID   = 0x0005;
+  storeAspathList(cmdHandler->aspathCache, &defRes, 0x0005, 3, pAspathList);
+  pAspathList->pathID   = 0x0004;
+  storeAspathList(cmdHandler->aspathCache, &defRes, 0x0004, 2, pAspathList);
+  pAspathList->pathID   = 0x0001;
+  storeAspathList(cmdHandler->aspathCache, &defRes, 0x0001, 1, pAspathList);
+
+  printf("+ [UTHASH] total Count: %d\n", getCountAsPathCache (cmdHandler->aspathCache));
+
+  //sortByPathId(cmdHandler->aspathCache);
+  printAllAsPathCache(cmdHandler->aspathCache);
+#endif
+
   
   return processed;
 }

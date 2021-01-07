@@ -5,9 +5,12 @@
 #include <stdbool.h>
 #include "server/aspa_trie.h"
 
+static uint32_t countTrieNode =0;
+
 bool initializeAspaDBManager(ASPA_DBManager* aspaDBManager) 
 {
    aspaDBManager->tableRoot = newAspaTrie();
+   aspaDBManager->count = 0;
 
   return true;
 }
@@ -27,8 +30,7 @@ ASPA_Object* newASPAObject(uint32_t cusAsn, uint16_t pAsCount, uint32_t* provAsn
   
   if (obj->providerAsns && provAsns)
   {
-    int i=0;
-    for(i=0; i< pAsCount; i++)
+    for(int i=0; i< pAsCount; i++)
     {
       obj->providerAsns[i] = provAsns[i];
     }
@@ -108,9 +110,14 @@ TrieNode* insert_trie(TrieNode* root, char* word, char* userData, ASPA_Object* o
     }
     // At the end of the word, mark this node as the leaf node
     temp->is_leaf = 1;
+    countTrieNode++;
     return root;
 }
 
+uint32_t getCountTrieNode(void)
+{
+  return countTrieNode;
+}
 
 int search_trie(TrieNode* root, char* word)
 {
@@ -148,6 +155,51 @@ ASPA_Object* findAspaObject(TrieNode* root, char* word)
     }
     return NULL;
 }
+
+TrieNode* printAllLeafNode(TrieNode *node)
+{
+  TrieNode* leaf = NULL;
+  uint8_t count=0;
+
+  if (node->is_leaf == 1)
+  {
+    leaf = node;
+    return leaf;
+  }
+
+  for (int i=0; i<N; i++) 
+  {
+    if(node->children[i])
+    {
+      //printf("%d", i);
+      leaf = printAllLeafNode(node->children[i]);
+      if (leaf)
+      {
+        //printf("++ count: %d i:%d digit: %c user data: %s\n", ++count, i, leaf->data, leaf->userData);
+        printf("\n++ count: %d, user data: %s, ASPA object:%p \n", 
+            ++count, leaf->userData, leaf->aspaObjects);
+
+        ASPA_Object *obj = leaf->aspaObjects;
+        if (obj)
+        {
+          printf("++ customer ASN: %d\n", obj->customerAsn);
+          printf("++ providerAsCount : %d\n", obj->providerAsCount);
+          printf("++ Address: provider asns : %p\n", obj->providerAsns);
+          if (obj->providerAsns)
+          {
+            for(int i=0; i< obj->providerAsCount; i++)
+              printf("++ providerAsns[%d]: %d\n", i, obj->providerAsns[i]);
+          }
+          printf("++ afi: %d\n", obj->afi);
+        }
+      }
+    }
+  }
+
+  return NULL;
+}
+
+
 
 void print_trie(TrieNode* root) {/*{{{*/
     // Prints the nodes of the trie
