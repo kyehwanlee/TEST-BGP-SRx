@@ -397,7 +397,8 @@ uint8_t do_AspaValidation(PATH_LIST* asPathList, uint8_t length, AS_TYPE asType,
 
 
   ASPA_ValidationResult currentResult;
-  bool isUpStream = true;
+  //bool isUpStream = true;
+  bool isUpStream = false;
 
   /*
    *    Up Stream Validation 
@@ -446,6 +447,7 @@ uint8_t do_AspaValidation(PATH_LIST* asPathList, uint8_t length, AS_TYPE asType,
       if (asType == AS_SET) // if AS_SET, skip
       {
         hopResult[i+1] = ASPA_RESULT_UNVERIFIABLE;
+        printf("+ validation  - Unverifiable detected\n");
         continue;
       }
 
@@ -457,12 +459,15 @@ uint8_t do_AspaValidation(PATH_LIST* asPathList, uint8_t length, AS_TYPE asType,
         temp       = customerAS;
         customerAS = providerAS;
         providerAS = temp;
+        printf(" customer provider ASN swapped \n");
       }
+      printf("+ customer AS: %d\t provider AS: %d\n", customerAS, providerAS);
 
       currentResult = hopResult[i+1] = 
         ASPA_DB_lookup(aspaDBManager->tableRoot, customerAS, providerAS, afi);
 
       result |= currentResult;
+      printf("+ current lookup result: %x Accured Result: %x\n", currentResult, result);
       
       if (currentResult == ASPA_RESULT_VALID || currentResult == ASPA_RESULT_UNKNOWN)
         continue;
@@ -470,6 +475,7 @@ uint8_t do_AspaValidation(PATH_LIST* asPathList, uint8_t length, AS_TYPE asType,
       if (currentResult == ASPA_RESULT_INVALID && !swapFlag)
       {
         swapFlag = true;
+        printf(" INVALID and swap flag set \n");
         continue;
       }
       else

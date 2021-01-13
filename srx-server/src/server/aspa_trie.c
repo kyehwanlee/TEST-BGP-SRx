@@ -231,26 +231,29 @@ ASPA_ValidationResult ASPA_DB_lookup(TrieNode* root, uint32_t customerAsn, uint3
 
   if (!obj) // if there is no object item
   {
+    printf("++ [db] No customer ASN exist -- Unknown \n");
     return ASPA_RESULT_UNKNOWN;
   }
   else // found object
   {
-    printf("++ customer ASN: %d\n", obj->customerAsn);
-    printf("++ providerAsCount : %d\n", obj->providerAsCount);
-    printf("++ Address: provider asns : %p\n", obj->providerAsns);
-    printf("++ afi: %d\n", obj->afi);
+    printf("++ [db] customer ASN: %d\n", obj->customerAsn);
+    printf("++ [db] providerAsCount : %d\n", obj->providerAsCount);
+    printf("++ [db] Address: provider asns : %p\n", obj->providerAsns);
+    printf("++ [db] afi: %d\n", obj->afi);
 
     if (obj->providerAsns)
     {
       for(int i=0; i< obj->providerAsCount; i++)
       {
-        printf("++ providerAsns[%d]: %d\n", i, obj->providerAsns[i]);
+        printf("++ [db] providerAsns[%d]: %d\n", i, obj->providerAsns[i]);
         if (obj->providerAsns[i] == providerAsn && obj->afi == afi)
         {
+          printf("++ [db] Matched -- Valid \n");
           return ASPA_RESULT_VALID;
         }
       }
   
+      printf("++ [db] No Matched -- Invalid \n");
       return ASPA_RESULT_INVALID;
     }
   }
