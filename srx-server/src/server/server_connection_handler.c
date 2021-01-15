@@ -714,10 +714,15 @@ bool processValidationRequest(ServerConnectionHandler* self,
         defResInfo.resSourceASPA     = hdr->aspaResSrc;
       }
       
+      // TODO: in order to free aspl, need to copy value inside the function below XXX
+      //
       storeAspathList(self->aspathCache, &defResInfo, pathId, asType, aspl);
       srxRes.aspaResult   = defResInfo.result.aspaResult;
 
     }
+    // XXX free 
+    // if (aspl)
+    //  free(aspl);
   }
       
 

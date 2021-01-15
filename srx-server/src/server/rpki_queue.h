@@ -48,7 +48,9 @@ typedef enum {
   /** A Key Modification */
   RQ_KEY=2,
   /** Both happened */
-  RQ_BOTH=3        
+  RQ_BOTH=3,        
+  /* ASPA modification */
+  RQ_ASPA=4,       
 } e_RPKI_QUEUE_REASON;
 
 /** The preliminary queue type */

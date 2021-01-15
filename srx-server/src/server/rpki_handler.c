@@ -117,12 +117,13 @@ int handleAspaPdu(void* rpkiHandler, uint32_t customerAsn,
 
 
 bool createRPKIHandler (RPKIHandler* handler, PrefixCache* prefixCache, 
-                        ASPA_DBManager* aspaDBManager,
+                        AspathCache* aspathCache, ASPA_DBManager* aspaDBManager,
                        const char* serverHost, int serverPort, int rpki_version)
 {
   // Attach the prefix cache
-  handler->prefixCache = prefixCache;
-  handler->aspaDBManager = aspaDBManager; 
+  handler->prefixCache   = prefixCache;
+  handler->aspaDBManager = aspaDBManager;
+  handler->aspathCache   = aspathCache;
 
   // Create the RPKI/Router protocol client instance
   handler->rrclParams.prefixCallback     = handlePrefix;
@@ -256,6 +257,7 @@ static void handleEndOfData (uint32_t valCacheID, uint16_t session_id,
     valRes.valType  = VRT_NONE;
     valRes.valResult.roaResult    = SRx_RESULT_DONOTUSE;
     valRes.valResult.bgpsecResult = SRx_RESULT_DONOTUSE;
+    valRes.valResult.aspaResult   = SRx_RESULT_DONOTUSE;
     
     if ((queueElem.reason & RQ_ROA) == RQ_ROA)
     {
@@ -295,10 +297,79 @@ static void handleEndOfData (uint32_t valCacheID, uint16_t session_id,
                          "BGPsec_PATH attribute is not stored!", *uID);
       }
     }
+
+    // Here check for ASPA Validation which was registered as Unknown
+    if ((queueElem.reason & RQ_ASPA) == RQ_ASPA)
+    {
+      uint32_t pathId= 0;
+      if (!getUpdateResult(uCache, uID, 0, NULL, &srxRes, &defaultRes, &pathId))
+      {
+        LOG(LEVEL_WARNING, "Update 0x%08X not found during de-queuing of RPKI "
+                           "QUEUE!", queueElem.updateID);
+      }
+      else
+      {
+        // 
+        // 1. get as path list data using uID
+        // 2. aspa validation based on the newly received aspa object
+        // 3. store the result into val Res variable to send a notification
+        //
+        if (defaultRes.result.aspaResult != SRx_RESULT_INVALID)
+        {
+
+          ASPA_DBManager* aspaDBManager = handler->aspaDBManager;
+          TrieNode *root = aspaDBManager->tableRoot;
+
+          printf("+ Path ID: %X\n", pathId);
+          AS_PATH_LIST *aspl = getAspathList (handler->aspathCache, pathId, &srxRes);
+
+          if (aspl)
+          {
+            // call ASPA validation
+            uint8_t afi       = 1; // temporary behavior TODO: laster should be replaced 
+            uint8_t valResult = do_AspaValidation (aspl->asPathList, 
+                aspl->asPathLength, aspl->asType, afi, aspaDBManager);
+      
+            printf("Validation Result(0:valid, 2:Invalid, 3:Undefined "
+                "4:DonotUse 5:Unknown, 6:Unverifiable): %d\n", valResult);
+
+            // modify Aspath Cache with the validation result
+            if (valResult != aspl->aspaValResult)
+            {
+              modifyAspaValidationResultToAspathCache (handler->aspathCache, pathId, 
+                  valResult, aspl);
+              aspl->aspaValResult = valResult;
+              srxRes.aspaResult = valResult;
+
+              // modify UpdateCache data as well
+              modifyUpdateCacheResultWithAspaVal(uCache, uID, &srxRes);
+            }
+
+            valRes.valType |= VRT_ASPA;
+            valRes.valResult.aspaResult = aspl->aspaValResult;
+
+          }
+          else
+          {
+            LOG(LEVEL_ERROR, "Update 0x%08X is registered for ASPA but the "
+                "AS Path List is not found!", *uID);
+          }
+
+          if (aspl)
+            free (aspl);
+        }
+        else 
+        {
+          LOG(LEVEL_ERROR, "Update 0x%08X is not capable to do ASPA validation",
+              *uID);
+        }
+      }
+
+    }
     
     if (uCache->resChangedCallback != NULL)
     {
-      // Notify of the change of validation result.
+      // Notify of the change of validation result. (call handleUpdateResultChange)
       uCache->resChangedCallback(&valRes);     
     }
     else
@@ -468,7 +539,9 @@ int handleAspaPdu(void* rpkiHandler, uint32_t customerAsn,
   root = insert_trie(root, strWord, strWord, aspaObj);
   //root = insert_trie(root, strAsn2, "100 200 400", aspaObj); // test
 
-//#define SEARCH_TEST
+  // TODO: call rpki queue
+
+//#define SEARCH_TEST/*{{{*/
 #ifdef  SEARCH_TEST
   //print_search(root, "60002");
   //ASPA_Object *obj = findAspaObject(root, "60002");
@@ -489,16 +562,16 @@ int handleAspaPdu(void* rpkiHandler, uint32_t customerAsn,
     }
     printf("++ afi: %d\n", obj->afi);
   }
-#endif
+#endif/*}}}*/
 
-//#define ASPA_OBJECT_DB_TEST
+//#define ASPA_OBJECT_DB_TEST/*{{{*/
 #if defined(ASPA_OBJECT_DB_TEST)
   root = insert_trie(root, "60001", "TESTING userData 60001", aspaObj);
   root = insert_trie(root, "65500", "TESTING userData 65500", aspaObj);
 
   printf("++ total ASPA object DB entry: %d \n", getCountTrieNode());
   printAllLeafNode(root);
-#endif
+#endif/*}}}*/
 
   return 0;
 

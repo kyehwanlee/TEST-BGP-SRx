@@ -52,6 +52,7 @@
 #include "shared/srx_identifier.h"
 #include "shared/srx_packets.h"
 #include "server/srx_packet_sender.h"
+#include "server/rpki_queue.h"
 #include "util/log.h"
 #include "util/math.h"
 #include "util/prefix.h"
@@ -61,6 +62,7 @@
 
 // Forward declaration
 static void* handleCommands(void* arg);
+extern RPKI_QUEUE* getRPKIQueue();
 
 /**
  * Registers a BGPSec Handler, RPKI Handler and Update Cache.
@@ -620,7 +622,6 @@ static bool _processUpdateValidation(CommandHandler* cmdHandler,
   {
     // ----------------------------------------------------------------
     // 
-    // TODO:
     // 1. fetch validation task for Aspath from AspathCache 
     // 2. relate this job to ASPA object DB
     // 3. validation work
@@ -632,7 +633,7 @@ static bool _processUpdateValidation(CommandHandler* cmdHandler,
     TrieNode *root = aspaDBManager->tableRoot;
 
     //#define TEST_ASPA_DB
-#ifdef  TEST_ASPA_DB
+#ifdef  TEST_ASPA_DB/*{{{*/
     printf("\n[%s] Testing ASPA object DB for AS path cache\n", __FUNCTION__);
     print_search(root, "60001");
     print_search(root, "60002");
@@ -653,7 +654,7 @@ static bool _processUpdateValidation(CommandHandler* cmdHandler,
       }
       printf("afi: %d\n", obj->afi);
     }
-#endif // TEST_ASPA_DB
+#endif // TEST_ASPA_DB/*}}}*/
 
     // -------------------------------------------------------------------
     // Retrieve data from aspath cache with crc Key, path ID, here
@@ -690,6 +691,12 @@ static bool _processUpdateValidation(CommandHandler* cmdHandler,
     else
     {
       printf("Something went wrong... path list was not registered\n");
+    }
+
+    if (srxRes_mod.aspaResult  == SRx_RESULT_UNKNOWN)
+    {
+      RPKI_QUEUE*      rQueue = getRPKIQueue();
+      rq_queue(rQueue, RQ_ASPA, &updateID);
     }
   }
 

@@ -83,9 +83,8 @@ void free_trienode(TrieNode* node) {
     free(node);
 }
 
-// TODO: need to have parameters
-//      1. aspa object structure
-//      2. 
+// TODO: 
+//      1. new value substitution 
 //
 TrieNode* insert_trie(TrieNode* root, char* word, char* userData, ASPA_Object* obj) {
     // Inserts the word onto the Trie

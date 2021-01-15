@@ -195,9 +195,21 @@ int storeAspathList (AspathCache* self, SRxDefaultResult* defRes,
     plCacheTable->pathId = pathId;
     plCacheTable->asType = asType;
 
-    plCacheTable->data.hops = pathlistEntry->asPathLength;
-    plCacheTable->data.asPathList = pathlistEntry->asPathList? 
-                                    pathlistEntry->asPathList: NULL;
+    uint8_t length = pathlistEntry->asPathLength;
+    plCacheTable->data.hops = length;
+
+    // copy by value, NOT by reference.  Because path list Entry should be freed later
+    //
+    if ( length > 0 && pathlistEntry->asPathList)
+    {
+      plCacheTable->data.asPathList = (PATH_LIST*) calloc(length, sizeof(PATH_LIST));
+      for(int i=0; i < length; i++)
+      {
+        plCacheTable->data.asPathList[i] = pathlistEntry->asPathList[i];
+      }
+    }
+    //plCacheTable->data.asPathList = pathlistEntry->asPathList? 
+    //                                pathlistEntry->asPathList: NULL;
     if (defRes != NULL)
     {
       plCacheTable->aspaResult = defRes->result.aspaResult;
@@ -219,6 +231,15 @@ int storeAspathList (AspathCache* self, SRxDefaultResult* defRes,
 
   return retVal;
 }
+
+
+// TODO: delete function for calling del_AspathList to remove the cache data
+//
+bool deleteAspathCache()
+{
+  return false;
+}
+
 
 // key : path id to find AS path cache record
 // return: a new AS PATH LIST structure

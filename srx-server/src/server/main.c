@@ -327,7 +327,7 @@ static bool setupHandlers()
   uint8_t handlers = 0;
   bool retVal = true;
 
-  if (!createRPKIHandler (&rpkiHandler, &prefixCache, &aspaDBManager,
+  if (!createRPKIHandler (&rpkiHandler, &prefixCache, &aspathCache, &aspaDBManager,
                           config.rpki_host, config.rpki_port, 
                           config.rpki_router_protocol))
   {

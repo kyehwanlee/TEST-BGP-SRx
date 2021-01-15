@@ -908,9 +908,10 @@ void bgp_info_set_validation_result (struct bgp_info *info,
 
 {
   /* An internal error occurred */
-  if ((resType & SRX_FLAG_ROA_AND_BGPSEC) == 0)
+  if ((resType & SRX_FLAG_ROA_BGPSEC_ASPA) == 0)
   {
-    zlog_debug ("No SRx result provided! - Update [0x%08X]", info->updateID);
+    zlog_debug ("No SRx result provided! - type [0x%X], Update [0x%08X]", 
+        resType, info->updateID);
   }
   else
   {
