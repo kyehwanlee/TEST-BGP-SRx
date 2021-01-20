@@ -226,8 +226,8 @@ typedef struct {
   IPv4Address      prefixAddress;
   uint32_t         originAS;
   uint32_t         bgpsecLength;
-  BGPSECValReqData bgpsecValReqData;
   AS_TYPE          asType;
+  BGPSECValReqData bgpsecValReqData;
 } __attribute__((packed)) SRXPROXY_VERIFY_V4_REQUEST;
 
 /**
@@ -238,6 +238,7 @@ typedef struct {
   IPv6Address      prefixAddress;
   uint32_t         originAS;
   uint32_t         bgpsecLength;
+  AS_TYPE          asType;
   BGPSECValReqData bgpsecValReqData;
 } __attribute__((packed)) SRXPROXY_VERIFY_V6_REQUEST;
 

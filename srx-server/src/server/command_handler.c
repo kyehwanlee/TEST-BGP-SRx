@@ -399,8 +399,8 @@ uint8_t do_AspaValidation(PATH_LIST* asPathList, uint8_t length, AS_TYPE asType,
 
 
   ASPA_ValidationResult currentResult;
-  //bool isUpStream = true;
-  bool isUpStream = false;
+  bool isUpStream = true;
+  //bool isUpStream = false;
 
   /*
    *    Up Stream Validation 
@@ -692,12 +692,15 @@ static bool _processUpdateValidation(CommandHandler* cmdHandler,
     {
       printf("Something went wrong... path list was not registered\n");
     }
+  }
 
-    if (srxRes_mod.aspaResult  == SRx_RESULT_UNKNOWN)
-    {
-      RPKI_QUEUE*      rQueue = getRPKIQueue();
-      rq_queue(rQueue, RQ_ASPA, &updateID);
-    }
+  // unknown case, put into rpki queue for later validation
+  if (srxRes.aspaResult  == SRx_RESULT_UNKNOWN || 
+      srxRes_mod.aspaResult == SRx_RESULT_UNKNOWN)
+  {
+    RPKI_QUEUE*      rQueue = getRPKIQueue();
+    rq_queue(rQueue, RQ_ASPA, &updateID);
+    printf("+ rpki queuing for aspa Unknown [uID:0x%08X]\n", updateID);
   }
 
   //

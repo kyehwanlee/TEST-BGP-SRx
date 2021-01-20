@@ -117,24 +117,25 @@ AS_PATH_LIST* newAspathListEntry (uint32_t length, uint32_t* pathData, AS_TYPE a
 
 void printAsPathList(AS_PATH_LIST* aspl)
 {
+  printf("[%s] called \n", __FUNCTION__);
   if (aspl)
   {
-    printf("path ID           : %08X \n" , aspl->pathID);
-    printf("length            : %d \n"   , aspl->asPathLength);
-    printf("Validation Result : %d \n"   , aspl->aspaValResult);
-    printf("AS Path Type      : %d \n"   , aspl->asType);
+    printf("\tpath ID           : %08X \n" , aspl->pathID);
+    printf("\tlength            : %d \n"   , aspl->asPathLength);
+    printf("\tValidation Result : %d \n"   , aspl->aspaValResult);
+    printf("\tAS Path Type      : %d \n"   , aspl->asType);
 
     if(aspl->asPathList)
     {
       for(int i=0; i<aspl->asPathLength; i++)
       {
-        printf("Path List[%d]: %d \n"   , i, aspl->asPathList[i]);
+        printf("\tPath List[%d]: %d \n"   , i, aspl->asPathList[i]);
       }
     }
   }
   else
   {
-    printf("No path list\n");
+    printf("\tNo path list\n");
   }
 }
 

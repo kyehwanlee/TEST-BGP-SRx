@@ -253,6 +253,7 @@ static void handleEndOfData (uint32_t valCacheID, uint16_t session_id,
   while (rq_dequeue(rQueue, &queueElem))
   {
     uID = &queueElem.updateID;
+    printf("\n[%s] ---  [uID: %08X] \n", __FUNCTION__, *uID);
     valRes.updateID = queueElem.updateID;
     valRes.valType  = VRT_NONE;
     valRes.valResult.roaResult    = SRx_RESULT_DONOTUSE;
@@ -275,6 +276,7 @@ static void handleEndOfData (uint32_t valCacheID, uint16_t session_id,
     // Now check for BGPSEC path Validation
     if ((queueElem.reason & RQ_KEY) == RQ_KEY)
     {
+      printf("[%s] called for BGPSEC [uID: %08X] \n", __FUNCTION__, *uID);
       UC_UpdateData* updateData = getUpdateData(uCache, uID);
       SCA_BGP_PathAttribute* bgpsec_path = updateData->bgpsec_path;
       if (bgpsec_path != NULL)
@@ -301,6 +303,7 @@ static void handleEndOfData (uint32_t valCacheID, uint16_t session_id,
     // Here check for ASPA Validation which was registered as Unknown
     if ((queueElem.reason & RQ_ASPA) == RQ_ASPA)
     {
+      printf("[%s] called for ASPA [uID: %08X] \n", __FUNCTION__, *uID);
       uint32_t pathId= 0;
       if (!getUpdateResult(uCache, uID, 0, NULL, &srxRes, &defaultRes, &pathId))
       {

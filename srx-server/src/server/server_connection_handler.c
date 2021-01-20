@@ -683,18 +683,22 @@ bool processValidationRequest(ServerConnectionHandler* self,
       //  this value is some value not undefined
       if (srxRes_aspa.aspaResult == SRx_RESULT_UNDEFINED)
       {
-        printf(" Error value occurred. Cached ASPA result should not be UNDEFINED\n");
+        printf(" Already registered with the previous pdu \n");
       }
-      printf(" ASPA validation Result Already exist: %d\n", srxRes_aspa.aspaResult);
+      else
+      {
+        printf(" ASPA validation Result Already exist: %d\n", srxRes_aspa.aspaResult);
 
-      // then disable validation operation
-      //doAspaVal = false;
+        // then disable validation operation
+        //doAspaVal = false;
 
-      // TODO: modify UpdateCache's srx Res -> aspaResult with srxRes_aspa.aspaResult
-      // !!! But UpdateCache's cEntry here dosen't exist yet
-      //
-      // maybe after calling storeUpdate, put this value into cEntry directly
-      modifyUpdateCacheWithAspaValue = true;
+        // TODO: modify UpdateCache's srx Res -> aspaResult with srxRes_aspa.aspaResult
+        // !!! But UpdateCache's cEntry here dosen't exist yet
+        //
+        // maybe after calling storeUpdate, put this value into cEntry directly
+        modifyUpdateCacheWithAspaValue = true;
+      }
+
       srxRes.aspaResult = srxRes_aspa.aspaResult;
 
     }

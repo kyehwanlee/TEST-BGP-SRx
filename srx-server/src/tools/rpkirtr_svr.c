@@ -533,8 +533,8 @@ bool sendAspaPdu_Upstream(int* fdPtr, u_int8_t version)
 
   // TODO: here need to obtain or manipulate providerASNs
   //
-#define UP_STREAM_COUNT 5
-  uint32_t asns[UP_STREAM_COUNT] = {40, 30, 20, 10, 60004};
+#define UP_STREAM_COUNT 6
+  uint32_t asns[UP_STREAM_COUNT] = {40, 30, 20, 10, 60004, 60002};
   uint32_t casn, pasn;
 
   for (int i=0; i< UP_STREAM_COUNT-1; i++)
@@ -823,9 +823,10 @@ void sendPrefixes(int* fdPtr, uint32_t clientSerial, uint16_t clientSessionID,
           }
         }
       }
-        
-      sendAspaPdu_Downstream1 (fdPtr, version);
-      sendAspaPdu_Downstream2 (fdPtr, version);
+       
+      sendAspaPdu_Upstream (fdPtr, version);
+      //sendAspaPdu_Downstream1 (fdPtr, version);
+      //sendAspaPdu_Downstream2 (fdPtr, version);
 
       // Send 'End of Data'
       OUTPUTF(true, "Sending an 'End of Data (max. serial = %u)\n",
@@ -1265,10 +1266,6 @@ void handleClient(ServerSocket* svrSock, int sock, void* user)
       case PDU_TYPE_RESET_QUERY:
         OUTPUTF(true, "[+%lds] Received a 'Reset Query'\n", diffReq);
         sendPrefixes(&sock, 0, sessionID, true, ccl->version);
-        //sendAspaPdu(&sock, ccl->version);
-        //sendAspaPdu_Upstream(&sock, ccl->version);
-        //sendAspaPdu_Downstream1 (&sock, ccl->version);
-        //sendAspaPdu_Downstream2 (&sock, ccl->version);
         break;
 
       case PDU_TYPE_ERROR_REPORT:

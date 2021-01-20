@@ -51,6 +51,8 @@ typedef enum {
   RQ_BOTH=3,        
   /* ASPA modification */
   RQ_ASPA=4,       
+  /* all conditions */
+  RQ_ALL=7,       
 } e_RPKI_QUEUE_REASON;
 
 /** The preliminary queue type */

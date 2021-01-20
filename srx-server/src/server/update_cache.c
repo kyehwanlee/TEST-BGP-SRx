@@ -821,6 +821,8 @@ bool modifyUpdateCacheResultWithAspaVal(UpdateCache* self, SRxUpdateID* updateID
       if (srxResult_aspa->aspaResult != cEntry->srxResult.aspaResult)
       {
         cEntry->srxResult.aspaResult = srxResult_aspa->aspaResult;
+        printf(" cEntry(UpdateCache) updated with uID: %08X, ASPA result:%d\n"
+            , *updateID, srxResult_aspa->aspaResult);
       }
     }
 
