@@ -846,6 +846,9 @@ int bgp_srx_conf_default_result(struct bgp *bgp, int type, int def_value)
     case SRX_VTY_PARAM_PATH_VALUE:
       bgp->srx_default_bgpsecVal = def_value;
       break;
+    case SRX_VTY_PARAM_ASPA_VALUE:
+      bgp->srx_default_aspaVal = def_value;
+      break;
     default:
       zlog_err("Invalid default validation result type [%d]!", type);
   }
@@ -862,12 +865,12 @@ int bgp_srx_conf_default_result(struct bgp *bgp, int type, int def_value)
  * @param value the value itself. (negative = subtract, positive = add)
  * @return CMD_SUCCESS
  */
-int srx_val_local_preference_set (struct bgp *bgp, int index, int relative,
+int srx_val_local_preference_set (struct bgp *bgp, int type, int index, int relative,
                               uint32_t value)
 {
-  bgp->srx_val_local_pref[index].is_set = 1;
-  bgp->srx_val_local_pref[index].relative = relative;
-  bgp->srx_val_local_pref[index].value = value;
+  bgp->srx_val_local_pref[type][index].is_set = 1;
+  bgp->srx_val_local_pref[type][index].relative = relative;
+  bgp->srx_val_local_pref[type][index].value = value;
   return CMD_SUCCESS;
 }
 
@@ -879,11 +882,11 @@ int srx_val_local_preference_set (struct bgp *bgp, int index, int relative,
  * @param index the validation result (valid, notfound, invalid)
  * @return CMD_SUCCESS
  */
-int srx_val_local_preference_unset (struct bgp *bgp, int index)
+int srx_val_local_preference_unset (struct bgp *bgp, int type, int index)
 {
-  bgp->srx_val_local_pref[index].is_set = 0;
-  bgp->srx_val_local_pref[index].relative = 1;
-  bgp->srx_val_local_pref[index].value = 0;
+  bgp->srx_val_local_pref[type][index].is_set = 0;
+  bgp->srx_val_local_pref[type][index].relative = 1;
+  bgp->srx_val_local_pref[type][index].value = 0;
   return CMD_SUCCESS;
 }
 
@@ -897,6 +900,7 @@ int srx_val_local_preference_unset (struct bgp *bgp, int index)
 int srx_val_policy_set (struct bgp *bgp, uint16_t policy)
 {
   SET_FLAG (bgp->srx_val_policy, policy);
+  printf("Set flag: %02X with value: %02X\n", bgp->srx_val_policy, policy );
   return CMD_SUCCESS;
 }
 
@@ -5930,8 +5934,16 @@ static int srx_config_write_configuration (struct vty *vty, struct bgp *bgp)
     "invalid"
   };
 
+  static const char *TYPE_STR[3] =
+  {
+    "roa",
+    "bgpsec",
+    "aspa"
+  };
+
   int noElements = 3; // Number of elements in the above INDEX_STR
   int index;
+  int type;
 
   // SRx proxy values
   vty_out (vty, "%s ! SRx Basic Configuration Settings%s", VTY_NEWLINE, VTY_NEWLINE);
@@ -6040,20 +6052,23 @@ static int srx_config_write_configuration (struct vty *vty, struct bgp *bgp)
   vty_out (vty, "%s", (vty->type == VTY_TERM) ? "\r" : "");
 
   // VALIDATION POLICY LOCAL PREF
-  for (index = 0; index < noElements; index++)
+  for (type = 0; type < noElements; type++)
   {
-    if (bgp->srx_val_local_pref[index].is_set)
+    for (index = 0; index < noElements; index++)
     {
-    	vty_out (vty, " %s %s %u", SRX_VTY_CMD_POL_LOCP, INDEX_STR[index],
-                    bgp->srx_val_local_pref[index].value);
-
-      if (bgp->srx_val_local_pref[index].relative)
+      if (bgp->srx_val_local_pref[type][index].is_set)
       {
-        vty_out (vty, " %s", (bgp->srx_val_local_pref[index].relative == 1)
-                             ? "add" : "subtract");
-      }
+        vty_out (vty, " %s %s %u", SRX_VTY_CMD_POL_LOCP, TYPE_STR[type], INDEX_STR[index],
+            bgp->srx_val_local_pref[type][index].value);
 
-      vty_out (vty, "%s", VTY_NEWLINE);
+        if (bgp->srx_val_local_pref[type][index].relative)
+        {
+          vty_out (vty, " %s", (bgp->srx_val_local_pref[type][index].relative == 1)
+              ? "add" : "subtract");
+        }
+
+        vty_out (vty, "%s", VTY_NEWLINE);
+      }
     }
   }
 

@@ -306,7 +306,7 @@ uint32_t makePathId (uint8_t asPathLength, PATH_LIST* asPathList, bool bBigEndia
   }
 
   pathId = crc32((uint8_t*)strBuf, strSize);
-  printf("CRC: %08X strings: %s\n", pathId, strBuf);
+  printf("PathID: %08X strings: %s\n", pathId, strBuf);
 
   if (strBuf)
   {

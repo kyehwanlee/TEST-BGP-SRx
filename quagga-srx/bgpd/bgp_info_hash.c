@@ -125,6 +125,7 @@ static int show_info_hash (struct vty* vty, struct bgp* bgp,
       default:
         valState = -1;
     }
+#if TODO
     if (valState != -1)
     {
       if (bgp->srx_val_local_pref[valState].is_set)
@@ -146,6 +147,7 @@ static int show_info_hash (struct vty* vty, struct bgp* bgp,
     {
       vty_out (vty, "      ");
     }        
+#endif
 
     /* AS-Path */
     if (attr->aspath)

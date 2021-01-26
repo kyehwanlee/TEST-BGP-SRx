@@ -597,7 +597,6 @@ bool processValidationRequest(ServerConnectionHandler* self,
     bgpData.safi     = v4Hdr->bgpsecValReqData.valPrefix.safi;
     bgpData.local_as = v4Hdr->bgpsecValReqData.valData.local_as;
     asType           = ntohl(v4Hdr->asType);
-    printf("\n+ [%s] Validation Request Received in AS type: %d\n", __FUNCTION__, asType);
   }
   else
   {
@@ -654,7 +653,7 @@ bool processValidationRequest(ServerConnectionHandler* self,
   ProxyClientMapping* clientMapping = clientID > 0 ? &self->proxyMap[clientID]
                                                    : NULL;
 
-  printf("\n[%s] called and ASpath cache starts \n", __FUNCTION__);
+  printf("\n[%s] called and ASpath cache starts with AS Type:%d \n", __FUNCTION__, asType);
   uint32_t pathId = 0;
 
   doStoreUpdate = !getUpdateResult (self->updateCache, &updateID,
@@ -671,7 +670,7 @@ bool processValidationRequest(ServerConnectionHandler* self,
   if (pathId == 0)  // if not found in  cEntry
   {
     pathId = makePathId(bgpData.numberHops, bgpData.asPath, true);
-    printf("generated CRC value: %08X \n", pathId);
+    printf("+ generated Path ID : %08X \n", pathId);
 
     // to see if there is already exist or not in AS path Cache with path id
     aspl = getAspathList (self->aspathCache, pathId, &srxRes_aspa);
@@ -683,11 +682,11 @@ bool processValidationRequest(ServerConnectionHandler* self,
       //  this value is some value not undefined
       if (srxRes_aspa.aspaResult == SRx_RESULT_UNDEFINED)
       {
-        printf(" Already registered with the previous pdu \n");
+        printf("+ Already registered with the previous pdu \n");
       }
       else
       {
-        printf(" ASPA validation Result Already exist: %d\n", srxRes_aspa.aspaResult);
+        printf("+ ASPA validation Result[%d] is already exist \n", srxRes_aspa.aspaResult);
 
         // then disable validation operation
         //doAspaVal = false;
@@ -708,7 +707,7 @@ bool processValidationRequest(ServerConnectionHandler* self,
       aspl = newAspathListEntry(bgpData.numberHops, bgpData.asPath, asType, true);
       if(!aspl)
       {
-        printf(" memory allocation for AS path list entry resulted in fault \n");
+        printf("+ memory allocation for AS path list entry resulted in fault \n");
         return false;
       }
   

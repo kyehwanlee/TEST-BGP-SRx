@@ -137,6 +137,7 @@ Software Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
 // DEFAULT VALIDATION RESULT PARAMETER
 #define SRX_VTY_PARAM_ORIGIN_VALUE 0
 #define SRX_VTY_PARAM_PATH_VALUE   1
+#define SRX_VTY_PARAM_ASPA_VALUE   2
 
 #define SRX_VTY_PARAM_BGPSEC_MIN_ALGOID 1
 #define SRX_VTY_PARAM_BGPSEC_MAX_ALGOID 254
@@ -198,21 +199,83 @@ Software Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
 #define SRX_VTY_HLP_ORIGIN_ONLY "(" SRX_VTY_EVAL_ORIGIN_ONLY ") "
 
 // POLICY IGNORE NOTFOUND / INVALID
+
+#define SRX_VTY_CMD_POL  "srx policy "
+#define SRX_VTY_CMD_POL_ROA_IGNORE_NOTFOUND  SRX_VTY_CMD_POL  "roa ignore-notfound"
+#define SRX_VTY_HLP_POL_ROA_IGNORE_NOTFOUND  SRX_VTY_HLP_STR SRX_VTY_HLP_POLICY \
+                                             "For origin validation\n" \
+                                             SRX_VTY_HLP_ORIGIN_ONLY \
+                                             "Ignore updates with validation " \
+                                             "result = UNKNOWN.\n"
+
 #define SRX_VTY_CMD_POL_IGNORE_NOTFOUND  "srx policy ignore-notfound"
 #define SRX_VTY_HLP_POL_IGNORE_NOTFOUND  SRX_VTY_HLP_STR SRX_VTY_HLP_POLICY \
                                          SRX_VTY_HLP_ORIGIN_ONLY \
                                          "Ignore updates with validation " \
                                          "result = UNKNOWN.\n"
 
+// invalid
+#define SRX_VTY_CMD_POL_ROA_IGNORE_INVALID   SRX_VTY_CMD_POL "roa ignore-invalid"
+#define SRX_VTY_HLP_POL_ROA_IGNORE_INVALID   SRX_VTY_HLP_STR SRX_VTY_HLP_POLICY \
+                                             "For origin validation\n" \
+                                             "Ignore updates with validation" \
+                                             " result = INVALID.\n"
+
+#define SRX_VTY_CMD_POL_BGPSEC_IGNORE_INVALID   SRX_VTY_CMD_POL "bgpsec ignore-invalid"
+#define SRX_VTY_HLP_POL_BGPSEC_IGNORE_INVALID   SRX_VTY_HLP_STR SRX_VTY_HLP_POLICY \
+                                                 "For bgpsec path validation\n" \
+                                                 "Ignore updates with validation" \
+                                                 " result = INVALID.\n"
+
+#define SRX_VTY_CMD_POL_ASPA_IGNORE_INVALID   SRX_VTY_CMD_POL "aspa ignore-invalid"
+#define SRX_VTY_HLP_POL_ASPA_IGNORE_INVALID   SRX_VTY_HLP_STR SRX_VTY_HLP_POLICY \
+                                              "For aspa validation\n" \
+                                              "Ignore updates with validation" \
+                                              " result = INVALID.\n"
+
 #define SRX_VTY_CMD_POL_IGNORE_INVALID   "srx policy ignore-invalid"
 #define SRX_VTY_HLP_POL_IGNORE_INVALID   SRX_VTY_HLP_STR SRX_VTY_HLP_POLICY \
                                          "Ignore updates with validation" \
                                          " result = INVALID.\n"
 
+
+// undefined
+#define SRX_VTY_CMD_POL_ROA_IGNORE_UNDEFINED  SRX_VTY_CMD_POL "roa ignore-undefined"
+#define SRX_VTY_HLP_POL_ROA_IGNORE_UNDEFINED  SRX_VTY_HLP_STR SRX_VTY_HLP_POLICY \
+                                              "For origin validation\n" \
+                                              "Ignore updates with no complete" \
+                                              " validation result available.\n"
+
+
+#define SRX_VTY_CMD_POL_BGPSEC_IGNORE_UNDEFINED  SRX_VTY_CMD_POL "bgpsec ignore-undefined"
+#define SRX_VTY_HLP_POL_BGPSEC_IGNORE_UNDEFINED  SRX_VTY_HLP_STR SRX_VTY_HLP_POLICY \
+                                                 "For bgpsec path validation\n" \
+                                                 "Ignore updates with no complete" \
+                                                 " validation result available.\n"
+
+#define SRX_VTY_CMD_POL_ASPA_IGNORE_UNDEFINED  SRX_VTY_CMD_POL "aspa ignore-undefined"
+#define SRX_VTY_HLP_POL_ASPA_IGNORE_UNDEFINED  SRX_VTY_HLP_STR SRX_VTY_HLP_POLICY \
+                                                 "For aspa validation\n" \
+                                                 "Ignore updates with no complete" \
+                                                 " validation result available.\n"
+
 #define SRX_VTY_CMD_POL_IGNORE_UNDEFINED "srx policy ignore-undefined"
 #define SRX_VTY_HLP_POL_IGNORE_UNDEFINED SRX_VTY_HLP_STR SRX_VTY_HLP_POLICY \
                                          "Ignore updates with no complete" \
                                          " validation result available.\n"
+
+
+#define SRX_VTY_CMD_POL_ASPA_IGNORE_UNKNOWN  SRX_VTY_CMD_POL "aspa ignore-unknown"
+#define SRX_VTY_HLP_POL_ASPA_IGNORE_UNKNOWN  SRX_VTY_HLP_STR SRX_VTY_HLP_POLICY \
+                                             "For aspa validation\n" \
+                                             "Ignore updates with validation " \
+                                             "result = UNKNOWN.\n"
+
+#define SRX_VTY_CMD_POL_ASPA_IGNORE_UNVERIFIABLE  SRX_VTY_CMD_POL "aspa ignore-unverifiable"
+#define SRX_VTY_HLP_POL_ASPA_IGNORE_UNVERIFIABLE  SRX_VTY_HLP_STR SRX_VTY_HLP_POLICY \
+                                                  "For aspa validation\n" \
+                                                  "Ignore updates with validation " \
+                                                  "result = UNVERIFIABLE.\n"
 
 // POLICY LOCAL-PREF ADJUSTMENT
 #define SRX_VTY_HLP_POL_LOCP   "Manipulate local preference\n"
@@ -226,7 +289,7 @@ Software Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
 
 #define SRX_VTY_CMD_POL_LOCP      "srx policy local-preference"
 #define SRX_VTY_CMD_POL_LOCP_FIX  SRX_VTY_CMD_POL_LOCP \
-                                  " (valid|notfound|invalid) <0-4294967295>"
+                                  " (roa|bgpsec|aspa) (valid|notfound|invalid) <0-4294967295>"
 #define SRX_VTY_HLP_POL_LOCP_FIX  SRX_VTY_HLP_STR SRX_VTY_HLP_POLICY \
                                   SRX_VTY_HLP_POL_LOCP \
                                   SRX_VTY_HLP_POL_LOCP_V \
@@ -254,6 +317,27 @@ Software Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
 #define SRX_VTY_HLP_POL_PREFV SRX_VTY_HLP_STR SRX_VTY_HLP_POLICY \
                               "Use the validation state as tie breaker" \
                               " with valid > any other\n"
+
+// roa prefer valid
+#define SRX_VTY_CMD_POL_ROA_PREFV SRX_VTY_CMD_POL "roa prefer-valid"
+#define SRX_VTY_HLP_POL_ROA_PREFV SRX_VTY_HLP_STR SRX_VTY_HLP_POLICY \
+                                  "For origin validation\n" \
+                                  "Use the validation state as tie breaker" \
+                                  " with valid > any other\n"
+
+// bgpsec prefer valid
+#define SRX_VTY_CMD_POL_BGPSEC_PREFV SRX_VTY_CMD_POL "bgpsec prefer-valid"
+#define SRX_VTY_HLP_POL_BGPSEC_PREFV SRX_VTY_HLP_STR SRX_VTY_HLP_POLICY \
+                                  "For bgpsec validation\n" \
+                                  "Use the validation state as tie breaker" \
+                                  " with valid > any other\n"
+
+// aspa prefer valid
+#define SRX_VTY_CMD_POL_ASPA_PREFV SRX_VTY_CMD_POL "aspa prefer-valid"
+#define SRX_VTY_HLP_POL_ASPA_PREFV SRX_VTY_HLP_STR SRX_VTY_HLP_POLICY \
+                                  "For aspa validation\n" \
+                                  "Use the validation state as tie breaker" \
+                                  " with valid > any other\n"
 
 // USE OF COMMUNITY STRING
 #define SRX_VTY_CMD_EXT_CSTR "srx extcommunity <0-255>"
@@ -528,18 +612,43 @@ struct bgp
   // Time in seconds the SRx server is requested to keep data after a delete
   int  srx_keepWindow;
   uint32_t srx_proxyID;
-  /** The local pref values for [0]valid, [1]notfound, and [2]invalid*/
-  struct srx_local_pref  srx_val_local_pref[3];
+  /** The local pref values for type[0:roa, 1:bgpsec, 2:aspa], [0]valid, [1]notfound, and [2]invalid*/
+  struct srx_local_pref  srx_val_local_pref[3][3];
+#define NUM_LOCPREF_TYPE   3
+#define LOCPRF_TYPE_ROA    0
+#define LOCPRF_TYPE_BGPSEC 1
+#define LOCPRF_TYPE_ASPA   2
+
 #define VAL_LOCPRF_VALID     0
-#define VAL_LOCPRF_NOTFOUND   1
+#define VAL_LOCPRF_NOTFOUND  1
 #define VAL_LOCPRF_INVALID   2
 
   /** Contains the bit coded policy setting*/
   uint16_t srx_val_policy;
-#define SRX_VAL_POLICY_PREFER_VALID     (1 << 0)
-#define SRX_VAL_POLICY_IGNORE_NOTFOUND  (1 << 1)
-#define SRX_VAL_POLICY_IGNORE_INVALID   (1 << 2)
-#define SRX_VAL_POLICY_IGNORE_UNDEFINED (1 << 3)
+#define SRX_VAL_POLICY_PREFER_VALID  \
+  (SRX_VAL_POLICY_ROA_PREFER_VALID | SRX_VAL_POLICY_BGPSEC_PREFER_VALID | SRX_VAL_POLICY_ASPA_PREFER_VALID)
+#define SRX_VAL_POLICY_IGNORE_NOTFOUND \
+  (SRX_VAL_POLICY_ROA_IGNORE_NOTFOUND | SRX_VAL_POLICY_BGPSEC_IGNORE_NOTFOUND | SRX_VAL_POLICY_ASPA_IGNORE_UNKNOWN)
+#define SRX_VAL_POLICY_IGNORE_INVALID \
+  (SRX_VAL_POLICY_ROA_IGNORE_INVALID | SRX_VAL_POLICY_BGPSEC_IGNORE_INVALID | SRX_VAL_POLICY_ASPA_IGNORE_INVALID)
+#define SRX_VAL_POLICY_IGNORE_UNDEFINED \
+  (SRX_VAL_POLICY_ROA_IGNORE_UNDEFINED | SRX_VAL_POLICY_BGPSEC_IGNORE_UNDEFINED | SRX_VAL_POLICY_ASPA_IGNORE_UNDEFINED)
+
+#define SRX_VAL_POLICY_ROA_PREFER_VALID     (1 << 0)
+#define SRX_VAL_POLICY_ROA_IGNORE_NOTFOUND  (1 << 1)
+#define SRX_VAL_POLICY_ROA_IGNORE_INVALID   (1 << 2)
+#define SRX_VAL_POLICY_ROA_IGNORE_UNDEFINED (1 << 3)
+
+#define SRX_VAL_POLICY_BGPSEC_PREFER_VALID     (1 << 4)
+#define SRX_VAL_POLICY_BGPSEC_IGNORE_NOTFOUND  (1 << 5)
+#define SRX_VAL_POLICY_BGPSEC_IGNORE_INVALID   (1 << 6)
+#define SRX_VAL_POLICY_BGPSEC_IGNORE_UNDEFINED (1 << 7)
+
+#define SRX_VAL_POLICY_ASPA_PREFER_VALID        (1 << 8)
+#define SRX_VAL_POLICY_ASPA_IGNORE_UNKNOWN      (1 << 9)
+#define SRX_VAL_POLICY_ASPA_IGNORE_INVALID      (1 << 10)
+#define SRX_VAL_POLICY_ASPA_IGNORE_UNDEFINED    (1 << 11)
+#define SRX_VAL_POLICY_ASPA_IGNORE_UNVERIFIABLE (1 << 12)
 
   uint16_t srx_default_roaVal;
   uint16_t srx_default_bgpsecVal;
@@ -1323,8 +1432,8 @@ extern int bgp_srx_conf_default_result (struct bgp *bgp, int, int);
 // does set
 extern int srx_set_proxyID(struct bgp* , uint32_t);
 
-extern int srx_val_local_preference_set (struct bgp *, int, int, uint32_t);
-extern int srx_val_local_preference_unset (struct bgp *, int);
+extern int srx_val_local_preference_set (struct bgp *, int, int, int, uint32_t);
+extern int srx_val_local_preference_unset (struct bgp *, int, int);
 extern int srx_val_policy_set (struct bgp *, uint16_t);
 extern int srx_val_policy_unset (struct bgp *, uint16_t);
 

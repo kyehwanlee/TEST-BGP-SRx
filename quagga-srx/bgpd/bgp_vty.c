@@ -1516,11 +1516,13 @@ DEFUN (srx_show_config,
              VTY_NEWLINE);
     doPolicy = 1;
   }
-  if (bgp->srx_val_local_pref[VAL_LOCPRF_VALID].is_set)
+
+  // Origin Validation
+  if (bgp->srx_val_local_pref[LOCPRF_TYPE_ROA][VAL_LOCPRF_VALID].is_set)
   {
-    vty_out (vty, "%slocal-preference valid %d", (doPolicy ? _BLANKS : ""),
-                  bgp->srx_val_local_pref[VAL_LOCPRF_VALID].value);
-    switch (bgp->srx_val_local_pref[VAL_LOCPRF_VALID].relative)
+    vty_out (vty, "%slocal-preference valid(OV) %d", (doPolicy ? _BLANKS : ""),
+                  bgp->srx_val_local_pref[LOCPRF_TYPE_ROA][VAL_LOCPRF_VALID].value);
+    switch (bgp->srx_val_local_pref[LOCPRF_TYPE_ROA][VAL_LOCPRF_VALID].relative)
     {
       case -1 : vty_out (vty, " SUBTRACT%s", VTY_NEWLINE); break;
       case  1 : vty_out (vty, " ADD%s", VTY_NEWLINE); break;
@@ -1528,11 +1530,11 @@ DEFUN (srx_show_config,
     }
     doPolicy = 1;
   }
-  if (bgp->srx_val_local_pref[VAL_LOCPRF_NOTFOUND].is_set)
+  if (bgp->srx_val_local_pref[LOCPRF_TYPE_ROA][VAL_LOCPRF_NOTFOUND].is_set)
   {
-    vty_out (vty, "%slocal-preference notfound %d", (doPolicy ? _BLANKS : ""),
-                  bgp->srx_val_local_pref[VAL_LOCPRF_NOTFOUND].value);
-    switch (bgp->srx_val_local_pref[VAL_LOCPRF_NOTFOUND].relative)
+    vty_out (vty, "%slocal-preference notfoundi(OV) %d", (doPolicy ? _BLANKS : ""),
+                  bgp->srx_val_local_pref[LOCPRF_TYPE_ROA][VAL_LOCPRF_NOTFOUND].value);
+    switch (bgp->srx_val_local_pref[LOCPRF_TYPE_ROA][VAL_LOCPRF_NOTFOUND].relative)
     {
       case -1 : vty_out (vty, " SUBTRACT%s", VTY_NEWLINE); break;
       case  1 : vty_out (vty, " ADD%s", VTY_NEWLINE); break;
@@ -1540,11 +1542,11 @@ DEFUN (srx_show_config,
     }
     doPolicy = 1;
   }
-  if (bgp->srx_val_local_pref[VAL_LOCPRF_INVALID].is_set)
+  if (bgp->srx_val_local_pref[LOCPRF_TYPE_ROA][VAL_LOCPRF_INVALID].is_set)
   {
-    vty_out (vty, "%slocal-preference invalid %d", (doPolicy ? _BLANKS : ""),
-                  bgp->srx_val_local_pref[VAL_LOCPRF_INVALID].value);
-    switch (bgp->srx_val_local_pref[VAL_LOCPRF_INVALID].relative)
+    vty_out (vty, "%slocal-preference invalid(OV) %d", (doPolicy ? _BLANKS : ""),
+                  bgp->srx_val_local_pref[LOCPRF_TYPE_ROA][VAL_LOCPRF_INVALID].value);
+    switch (bgp->srx_val_local_pref[LOCPRF_TYPE_ROA][VAL_LOCPRF_INVALID].relative)
     {
       case -1 : vty_out (vty, " SUBTRACT%s", VTY_NEWLINE); break;
       case  1 : vty_out (vty, " ADD%s", VTY_NEWLINE); break;
@@ -1552,6 +1554,83 @@ DEFUN (srx_show_config,
     }
     doPolicy = 1;
   }
+
+  // Path Validation
+  if (bgp->srx_val_local_pref[LOCPRF_TYPE_BGPSEC][VAL_LOCPRF_VALID].is_set)
+  {
+    vty_out (vty, "%slocal-preference valid(PV) %d", (doPolicy ? _BLANKS : ""),
+                  bgp->srx_val_local_pref[LOCPRF_TYPE_BGPSEC][VAL_LOCPRF_VALID].value);
+    switch (bgp->srx_val_local_pref[LOCPRF_TYPE_BGPSEC][VAL_LOCPRF_VALID].relative)
+    {
+      case -1 : vty_out (vty, " SUBTRACT%s", VTY_NEWLINE); break;
+      case  1 : vty_out (vty, " ADD%s", VTY_NEWLINE); break;
+      default: vty_out (vty, "%s", VTY_NEWLINE);
+    }
+    doPolicy = 1;
+  }
+  if (bgp->srx_val_local_pref[LOCPRF_TYPE_BGPSEC][VAL_LOCPRF_NOTFOUND].is_set)
+  {
+    vty_out (vty, "%slocal-preference notfoundi(PV) %d", (doPolicy ? _BLANKS : ""),
+                  bgp->srx_val_local_pref[LOCPRF_TYPE_BGPSEC][VAL_LOCPRF_NOTFOUND].value);
+    switch (bgp->srx_val_local_pref[LOCPRF_TYPE_BGPSEC][VAL_LOCPRF_NOTFOUND].relative)
+    {
+      case -1 : vty_out (vty, " SUBTRACT%s", VTY_NEWLINE); break;
+      case  1 : vty_out (vty, " ADD%s", VTY_NEWLINE); break;
+      default: vty_out (vty, "%s", VTY_NEWLINE);
+    }
+    doPolicy = 1;
+  }
+  if (bgp->srx_val_local_pref[LOCPRF_TYPE_BGPSEC][VAL_LOCPRF_INVALID].is_set)
+  {
+    vty_out (vty, "%slocal-preference invalid(PV) %d", (doPolicy ? _BLANKS : ""),
+                  bgp->srx_val_local_pref[LOCPRF_TYPE_BGPSEC][VAL_LOCPRF_INVALID].value);
+    switch (bgp->srx_val_local_pref[LOCPRF_TYPE_BGPSEC][VAL_LOCPRF_INVALID].relative)
+    {
+      case -1 : vty_out (vty, " SUBTRACT%s", VTY_NEWLINE); break;
+      case  1 : vty_out (vty, " ADD%s", VTY_NEWLINE); break;
+      default: vty_out (vty, "%s", VTY_NEWLINE);
+    }
+    doPolicy = 1;
+  }
+
+  // ASPA Validation
+  if (bgp->srx_val_local_pref[LOCPRF_TYPE_ASPA][VAL_LOCPRF_VALID].is_set)
+  {
+    vty_out (vty, "%slocal-preference valid(AV) %d", (doPolicy ? _BLANKS : ""),
+                  bgp->srx_val_local_pref[LOCPRF_TYPE_ASPA][VAL_LOCPRF_VALID].value);
+    switch (bgp->srx_val_local_pref[LOCPRF_TYPE_ASPA][VAL_LOCPRF_VALID].relative)
+    {
+      case -1 : vty_out (vty, " SUBTRACT%s", VTY_NEWLINE); break;
+      case  1 : vty_out (vty, " ADD%s", VTY_NEWLINE); break;
+      default: vty_out (vty, "%s", VTY_NEWLINE);
+    }
+    doPolicy = 1;
+  }
+  if (bgp->srx_val_local_pref[LOCPRF_TYPE_ASPA][VAL_LOCPRF_NOTFOUND].is_set)
+  {
+    vty_out (vty, "%slocal-preference notfoundi(AV) %d", (doPolicy ? _BLANKS : ""),
+                  bgp->srx_val_local_pref[LOCPRF_TYPE_ASPA][VAL_LOCPRF_NOTFOUND].value);
+    switch (bgp->srx_val_local_pref[LOCPRF_TYPE_ASPA][VAL_LOCPRF_NOTFOUND].relative)
+    {
+      case -1 : vty_out (vty, " SUBTRACT%s", VTY_NEWLINE); break;
+      case  1 : vty_out (vty, " ADD%s", VTY_NEWLINE); break;
+      default: vty_out (vty, "%s", VTY_NEWLINE);
+    }
+    doPolicy = 1;
+  }
+  if (bgp->srx_val_local_pref[LOCPRF_TYPE_ASPA][VAL_LOCPRF_INVALID].is_set)
+  {
+    vty_out (vty, "%slocal-preference invalid(AV) %d", (doPolicy ? _BLANKS : ""),
+                  bgp->srx_val_local_pref[LOCPRF_TYPE_ASPA][VAL_LOCPRF_INVALID].value);
+    switch (bgp->srx_val_local_pref[LOCPRF_TYPE_ASPA][VAL_LOCPRF_INVALID].relative)
+    {
+      case -1 : vty_out (vty, " SUBTRACT%s", VTY_NEWLINE); break;
+      case  1 : vty_out (vty, " ADD%s", VTY_NEWLINE); break;
+      default: vty_out (vty, "%s", VTY_NEWLINE);
+    }
+    doPolicy = 1;
+  }
+
   if (bgp->srx_val_policy & SRX_VAL_POLICY_PREFER_VALID)
   {
     vty_out (vty, "%sprefer-valid%s", (doPolicy ? _BLANKS : ""), VTY_NEWLINE);
@@ -2217,6 +2296,15 @@ static int parse_local_pref_index (const char *str)
                                       : VAL_LOCPRF_INVALID;
 }
 
+static int parse_local_pref_type (const char *str)
+{
+  if (strncmp (str, "r", 1) == 0)
+  {
+    return LOCPRF_TYPE_ROA;
+  }
+  return (strncmp (str, "b", 1) == 0) ? LOCPRF_TYPE_BGPSEC
+                                      : LOCPRF_TYPE_ASPA;
+}
 /**
  * Set the local pref policy
  *
@@ -2229,25 +2317,26 @@ static int parse_local_pref_index (const char *str)
 static int validation_local_preference(int argc, const char** argv,
                                        struct bgp* bgp, int set)
 {
-  int index, relative;
+  int index, relative, type;
   uint32_t lp_val;
 
-  index  = parse_local_pref_index (argv[0]);
+  type = parse_local_pref_type (argv[0]);
+  index  = parse_local_pref_index (argv[1]);
 
   if (set == 1)
   {
-    lp_val = strtoul (argv[1], NULL, 10);
+    lp_val = strtoul (argv[2], NULL, 10);
 
-    if (argc == 2)
+    if (argc == 3)
       relative = 0;
     else
-      relative = (strncmp (argv[2], "a", 1) == 0) ? 1 : -1;
+      relative = (strncmp (argv[3], "a", 1) == 0) ? 1 : -1;
 
-    srx_val_local_preference_set (bgp, index, relative, lp_val);
+    srx_val_local_preference_set (bgp, type, index, relative, lp_val);
   }
   else
   {
-    srx_val_local_preference_unset (bgp, index);
+    srx_val_local_preference_unset (bgp, type, index);
   }
   return CMD_SUCCESS;
 }
@@ -2279,6 +2368,7 @@ DEFUN (no_srx_policy_local_preference,
   return validation_local_preference(argc, argv, vty->index, 0);
 }
 
+// original ignore not found
 DEFUN (srx_policy_ignore_notfound,
        srx_policy_ignore_notfound_cmd,
        SRX_VTY_CMD_POL_IGNORE_NOTFOUND,
@@ -2298,6 +2388,27 @@ DEFUN (no_srx_policy_ignore_notfound,
   return  CMD_SUCCESS;
 }
 
+// for roa validation not found
+DEFUN (srx_policy_roa_ignore_notfound,
+       srx_policy_roa_ignore_notfound_cmd,
+       SRX_VTY_CMD_POL_ROA_IGNORE_NOTFOUND,
+       SRX_VTY_HLP_POL_ROA_IGNORE_NOTFOUND)
+{
+  srx_val_policy_set (vty->index, SRX_VAL_POLICY_ROA_IGNORE_NOTFOUND);
+  return  CMD_SUCCESS;
+}
+
+DEFUN (no_srx_policy_roa_ignore_notfound,
+       no_srx_policy_roa_ignore_notfound_cmd,
+       "no " SRX_VTY_CMD_POL_ROA_IGNORE_NOTFOUND,
+       NO_STR
+       SRX_VTY_HLP_POL_ROA_IGNORE_NOTFOUND)
+{
+  srx_val_policy_unset (vty->index, SRX_VAL_POLICY_ROA_IGNORE_NOTFOUND);
+  return  CMD_SUCCESS;
+}
+
+// original invalid
 DEFUN (srx_policy_ignore_invalid,
        srx_policy_ignore_invalid_cmd,
        SRX_VTY_CMD_POL_IGNORE_INVALID,
@@ -2317,6 +2428,68 @@ DEFUN (no_srx_policy_ignore_invalid,
   return  CMD_SUCCESS;
 }
 
+// for roa validation invalid
+DEFUN (srx_policy_roa_ignore_invalid,
+       srx_policy_roa_ignore_invalid_cmd,
+       SRX_VTY_CMD_POL_ROA_IGNORE_INVALID,
+       SRX_VTY_HLP_POL_ROA_IGNORE_INVALID)
+{
+  srx_val_policy_set (vty->index, SRX_VAL_POLICY_ROA_IGNORE_INVALID);
+  return  CMD_SUCCESS;
+}
+
+DEFUN (no_srx_policy_roa_ignore_invalid,
+       no_srx_policy_roa_ignore_invalid_cmd,
+       "no " SRX_VTY_CMD_POL_ROA_IGNORE_INVALID,
+       NO_STR
+       SRX_VTY_HLP_POL_ROA_IGNORE_INVALID)
+{
+  srx_val_policy_unset (vty->index, SRX_VAL_POLICY_ROA_IGNORE_INVALID);
+  return  CMD_SUCCESS;
+}
+
+
+// for bgpsec validation invalid
+DEFUN (srx_policy_bgpsec_ignore_invalid,
+       srx_policy_bgpsec_ignore_invalid_cmd,
+       SRX_VTY_CMD_POL_BGPSEC_IGNORE_INVALID,
+       SRX_VTY_HLP_POL_BGPSEC_IGNORE_INVALID)
+{
+  srx_val_policy_set (vty->index, SRX_VAL_POLICY_BGPSEC_IGNORE_INVALID);
+  return  CMD_SUCCESS;
+}
+
+DEFUN (no_srx_policy_bgpsec_ignore_invalid,
+       no_srx_policy_bgpsec_ignore_invalid_cmd,
+       "no " SRX_VTY_CMD_POL_BGPSEC_IGNORE_INVALID,
+       NO_STR
+       SRX_VTY_HLP_POL_BGPSEC_IGNORE_INVALID)
+{
+  srx_val_policy_unset (vty->index, SRX_VAL_POLICY_BGPSEC_IGNORE_INVALID);
+  return  CMD_SUCCESS;
+}
+
+// for aspa validation invalid
+DEFUN (srx_policy_aspa_ignore_invalid,
+       srx_policy_aspa_ignore_invalid_cmd,
+       SRX_VTY_CMD_POL_ASPA_IGNORE_INVALID,
+       SRX_VTY_HLP_POL_ASPA_IGNORE_INVALID)
+{
+  srx_val_policy_set (vty->index, SRX_VAL_POLICY_ASPA_IGNORE_INVALID);
+  return  CMD_SUCCESS;
+}
+
+DEFUN (no_srx_policy_aspa_ignore_invalid,
+       no_srx_policy_aspa_ignore_invalid_cmd,
+       "no " SRX_VTY_CMD_POL_ASPA_IGNORE_INVALID,
+       NO_STR
+       SRX_VTY_HLP_POL_ASPA_IGNORE_INVALID)
+{
+  srx_val_policy_unset (vty->index, SRX_VAL_POLICY_ASPA_IGNORE_INVALID);
+  return  CMD_SUCCESS;
+}
+
+// original undefined
 DEFUN (srx_policy_ignore_undefined,
        srx_policy_ignore_undefined_cmd,
        SRX_VTY_CMD_POL_IGNORE_UNDEFINED,
@@ -2336,6 +2509,108 @@ DEFUN (no_srx_policy_ignore_undefined,
   return  CMD_SUCCESS;
 }
 
+// roa undefined
+DEFUN (srx_policy_roa_ignore_undefined,
+       srx_policy_roa_ignore_undefined_cmd,
+       SRX_VTY_CMD_POL_ROA_IGNORE_UNDEFINED,
+       SRX_VTY_HLP_POL_ROA_IGNORE_UNDEFINED)
+{
+  srx_val_policy_set (vty->index, SRX_VAL_POLICY_ROA_IGNORE_UNDEFINED);
+  return  CMD_SUCCESS;
+}
+
+DEFUN (no_srx_policy_roa_ignore_undefined,
+       no_srx_policy_roa_ignore_undefined_cmd,
+       "no " SRX_VTY_CMD_POL_ROA_IGNORE_UNDEFINED,
+       NO_STR
+       SRX_VTY_HLP_POL_ROA_IGNORE_UNDEFINED)
+{
+  srx_val_policy_unset (vty->index, SRX_VAL_POLICY_ROA_IGNORE_UNDEFINED);
+  return  CMD_SUCCESS;
+}
+
+// bgpsec undefined
+DEFUN (srx_policy_bgpsec_ignore_undefined,
+       srx_policy_bgpsec_ignore_undefined_cmd,
+       SRX_VTY_CMD_POL_BGPSEC_IGNORE_UNDEFINED,
+       SRX_VTY_HLP_POL_BGPSEC_IGNORE_UNDEFINED)
+{
+  srx_val_policy_set (vty->index, SRX_VAL_POLICY_BGPSEC_IGNORE_UNDEFINED);
+  return  CMD_SUCCESS;
+}
+
+DEFUN (no_srx_policy_bgpsec_ignore_undefined,
+       no_srx_policy_bgpsec_ignore_undefined_cmd,
+       "no " SRX_VTY_CMD_POL_BGPSEC_IGNORE_UNDEFINED,
+       NO_STR
+       SRX_VTY_HLP_POL_BGPSEC_IGNORE_UNDEFINED)
+{
+  srx_val_policy_unset (vty->index, SRX_VAL_POLICY_BGPSEC_IGNORE_UNDEFINED);
+  return  CMD_SUCCESS;
+}
+
+// aspa undefined
+DEFUN (srx_policy_aspa_ignore_undefined,
+       srx_policy_aspa_ignore_undefined_cmd,
+       SRX_VTY_CMD_POL_ASPA_IGNORE_UNDEFINED,
+       SRX_VTY_HLP_POL_ASPA_IGNORE_UNDEFINED)
+{
+  srx_val_policy_set (vty->index, SRX_VAL_POLICY_ASPA_IGNORE_UNDEFINED);
+  return  CMD_SUCCESS;
+}
+
+DEFUN (no_srx_policy_aspa_ignore_undefined,
+       no_srx_policy_aspa_ignore_undefined_cmd,
+       "no " SRX_VTY_CMD_POL_ASPA_IGNORE_UNDEFINED,
+       NO_STR
+       SRX_VTY_HLP_POL_ASPA_IGNORE_UNDEFINED)
+{
+  srx_val_policy_unset (vty->index, SRX_VAL_POLICY_ASPA_IGNORE_UNDEFINED);
+  return  CMD_SUCCESS;
+}
+
+
+// for ASPA, unknown
+DEFUN (srx_policy_aspa_ignore_unknown,
+       srx_policy_aspa_ignore_unknown_cmd,
+       SRX_VTY_CMD_POL_ASPA_IGNORE_UNKNOWN,
+       SRX_VTY_HLP_POL_ASPA_IGNORE_UNKNOWN)
+{
+  srx_val_policy_set (vty->index, SRX_VAL_POLICY_ASPA_IGNORE_UNKNOWN);
+  return  CMD_SUCCESS;
+}
+
+DEFUN (no_srx_policy_aspa_ignore_unknown,
+       no_srx_policy_aspa_ignore_unknown_cmd,
+       "no " SRX_VTY_CMD_POL_ASPA_IGNORE_UNKNOWN,
+       NO_STR
+       SRX_VTY_HLP_POL_ASPA_IGNORE_UNKNOWN)
+{
+  srx_val_policy_unset (vty->index, SRX_VAL_POLICY_ASPA_IGNORE_UNKNOWN);
+  return  CMD_SUCCESS;
+}
+
+// for ASPA, unverifiable
+DEFUN (srx_policy_aspa_ignore_unverifiable,
+       srx_policy_aspa_ignore_unverifiable_cmd,
+       SRX_VTY_CMD_POL_ASPA_IGNORE_UNVERIFIABLE,
+       SRX_VTY_HLP_POL_ASPA_IGNORE_UNVERIFIABLE)
+{
+  srx_val_policy_set (vty->index, SRX_VAL_POLICY_ASPA_IGNORE_UNVERIFIABLE);
+  return  CMD_SUCCESS;
+}
+
+DEFUN (no_srx_policy_aspa_ignore_unverifiable,
+       no_srx_policy_aspa_ignore_unverifiable_cmd,
+       "no " SRX_VTY_CMD_POL_ASPA_IGNORE_UNVERIFIABLE,
+       NO_STR
+       SRX_VTY_HLP_POL_ASPA_IGNORE_UNVERIFIABLE)
+{
+  srx_val_policy_unset (vty->index, SRX_VAL_POLICY_ASPA_IGNORE_UNVERIFIABLE);
+  return  CMD_SUCCESS;
+}
+
+// original prefer valid
 DEFUN (srx_policy_prefer_valid,
        srx_policy_prefer_valid_cmd,
        SRX_VTY_CMD_POL_PREFV,
@@ -2352,6 +2627,64 @@ DEFUN (no_srx_policy_prefer_valid,
 {
   return srx_val_policy_unset (vty->index, SRX_VAL_POLICY_PREFER_VALID);
 }
+
+
+// roa prefer valid
+DEFUN (srx_policy_roa_prefer_valid,
+       srx_policy_roa_prefer_valid_cmd,
+       SRX_VTY_CMD_POL_ROA_PREFV,
+       SRX_VTY_HLP_POL_ROA_PREFV)
+{
+  return srx_val_policy_set (vty->index, SRX_VAL_POLICY_ROA_PREFER_VALID);
+}
+
+DEFUN (no_srx_policy_roa_prefer_valid,
+       no_srx_policy_roa_prefer_valid_cmd,
+       "no " SRX_VTY_CMD_POL_ROA_PREFV,
+       NO_STR
+       SRX_VTY_HLP_POL_ROA_PREFV)
+{
+  return srx_val_policy_unset (vty->index, SRX_VAL_POLICY_ROA_PREFER_VALID);
+}
+
+
+// bgpsec prefer valid
+DEFUN (srx_policy_bgpsec_prefer_valid,
+       srx_policy_bgpsec_prefer_valid_cmd,
+       SRX_VTY_CMD_POL_BGPSEC_PREFV,
+       SRX_VTY_HLP_POL_BGPSEC_PREFV)
+{
+  return srx_val_policy_set (vty->index, SRX_VAL_POLICY_BGPSEC_PREFER_VALID);
+}
+
+DEFUN (no_srx_policy_bgpsec_prefer_valid,
+       no_srx_policy_bgpsec_prefer_valid_cmd,
+       "no " SRX_VTY_CMD_POL_BGPSEC_PREFV,
+       NO_STR
+       SRX_VTY_HLP_POL_BGPSEC_PREFV)
+{
+  return srx_val_policy_unset (vty->index, SRX_VAL_POLICY_BGPSEC_PREFER_VALID);
+}
+
+// aspa prefer valid
+DEFUN (srx_policy_aspa_prefer_valid,
+       srx_policy_aspa_prefer_valid_cmd,
+       SRX_VTY_CMD_POL_ASPA_PREFV,
+       SRX_VTY_HLP_POL_ASPA_PREFV)
+{
+  return srx_val_policy_set (vty->index, SRX_VAL_POLICY_ASPA_PREFER_VALID);
+}
+
+DEFUN (no_srx_policy_aspa_prefer_valid,
+       no_srx_policy_aspa_prefer_valid_cmd,
+       "no " SRX_VTY_CMD_POL_ASPA_PREFV,
+       NO_STR
+       SRX_VTY_HLP_POL_ASPA_PREFV)
+{
+  return srx_val_policy_unset (vty->index, SRX_VAL_POLICY_ASPA_PREFER_VALID);
+}
+
+
 
 DEFUN (srx_send_extcommunity,
        srx_send_extcommunity_cmd,
@@ -10516,15 +10849,52 @@ bgp_vty_init (void)
 
   install_element (BGP_NODE, &srx_policy_ignore_notfound_cmd);
   install_element (BGP_NODE, &no_srx_policy_ignore_notfound_cmd);
+  
+  install_element (BGP_NODE, &srx_policy_roa_ignore_notfound_cmd);
+  install_element (BGP_NODE, &no_srx_policy_roa_ignore_notfound_cmd);
 
   install_element (BGP_NODE, &srx_policy_ignore_invalid_cmd);
   install_element (BGP_NODE, &no_srx_policy_ignore_invalid_cmd);
+  
+  install_element (BGP_NODE, &srx_policy_roa_ignore_invalid_cmd);
+  install_element (BGP_NODE, &no_srx_policy_roa_ignore_invalid_cmd);
+  
+  install_element (BGP_NODE, &srx_policy_bgpsec_ignore_invalid_cmd);
+  install_element (BGP_NODE, &no_srx_policy_bgpsec_ignore_invalid_cmd);
+
+  install_element (BGP_NODE, &srx_policy_aspa_ignore_invalid_cmd);
+  install_element (BGP_NODE, &no_srx_policy_aspa_ignore_invalid_cmd);
 
   install_element (BGP_NODE, &srx_policy_ignore_undefined_cmd);
   install_element (BGP_NODE, &no_srx_policy_ignore_undefined_cmd);
+  
+  install_element (BGP_NODE, &srx_policy_roa_ignore_undefined_cmd);
+  install_element (BGP_NODE, &no_srx_policy_roa_ignore_undefined_cmd);
+  
+  install_element (BGP_NODE, &srx_policy_bgpsec_ignore_undefined_cmd);
+  install_element (BGP_NODE, &no_srx_policy_bgpsec_ignore_undefined_cmd);
+  
+  install_element (BGP_NODE, &srx_policy_aspa_ignore_undefined_cmd);
+  install_element (BGP_NODE, &no_srx_policy_aspa_ignore_undefined_cmd);
+  
+  install_element (BGP_NODE, &srx_policy_aspa_ignore_unknown_cmd);
+  install_element (BGP_NODE, &no_srx_policy_aspa_ignore_unknown_cmd);
+
+  install_element (BGP_NODE, &srx_policy_aspa_ignore_unverifiable_cmd);
+  install_element (BGP_NODE, &no_srx_policy_aspa_ignore_unverifiable_cmd);
 
   install_element (BGP_NODE, &srx_policy_prefer_valid_cmd);
   install_element (BGP_NODE, &no_srx_policy_prefer_valid_cmd);
+
+  install_element (BGP_NODE, &srx_policy_roa_prefer_valid_cmd);
+  install_element (BGP_NODE, &no_srx_policy_roa_prefer_valid_cmd);
+
+  install_element (BGP_NODE, &srx_policy_bgpsec_prefer_valid_cmd);
+  install_element (BGP_NODE, &no_srx_policy_bgpsec_prefer_valid_cmd);
+
+  install_element (BGP_NODE, &srx_policy_aspa_prefer_valid_cmd);
+  install_element (BGP_NODE, &no_srx_policy_aspa_prefer_valid_cmd);
+
   // The following two entries are deprecated but kept in place to not break
   // all previous configurations. It will be mapped into install ski 1 and also
   // selects this ski. Also a warning will be printed.
