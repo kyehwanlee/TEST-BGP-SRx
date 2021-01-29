@@ -292,6 +292,7 @@ Software Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
                                   " (roa|bgpsec|aspa) (valid|notfound|invalid) <0-4294967295>"
 #define SRX_VTY_HLP_POL_LOCP_FIX  SRX_VTY_HLP_STR SRX_VTY_HLP_POLICY \
                                   SRX_VTY_HLP_POL_LOCP \
+                                  "each type selection\n" \
                                   SRX_VTY_HLP_POL_LOCP_V \
                                   SRX_VTY_HLP_POL_LOCP_U \
                                   SRX_VTY_HLP_POL_LOCP_I \
@@ -304,7 +305,7 @@ Software Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
                                   SRX_VTY_HLP_POL_LOCP_S
 
 #define SRX_VTY_CMD_NO_POL_LOCP   "no " SRX_VTY_CMD_POL_LOCP \
-                                  " (valid|notfound|invalid)"
+                                  " (roa|bgpsec|aspa) (valid|notfound|invalid)"
 #define SRX_VTY_HLP_NO_POL_LOCP   NO_STR SRX_VTY_HLP_STR SRX_VTY_HLP_POLICY \
                                   SRX_VTY_HLP_POL_LOCP \
                                   SRX_VTY_HLP_POL_LOCP_V \
@@ -619,6 +620,7 @@ struct bgp
 #define LOCPRF_TYPE_BGPSEC 1
 #define LOCPRF_TYPE_ASPA   2
 
+#define NUM_LOCPREF_RESULT   3
 #define VAL_LOCPRF_VALID     0
 #define VAL_LOCPRF_NOTFOUND  1
 #define VAL_LOCPRF_INVALID   2

@@ -1085,8 +1085,7 @@ static u_int32_t srx_loc_prev_value(struct bgp* bgp, u_int32_t locPref,
                                     SRxResult valResult)
 {
   struct srx_local_pref* prefPolicy[NUM_LOCPREF_TYPE];
-  bool isSet[NUM_LOCPREF_TYPE];
-  uint32_t localPrefValues[NUM_LOCPREF_TYPE] = {0,0,0};
+  bool isSet[NUM_LOCPREF_TYPE] = {false, false, false};
 
   // ROA result
   switch (valResult.roaResult)
@@ -1149,64 +1148,49 @@ static u_int32_t srx_loc_prev_value(struct bgp* bgp, u_int32_t locPref,
   }
 
   int i, numSet=0;
+  uint32_t defaultLocPref = locPref;
+  int32_t totalLocalPref = defaultLocPref;
   for (i=0; i<NUM_LOCPREF_TYPE; i++)
   {
     if (isSet[i])
     {
       numSet++;
-      if (prefPolicy[i]->relative == 0)
+      if (prefPolicy[i]->relative == 0) // get rid of Fix value, instead using with add, subtract 
       {
-        localPrefValues[i] = prefPolicy[i]->value;
+        totalLocalPref += prefPolicy[i]->value; // add
       }
       else if (prefPolicy[i]->relative == -1)
       {
-        localPrefValues[i] = (locPref > prefPolicy[i]->value) ? (locPref - prefPolicy[i]->value)
-          : 0; // underflow
+        totalLocalPref = totalLocalPref - prefPolicy[i]->value;  //subtract
       }
       else
       {
-        localPrefValues[i] = locPref + prefPolicy[i]->value;
+        totalLocalPref += prefPolicy[i]->value; // add
       }
+      printf("+ set type:%d(0:RV,1:PV,2:AV), relative:%d, value: %d SRxlocalPref(total):%d  \n", 
+          i, prefPolicy[i]->relative, prefPolicy[i]->value, totalLocalPref);
     }
   }
-  
-  // average of all three values
-  uint8_t totalLocalPref=0;
-  for (i=0; i< NUM_LOCPREF_TYPE; i++)
-  {
-    if (isSet[i])
-    {
-      if(localPrefValues[i] > 0)
-      {
-        totalLocalPref += localPrefValues[i];
-      }
-      else
-      {
-        numSet--;
-      }
-    }
-  }
+  if (totalLocalPref < 0) // underflow
+    totalLocalPref = 0;
+  printf("+ attribute local pref: %d  Total calculated local pref: %d  num Set:%d\n\n", locPref, totalLocalPref, numSet);
 
-  locPref = totalLocalPref;
-  /*
-  // take average 
-  if (numSet > 0)
-    locPref = totalLocalPref / numSet; 
-  else
-    printf("number of srx pref configuration error\n");
-  */
-  return locPref;
+  return (uint32_t)totalLocalPref;
 }
 
 bool isSetPrefPolicy(struct bgp* bgp)
 {
   bool ret = false;
 
-  struct srx_local_pref* prefPolicy;
-  for(int i=0; i<NUM_LOCPREF_TYPE; i++)
+  struct srx_local_pref prefPolicy;
+  for(int t=0; t<NUM_LOCPREF_TYPE; t++)
   {
-    prefPolicy = bgp->srx_val_local_pref[i];
-    ret = prefPolicy->is_set;
+    for(int r=0; r < NUM_LOCPREF_RESULT; r++)
+    {
+      prefPolicy = bgp->srx_val_local_pref[t][r];
+      if(prefPolicy.is_set && prefPolicy.value)
+        return true;
+    }
   }
 
   return ret;
@@ -6990,8 +6974,8 @@ static void srx_route_vty_validation_out(struct vty *vty,
   SRxResult srxVal; 
   srxVal = getInfoToSrxVal(binfo);
   u_int32_t new_pref = 0;
-  int bSrxResult;
-  int *srxValPtr = (int*) &srxVal;
+  uint8_t bSrxResult;
+  uint8_t *srxValPtr = (uint8_t*) &srxVal;
 
   if ((bgp->srx_config & SRX_CONFIG_DISPLAY_INFO) != 0)
   {
@@ -7047,50 +7031,67 @@ static void srx_route_vty_validation_out(struct vty *vty,
     }
     vty_out (vty, ") ");
 
-    // Determine local pref policy
-    switch (valState)
+    // calculate total pref
+    /*
+    uint32_t defLocalPrefVal = bgp->default_local_pref;
+    if (binfo->attr->flag & ATTR_FLAG_BIT (BGP_ATTR_LOCAL_PREF))
+      defLocalPrefVal = binfo->attr->local_pref;
+    int32_t totalLocalPref = defLocalPrefVal;
+    */
+
+    int32_t totalLocalPref = 0;
+
+    // Determine local pref policy 'SRxLP'
+    for (int i=0; i<NUM_LOCPREF_TYPE; i++)
     {
-      case SRx_RESULT_VALID:
-        locPrefPol = VAL_LOCPRF_VALID;
-        break;
-      case SRx_RESULT_NOTFOUND:
-        locPrefPol = VAL_LOCPRF_NOTFOUND;
-        break;
-      case SRx_RESULT_INVALID:
-        locPrefPol = VAL_LOCPRF_INVALID;
-        break;
-      default:
-        locPrefPol = -1;
-    }
-    if (locPrefPol > -1)
-    {
-#ifdef TODO
-      if (bgp->srx_val_local_pref[locPrefPol].is_set)
+      bSrxResult = *(srxValPtr+i);
+      switch (bSrxResult)
       {
-        switch (bgp->srx_val_local_pref[locPrefPol].relative)
+        case SRx_RESULT_VALID:
+          locPrefPol = VAL_LOCPRF_VALID;
+          break;
+        case SRx_RESULT_NOTFOUND:
+          locPrefPol = VAL_LOCPRF_NOTFOUND;
+          break;
+        case SRx_RESULT_INVALID:
+          locPrefPol = VAL_LOCPRF_INVALID;
+          break;
+        default:
+          locPrefPol = -1;
+      }
+
+      if (locPrefPol > -1)
+      {
+        if (bgp->srx_val_local_pref[i][locPrefPol].is_set)
         {
-          case -1:
-            vty_out (vty, "-");
-            break;
-          case  1:
-            vty_out (vty, "+");
-            break;
-          default:
-            vty_out (vty, " ");
+          if (bgp->srx_val_local_pref[i][locPrefPol].relative == 0)  // add
+          {
+            totalLocalPref += bgp->srx_val_local_pref[i][locPrefPol].value;
+          }
+          else if (bgp->srx_val_local_pref[i][locPrefPol].relative == -1) // subtract
+          {
+            totalLocalPref -= bgp->srx_val_local_pref[i][locPrefPol].value; 
+          }
+          else // add
+          {
+            totalLocalPref += bgp->srx_val_local_pref[i][locPrefPol].value;
+          }
         }
-        vty_out (vty, "%4d,", bgp->srx_val_local_pref[locPrefPol].value);
       }
-      else
-      {
-        vty_out (vty, "      ");
-      }
-#endif
+    }
+
+    bool isAnySet = isSetPrefPolicy(bgp);
+      
+    if (isAnySet)
+    {
+      vty_out (vty, "%5d", totalLocalPref);
     }
     else
     {
-      vty_out (vty, "      ");
+      vty_out (vty, "     ");
     }
-    vty_out (vty, "   ");
+    vty_out (vty, "    ");
+
     if (CHECK_FLAG (binfo->flags, BGP_INFO_IGNORE))
     {
       vty_out (vty, "I");
@@ -7200,14 +7201,13 @@ route_vty_out (struct vty *vty, struct prefix *p,
       // Determine srx policy local pref
       struct bgp* bgp = binfo->peer->bgp;
       int srxResult = srx_calc_validation_state(bgp, binfo);
-      struct srx_local_pref* srxLocPref;
       int srxDoLocPref;
   
       SRxResult srxVal; 
       srxVal = getInfoToSrxVal(binfo);
       u_int32_t new_pref = 0;
-      int bSrxResult;
-      int *srxValPtr = (int*) &srxVal;
+      uint8_t bSrxResult;
+      uint8_t *srxValPtr = (uint8_t*) &srxVal;
 
       if (bgp != NULL)
       {
@@ -7224,35 +7224,15 @@ route_vty_out (struct vty *vty, struct prefix *p,
               srxDoLocPref = 1; break;
             default:
               srxDoLocPref = 0;
-              srxLocPref = NULL;
           }
 
           if (srxDoLocPref)
             break;
         }
-
-        /*
-        switch (srxResult)
-        {
-          case SRx_RESULT_VALID:
-            srxLocPref = &bgp->srx_val_local_pref[VAL_LOCPRF_VALID];
-            srxDoLocPref = 1; break;
-          case SRx_RESULT_NOTFOUND:
-            srxLocPref = &bgp->srx_val_local_pref[VAL_LOCPRF_NOTFOUND];
-            srxDoLocPref = 1; break;
-          case SRx_RESULT_INVALID:
-            srxLocPref = &bgp->srx_val_local_pref[VAL_LOCPRF_INVALID];
-            srxDoLocPref = 1; break;
-          default:
-            srxDoLocPref = 0;
-            srxLocPref = NULL;
-        }
-        */
       }
-     else
+      else
       {
         srxDoLocPref = 0;
-        srxLocPref = NULL;
       }
 #endif /* USE_SRX */
 
@@ -7262,33 +7242,29 @@ route_vty_out (struct vty *vty, struct prefix *p,
         new_pref = srx_loc_prev_value(bgp, attr->local_pref, srxVal);
         if (srxDoLocPref)
         {
-          //vty_out (vty, "%7ua", srxLocPref->relative \
-            ? attr->local_pref + srxLocPref->relative * srxLocPref->value \
-            : srxLocPref->value);
-	      vty_out (vty, "%7ua ", new_pref);
+          vty_out (vty, "%7ua ", new_pref);
         }
         else
         {
-	      vty_out (vty, "%7u ", attr->local_pref);
+          vty_out (vty, "%7u ", attr->local_pref);
         }
 #else /* USE_SRX */
-	vty_out (vty, "%7u", attr->local_pref);
+        vty_out (vty, "%7u", attr->local_pref);
 #endif /* USE_SRX */
 
 #ifdef USE_SRX
       }
-      //else if (srxDoLocPref && srxLocPref->is_set)
-      else if (srxDoLocPref)
+      else if (srxDoLocPref && isSetPrefPolicy(bgp))
       {
-        //vty_out (vty, "%7us", srxLocPref->value);
-        vty_out (vty, "%7us ", new_pref);
+        new_pref = srx_loc_prev_value(bgp, bgp->default_local_pref, srxVal);
+        vty_out (vty, "%7us", new_pref);
       }
 #endif /* USE_SRX */
       else
 #ifdef USE_SRX
-	vty_out (vty, "        ");
+        vty_out (vty, "        ");
 #else /* USE_SRX */
-	vty_out (vty, "       ");
+      vty_out (vty, "       ");
 #endif /* USE_SRX */
 
       vty_out (vty, "%7u ", (attr->extra ? attr->extra->weight : 0));
@@ -14931,3 +14907,134 @@ bgp_route_finish (void)
   bgp_table_unlock (bgp_distance_table);
   bgp_distance_table = NULL;
 }
+
+
+
+#if 0
+    // Determine local pref policy 'SRxLP'
+    bool isAnySet = isSetPrefPolicy(bgp);
+    for (int t=0; t<NUM_LOCPREF_TYPE; t++)
+    {
+      bSrxResult = *(srxValPtr+t);
+      switch (bSrxResult)
+      {
+        case SRx_RESULT_VALID:
+          locPrefPol = VAL_LOCPRF_VALID;
+          break;
+        case SRx_RESULT_NOTFOUND:
+          locPrefPol = VAL_LOCPRF_NOTFOUND;
+          break;
+        case SRx_RESULT_INVALID:
+          locPrefPol = VAL_LOCPRF_INVALID;
+          break;
+        default:
+          locPrefPol = -1;
+      }
+
+      if(isAnySet)
+        vty_out (vty, "(");
+
+      if (locPrefPol > -1)
+      {
+        if (bgp->srx_val_local_pref[t][locPrefPol].is_set)
+        {
+          //vty_out (vty, (t==0 ? "R": (t==1 ? "P":"A")));
+          switch (bgp->srx_val_local_pref[t][locPrefPol].relative)
+          {
+            case -1:
+              vty_out (vty, "-");
+              break;
+            case 0:
+            case 1:
+              vty_out (vty, "+");
+              break;
+            default:
+              vty_out (vty, " ");
+          }
+          vty_out (vty, "%2d", bgp->srx_val_local_pref[t][locPrefPol].value);
+        }
+        else
+        {
+          vty_out (vty, "   ");
+        }
+      } 
+      else
+      {
+        vty_out (vty, "    "); // in case 
+      }
+
+      if(isAnySet && t == NUM_LOCPREF_TYPE -1)
+        vty_out (vty, ")");
+      else if (isAnySet && t < NUM_LOCPREF_TYPE -1)
+        vty_out (vty, ",");
+      else if (!isAnySet && t < NUM_LOCPREF_TYPE)
+        vty_out (vty, " ");
+
+    } 
+    vty_out (vty, "  "); // space between "SRxLP and Status"
+#endif
+
+
+#if 0
+    bool isAnySet = isSetPrefPolicy(bgp);
+    for (int t=0; t<NUM_LOCPREF_TYPE; t++)
+    {
+      bSrxResult = *(srxValPtr+t);
+      switch (bSrxResult)
+      {
+        case SRx_RESULT_VALID:
+          locPrefPol = VAL_LOCPRF_VALID;
+          break;
+        case SRx_RESULT_NOTFOUND:
+          locPrefPol = VAL_LOCPRF_NOTFOUND;
+          break;
+        case SRx_RESULT_INVALID:
+          locPrefPol = VAL_LOCPRF_INVALID;
+          break;
+        default:
+          locPrefPol = -1;
+      }
+
+
+      if(isAnySet)
+        vty_out (vty, "(");
+
+      if (locPrefPol > -1)
+      {
+        if (bgp->srx_val_local_pref[t][locPrefPol].is_set)
+        {
+          //vty_out (vty, (t==0 ? "R": (t==1 ? "P":"A")));
+          switch (bgp->srx_val_local_pref[t][locPrefPol].relative)
+          {
+            case -1:
+              vty_out (vty, "-");
+              break;
+            case 0:
+            case 1:
+              vty_out (vty, "+");
+              break;
+            default:
+              vty_out (vty, " ");
+          }
+          vty_out (vty, "%2d", bgp->srx_val_local_pref[t][locPrefPol].value);
+        }
+        else
+        {
+          vty_out (vty, "   ");
+        }
+      } 
+      else
+      {
+        vty_out (vty, "    "); // in case 
+      }
+
+      if(isAnySet && t == NUM_LOCPREF_TYPE -1)
+        vty_out (vty, ")");
+      else if (isAnySet && t < NUM_LOCPREF_TYPE -1)
+        vty_out (vty, ",");
+      else if (!isAnySet && t < NUM_LOCPREF_TYPE)
+        vty_out (vty, " ");
+
+    } 
+    vty_out (vty, "  "); // space between "SRxLP and Status"
+#endif
