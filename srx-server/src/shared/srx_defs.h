@@ -211,7 +211,7 @@ typedef enum {
   SRx_RESULT_INVALID      = 2, // ROA & BGPSEC
   SRx_RESULT_UNDEFINED    = 3, // ROA & BGPSEC (if no result is available)
   SRx_RESULT_DONOTUSE     = 4, // ONLY FOR INTERNAL USE WITHIN SRx Server.
-  SRx_RESULT_UNKNOWN      = 5,  // ASPA Validation
+  SRx_RESULT_UNKNOWN      = 5, // ASPA Validation
   SRx_RESULT_UNVERIFIABLE = 6  // ASPA Validation
 } SRxValidationResultVal;
 
@@ -243,6 +243,11 @@ typedef enum {
   ASPA_RESULT_NIBBLE_ZERO  = 16
 } ASPA_ValidationResult;
 
+typedef enum {
+  ASPA_UNKNOWNSTREAM = 0,
+  ASPA_UPSTREAM      = 1,
+  ASPA_DOWNSTREAM    = 2,
+} AS_REL_DIR;
 
 
 #endif // !__SRX_DEFS_H__

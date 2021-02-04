@@ -331,7 +331,7 @@ static void handleEndOfData (uint32_t valCacheID, uint16_t session_id,
             // call ASPA validation
             uint8_t afi       = 1; // temporary behavior TODO: laster should be replaced 
             uint8_t valResult = do_AspaValidation (aspl->asPathList, 
-                aspl->asPathLength, aspl->asType, afi, aspaDBManager);
+                aspl->asPathLength, aspl->asType, aspl->asRelDir, afi, aspaDBManager);
       
             printf("Validation Result(0:valid, 2:Invalid, 3:Undefined "
                 "4:DonotUse 5:Unknown, 6:Unverifiable): %d\n", valResult);

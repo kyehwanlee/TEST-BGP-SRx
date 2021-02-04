@@ -1498,6 +1498,25 @@ DEFUN (srx_show_config,
       vty_out (vty, "  invalid value%s", VTY_NEWLINE);
   }
 
+  vty_out (vty, "  default value..: ( aspa ) ");
+  switch (bgp->srx_default_aspaVal)
+  {
+    case SRx_RESULT_VALID:
+      vty_out (vty, "  v = valid%s", VTY_NEWLINE); break;
+    case SRx_RESULT_NOTFOUND:
+      vty_out (vty, "  n = notfound%s", VTY_NEWLINE); break;
+    case SRx_RESULT_INVALID:
+      vty_out (vty, "  i = invalid%s", VTY_NEWLINE); break;
+    case SRx_RESULT_UNDEFINED:
+      vty_out (vty, "  ? = undefined%s", VTY_NEWLINE); break;
+    case SRx_RESULT_UNKNOWN:
+      vty_out (vty, "  u = unknown%s", VTY_NEWLINE); break;
+    case SRx_RESULT_UNVERIFIABLE:
+      vty_out (vty, "  f = unverifiable%s", VTY_NEWLINE); break;
+    default:
+      vty_out (vty, "  invalid value%s", VTY_NEWLINE);
+  }
+
    // always active
   vty_out (vty, "  policy.........: ");
   if (bgp->srx_val_policy & SRX_VAL_POLICY_IGNORE_NOTFOUND)

@@ -310,7 +310,7 @@ static bool setupCaches()
     RAISE_ERROR("Failed to setup a cache - stopping");    
     return false;
   }
-  initializeAspaDBManager(&aspaDBManager);    // ASPA: ASPA object DB
+  initializeAspaDBManager(&aspaDBManager, &config);    // ASPA: ASPA object DB
   createAspathCache(&aspathCache, &aspaDBManager); // ASPA: AS path DB 
 
   LOG(LEVEL_INFO, "- SRx Caches and RPKI Queue created");

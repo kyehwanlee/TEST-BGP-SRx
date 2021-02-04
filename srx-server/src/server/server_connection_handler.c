@@ -716,16 +716,22 @@ bool processValidationRequest(ServerConnectionHandler* self,
         defResInfo.result.aspaResult = hdr->aspaDefRes; // router's input value (Undefined, Unverifiable, Invalid)
         defResInfo.resSourceASPA     = hdr->aspaResSrc;
       }
+
+      // TODO: here need AS Relationship Direction
+      //
+      AS_REL_DIR asRelDir;
+      asRelDir = check_AsRelationship(self->aspathCache->aspaDBManager->config->as_relationship_data, 
+          aspl->asPathList, aspl->asPathLength);
       
-      // TODO: in order to free aspl, need to copy value inside the function below XXX
+      // in order to free aspl, need to copy value inside the function below
       //
       storeAspathList(self->aspathCache, &defResInfo, pathId, asType, aspl);
       srxRes.aspaResult   = defResInfo.result.aspaResult;
 
     }
-    // XXX free 
-    // if (aspl)
-    //  free(aspl);
+    // free 
+    if (aspl)
+      deleteAspathListEntry(aspl);
   }
       
 

@@ -115,6 +115,7 @@ typedef struct {
    * REquires SCA to provide the capability to do so*/
   bool                  sca_sync_logging;
   
+  char*                 as_relationship_data; // for aspa direction
   
   /** The minimum expected number of expected proxy clients */
   uint8_t               expectedProxies;

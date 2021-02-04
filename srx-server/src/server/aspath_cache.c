@@ -15,7 +15,7 @@ typedef struct {
   AC_PathListData   data;
   uint8_t           aspaResult;
   AS_TYPE           asType;
-
+  AS_REL_DIR        asRelDir;
 } PathListCacheTable;
 
 
@@ -98,6 +98,7 @@ AS_PATH_LIST* newAspathListEntry (uint32_t length, uint32_t* pathData, AS_TYPE a
   pAspathList->asPathLength = length;
   pAspathList->asPathList   = (uint32_t*)calloc(length, sizeof(uint32_t));
   pAspathList->asType       = asType;
+  pAspathList->asRelDir     = ASPA_UNKNOWNSTREAM;
 
   int i=0;
   for (i=0; i < length; i++)
@@ -178,7 +179,7 @@ bool modifyAspaValidationResultToAspathCache(AspathCache *self, uint32_t pathId,
   return retVal;
 }
 
-int storeAspathList (AspathCache* self, SRxDefaultResult* defRes, 
+int storeAspathList (AspathCache* self, SRxDefaultResult* srxRes, 
                       uint32_t pathId, AS_TYPE asType, AS_PATH_LIST* pathlistEntry)
 {
   int retVal = 1; // by default report it worked
@@ -193,8 +194,9 @@ int storeAspathList (AspathCache* self, SRxDefaultResult* defRes,
   else
   {
     plCacheTable = (PathListCacheTable*) calloc(1, sizeof(PathListCacheTable));
-    plCacheTable->pathId = pathId;
-    plCacheTable->asType = asType;
+    plCacheTable->pathId   = pathId;
+    plCacheTable->asType   = asType;
+    plCacheTable->asRelDir = pathlistEntry->asRelDir;
 
     uint8_t length = pathlistEntry->asPathLength;
     plCacheTable->data.hops = length;
@@ -209,11 +211,10 @@ int storeAspathList (AspathCache* self, SRxDefaultResult* defRes,
         plCacheTable->data.asPathList[i] = pathlistEntry->asPathList[i];
       }
     }
-    //plCacheTable->data.asPathList = pathlistEntry->asPathList? 
-    //                                pathlistEntry->asPathList: NULL;
-    if (defRes != NULL)
+
+    if (srxRes != NULL)
     {
-      plCacheTable->aspaResult = defRes->result.aspaResult;
+      plCacheTable->aspaResult = srxRes->result.aspaResult;
     }
 
     add_AspathList(self, plCacheTable);

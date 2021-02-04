@@ -47,11 +47,12 @@ typedef uint32_t PATH_LIST;
 
 // AS Path List structure
 typedef struct {
-  uint32_t  pathID;
-  uint8_t   asPathLength;
-  PATH_LIST* asPathList;
-  uint8_t   aspaValResult;
-  AS_TYPE   asType;
+  uint32_t      pathID;
+  uint8_t       asPathLength;
+  PATH_LIST*    asPathList;
+  uint8_t       aspaValResult;
+  AS_TYPE       asType;
+  AS_REL_DIR    asRelDir;
 } AS_PATH_LIST;
 
 
@@ -73,7 +74,6 @@ typedef struct {
   void              *aspathCacheTable;
   RWLock            tableLock;
   ASPA_DBManager    *aspaDBManager;
-
 } AspathCache;
 
 

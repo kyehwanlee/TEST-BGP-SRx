@@ -3,6 +3,7 @@
 
 #include <stdint.h>
 #include "shared/srx_defs.h"
+#include "server/configuration.h"
 
 // The number of children for each node
 // We will construct a N-ary tree and make it a Trie
@@ -29,8 +30,9 @@ struct TrieNode {
 };
 
 typedef struct {
-  TrieNode *tableRoot;
-  uint32_t count;
+  TrieNode*         tableRoot;
+  uint32_t          count;
+  Configuration*    config;  // The system configuration
 
 } ASPA_DBManager;
 
@@ -41,7 +43,7 @@ void free_trienode(TrieNode* node);
 TrieNode* insert_trie(TrieNode* root, char* word, char* userData, ASPA_Object*);
 int search_trie(TrieNode* root, char* word);
 void print_trie(TrieNode* root);
-bool initializeAspaDBManager(ASPA_DBManager* aspaDBManager);
+bool initializeAspaDBManager(ASPA_DBManager* aspaDBManager, Configuration* config);
 ASPA_Object* findAspaObject(TrieNode* root, char* word);
 void print_search(TrieNode* root, char* word);
 bool deleteASPAObject(ASPA_Object *obj);

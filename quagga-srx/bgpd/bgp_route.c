@@ -6998,7 +6998,7 @@ static void srx_route_vty_validation_out(struct vty *vty,
     // Calculate the total validation state
     valState = srx_calc_validation_state(bgp, binfo);
     // Print the total validation result depending on the validation mode
-    srx_validation_vty_short_out(vty, valState);
+    //srx_validation_vty_short_out(vty, valState);
     vty_out (vty, "(");
     if ((bgp->srx_config & SRX_CONFIG_EVAL_ORIGIN) != 0)
     {
@@ -7029,7 +7029,7 @@ static void srx_route_vty_validation_out(struct vty *vty,
     {
       vty_out (vty, "-");
     }
-    vty_out (vty, ") ");
+    vty_out (vty, ")  ");
 
     // calculate total pref
     /*
@@ -7848,7 +7848,7 @@ route_vty_out_detail (struct vty *vty, struct bgp *bgp, struct prefix *p,
 }
 
 #ifdef USE_SRX
-#define BGP_SRX_SHOW_SCODE_HEADER "Validation:    v - valid, n - notfound, i - invalid, ? - undefined%s" \
+#define BGP_SRX_SHOW_SCODE_HEADER "Validation:    v - valid, n - notfound, i - invalid, ? - undefined, u - unknown f - unverifiable%s" \
                                   "SRx Status:    I - route ignored, D - SRx evaluation deactivated%s" \
                                   "SRxVal Format: validation result (origin validation, path validation, aspa validation)%s"
 //#define BGP_SRX_SHOW_HEADER       "   SRx Data      Network          Next Hop            Metric  LocPrf Weight Path%s"

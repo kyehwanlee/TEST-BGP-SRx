@@ -7,10 +7,11 @@
 
 static uint32_t countTrieNode =0;
 
-bool initializeAspaDBManager(ASPA_DBManager* aspaDBManager) 
+bool initializeAspaDBManager(ASPA_DBManager* aspaDBManager, Configuration* config) 
 {
    aspaDBManager->tableRoot = newAspaTrie();
    aspaDBManager->count = 0;
+   aspaDBManager->config = config;
 
   return true;
 }

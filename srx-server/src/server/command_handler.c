@@ -47,6 +47,7 @@
  * 0.1.0    - 2012/05/15 - pgleichm
  *            * Code Created.
  */
+#include <ctype.h>
 #include "server/command_handler.h"
 #include "shared/srx_defs.h"
 #include "shared/srx_identifier.h"
@@ -319,6 +320,85 @@ bool _isSet(uint32_t bitmask, uint32_t bits)
   return (bitmask & bits) == bits;
 }
 
+// check for direction (upstream or downstream) with as relationship data file
+// return value: 1 - upstream, 2 - downstream, 0 - unknown
+//
+AS_REL_DIR check_AsRelationship(char* as_relationship_file, PATH_LIST* asPathList, uint8_t length)
+{
+  printf("[%s] received file path: %s\n", __FUNCTION__, as_relationship_file);
+
+  AS_REL_DIR retVal = ASPA_UNKNOWNSTREAM;
+  FILE* fp=NULL;
+  char buf[1024];
+  uint32_t count=0;
+      
+#define NUM_FIELDS 5
+  /*
+    The as-rel files contain p2p and p2c relationships.  The format is:
+    <provider-as>|<customer-as>|-1
+    <peer-as>|<peer-as>|0|<source>
+  */
+  char *field[NUM_FIELDS]; // f[0] provider, f[1] customer, f[2] marks
+  const char *delimiters = "|\n";
+  uint32_t provider_as   = 0;
+  uint32_t customer_as   = 0;
+  int option             = 1;
+
+  uint32_t as1 = asPathList[0];
+  uint32_t as2 = asPathList[1];
+        
+  fp = fopen(as_relationship_file, "rt");
+  if(fp)
+  {
+    while (fgets(buf, 1024, fp) != NULL)
+    {
+      char *s = buf;
+      int len = strlen(buf);
+
+      count++;
+      //if (count > 100) break;
+
+      if (!isdigit(*s)) // if a first character is not a number, continue to the next line
+        continue;
+
+      for(int i=0;  (field[i] = strsep(&s, delimiters)) != NULL && i < NUM_FIELDS; i++ ) 
+      {
+        // Multiple spaces will show up as multiple empty fields. Skip them.
+        if( *field[i] == '\0' ) 
+          continue;
+
+        //printf("field[%d]: %s\n", i, field[i]);
+      }
+
+      provider_as = strtoul(field[0], NULL, 10);
+      customer_as = strtoul(field[1], NULL, 10);
+      option      = strtoul(field[2], NULL, 10);
+
+      // find provider as in the file
+      if (provider_as == as1 && customer_as == as2) 
+      {
+        retVal = ASPA_UPSTREAM;  // upstream
+        break;
+      }
+      else if (provider_as == as2 && customer_as == as1)
+      {
+        retVal = ASPA_DOWNSTREAM; // downstream
+        break;
+      }
+      else
+        continue;
+    }
+  }
+  else
+  {
+    LOG(LEVEL_ERROR, "Can't open configuration file [%s]", as_relationship_file);
+  }
+
+  printf("total count: %d retrun value: %d\n", count, retVal);
+  fclose(fp);
+
+  return retVal;
+}
 // Function to reverse elements of an array
 void reverse(int arr[], int i, int n)
 {
@@ -338,7 +418,7 @@ void reverse(int arr[], int i, int n)
 }
 
 uint8_t do_AspaValidation(PATH_LIST* asPathList, uint8_t length, AS_TYPE asType, 
-                      uint8_t afi, ASPA_DBManager* aspaDBManager)
+                    AS_REL_DIR direction, uint8_t afi, ASPA_DBManager* aspaDBManager)
 {
   printf("\n[%s] ASPA Validation Starts\n", __FUNCTION__);
   uint8_t result = ASPA_RESULT_NIBBLE_ZERO; // for being distinguished with 0 (ASPA_RESULT_VALID)
@@ -390,7 +470,10 @@ uint8_t do_AspaValidation(PATH_LIST* asPathList, uint8_t length, AS_TYPE asType,
   //        With 3rd party customer provider table ?
 #ifdef NOT_YET
   CHECK_UP_DONWN_STREAM();
+  AS_REL_DIR direction = ASPA_UNKNOWNSTREAM; 
+  direction = check_AsRelationship(aspaDBManager->config->as_relationship_data, asPathList, length);
 #endif
+
 
   // revert asPathList to a new array variable
   PATH_LIST list[length];
@@ -399,8 +482,12 @@ uint8_t do_AspaValidation(PATH_LIST* asPathList, uint8_t length, AS_TYPE asType,
 
 
   ASPA_ValidationResult currentResult;
-  bool isUpStream = true;
-  //bool isUpStream = false;
+  bool isUpStream;
+  
+  if (direction == ASPA_UNKNOWNSTREAM || direction == ASPA_UPSTREAM) 
+    isUpStream = true;
+  else if (direction == ASPA_DOWNSTREAM)
+    isUpStream = false;
 
   /*
    *    Up Stream Validation 
@@ -670,7 +757,7 @@ static bool _processUpdateValidation(CommandHandler* cmdHandler,
       //
       uint8_t afi       = 1; // temporary behavior TODO: laster should be replaced 
       uint8_t valResult = do_AspaValidation (aspl->asPathList, 
-          aspl->asPathLength, aspl->asType, afi, aspaDBManager);
+          aspl->asPathLength, aspl->asType, aspl->asRelDir, afi, aspaDBManager);
 
       printf("Validation Result(0:valid, 2:Invalid, 3:Undefined 4:DonotUse 5:Unknown, 6:Unverifiable): %d\n",
           valResult);
@@ -692,6 +779,10 @@ static bool _processUpdateValidation(CommandHandler* cmdHandler,
     {
       printf("Something went wrong... path list was not registered\n");
     }
+
+    // release memory
+    if (aspl)
+      deleteAspathListEntry (aspl);
   }
 
   // unknown case, put into rpki queue for later validation
