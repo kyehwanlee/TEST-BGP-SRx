@@ -764,21 +764,6 @@ bool readConfigFile(Configuration* self, const char* filename)
     goto free_config;
   }
 
-  // ASPA 
-  sett = config_lookup(&cfg, "aspa");
-  if (sett != NULL)
-  {
-    if (config_setting_lookup_string(sett, "as_relationship_data", &strtmp))
-    {
-      if (self->as_relationship_data == NULL)
-      {
-        self->as_relationship_data = _duplicateString((char*)strtmp, 
-                &self->as_relationship_data, "ASPA AS Relationship Data file.");
-        printf("as relationship data file: %s\n", self->as_relationship_data);
-      }
-    }
-  }
-
   // optional experimental
   sett = config_lookup(&cfg, "mode");
   if (sett != NULL)

@@ -3182,7 +3182,7 @@ DEFUN (no_neighbor_set_peer_group,
 
 static int
 peer_flag_modify_vty (struct vty *vty, const char *ip_str,
-                      u_int16_t flag, int set)
+                      u_int32_t flag, int set)
 {
   int ret;
   struct peer *peer;
@@ -3200,13 +3200,13 @@ peer_flag_modify_vty (struct vty *vty, const char *ip_str,
 }
 
 static int
-peer_flag_set_vty (struct vty *vty, const char *ip_str, u_int16_t flag)
+peer_flag_set_vty (struct vty *vty, const char *ip_str, u_int32_t flag)
 {
   return peer_flag_modify_vty (vty, ip_str, flag, 1);
 }
 
 static int
-peer_flag_unset_vty (struct vty *vty, const char *ip_str, u_int16_t flag)
+peer_flag_unset_vty (struct vty *vty, const char *ip_str, u_int32_t flag)
 {
   return peer_flag_modify_vty (vty, ip_str, flag, 0);
 }
@@ -3421,6 +3421,54 @@ DEFUN (neighbor_bgpsec_mpnlri_ipv4,
 //  return peer_flag_set_vty(vty, argv[0], flag);
   peer_flag_set_vty(vty, argv[0], flag);
   return CMD_WARNING;
+}
+
+// peering relationship for ASPA
+DEFUN (neighbor_aspa_peering_relationship,
+       neighbor_aspa_peering_relationship_cmd,
+       SRX_VTY_CMD_NEIGHBOR_AS_RELATIONSHIP,
+       SRX_VTY_HLP_NEIGHBOR_AS_RELATIONSHIP)
+{
+
+  u_int32_t flag = 0;
+
+  if (strncmp (argv[1], "p", 1) == 0)
+  {
+    flag = PEER_FLAG_ASPA_RELATIONSHIP_PROV;
+  }
+  else if (strncmp (argv[1], "c", 1) == 0)
+  {
+    flag = PEER_FLAG_ASPA_RELATIONSHIP_CUST;
+  }
+  else
+  {
+    return CMD_ERR_INCOMPLETE;
+  }
+  return peer_flag_set_vty(vty, argv[0], flag);
+}
+
+
+DEFUN (no_neighbor_aspa_peering_relationship,
+       no_neighbor_aspa_peering_relationship_cmd,
+       SRX_VTY_CMD_NO_NEIGHBOR_AS_RELATIONSHIP,
+       SRX_VTY_HLP_NO_NEIGHBOR_AS_RELATIONSHIP)
+{
+
+  u_int32_t flag = 0;
+
+  if (strncmp (argv[1], "p", 1) == 0)
+  {
+    flag = PEER_FLAG_ASPA_RELATIONSHIP_PROV;
+  }
+  else if (strncmp (argv[1], "c", 1) == 0)
+  {
+    flag = PEER_FLAG_ASPA_RELATIONSHIP_CUST;
+  }
+  else
+  {
+    return CMD_ERR_INCOMPLETE;
+  }
+  return peer_flag_unset_vty(vty, argv[0], flag);
 }
 
 /**
@@ -11268,6 +11316,10 @@ bgp_vty_init (void)
   install_element (BGP_NODE, &no_neighbor_capability_bgpsec_cmd);
   // this one is deprecated
   install_element (BGP_NODE, &neighbor_bgpsec_mpnlri_ipv4_cmd);
+
+  /* aspa peering relationship */
+  install_element (BGP_NODE, &neighbor_aspa_peering_relationship_cmd);
+  install_element (BGP_NODE, &no_neighbor_aspa_peering_relationship_cmd);
 
   /* bgp extended message support */
   install_element (BGP_NODE, &neighbor_capability_extended_message_support_cmd);

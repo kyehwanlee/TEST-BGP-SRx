@@ -3053,6 +3053,8 @@ static const struct peer_flag_action peer_flag_action_list[] =
     { PEER_FLAG_BGPSEC_ROUTE_SERVER,      0, peer_change_none },
     { PEER_FLAG_EXTENDED_MESSAGE_SUPPORT, 0, peer_change_none },
     { PEER_FLAG_EXTENDED_MESSAGE_LIBERAL, 0, peer_change_none },
+    { PEER_FLAG_ASPA_RELATIONSHIP_PROV,   0, peer_change_none },
+    { PEER_FLAG_ASPA_RELATIONSHIP_CUST,   0, peer_change_none },
 #endif
     { 0, 0, 0 }
   };

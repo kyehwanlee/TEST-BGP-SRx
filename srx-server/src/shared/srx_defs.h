@@ -221,17 +221,27 @@ typedef enum {
   AS_SET             = 1,
   AS_SEQUENCE        = 2,
   AS_CONFED_SEQUENCE = 3,
-  AS_CONFED_SET      = 4
+  AS_CONFED_SET      = 4,
+  AS_MAKE_ENUM_32bit = 0xffffffff,
 } AS_TYPE;
 
 typedef struct {
   uint32_t asn;
 } ASSEGMENT;
 
+typedef enum {
+  AS_REL_UNKNOWN         = 0,
+  AS_REL_CUSTOMER        = 1,
+  AS_REL_PROVIDER        = 2,
+  AS_REL_SIBLING         = 3,
+  AS_REL_MAKE_ENUM_32bit = 0xffffffff,
+} AS_REL_TYPE;
+
 typedef struct {
   uint8_t     length;
   ASSEGMENT*  segments;
   AS_TYPE     asType;  // SEQUENCE, AS_SET, 
+  AS_REL_TYPE asRelationship;
 } SRxASPathList;
 
 typedef enum {
@@ -249,5 +259,9 @@ typedef enum {
   ASPA_DOWNSTREAM    = 2,
 } AS_REL_DIR;
 
+/* Address family numbers from RFC1700. */
+#define AFI_IP                    1
+#define AFI_IP6                   2
+#define AFI_MAX                   3
 
 #endif // !__SRX_DEFS_H__

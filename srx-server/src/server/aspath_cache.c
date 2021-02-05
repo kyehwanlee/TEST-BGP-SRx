@@ -16,6 +16,7 @@ typedef struct {
   uint8_t           aspaResult;
   AS_TYPE           asType;
   AS_REL_DIR        asRelDir;
+  uint16_t          afi;
 } PathListCacheTable;
 
 
@@ -85,7 +86,8 @@ static void del_AspathList (AspathCache* self, PathListCacheTable *cacheTable)
 }
 
 
-AS_PATH_LIST* newAspathListEntry (uint32_t length, uint32_t* pathData, AS_TYPE asType,  bool bBigEndian)
+AS_PATH_LIST* newAspathListEntry (uint32_t length, uint32_t* pathData, AS_TYPE asType, 
+                                  AS_REL_DIR asRelDir, uint16_t afi, bool bBigEndian)
 {
   if (!length)
   {
@@ -98,7 +100,9 @@ AS_PATH_LIST* newAspathListEntry (uint32_t length, uint32_t* pathData, AS_TYPE a
   pAspathList->asPathLength = length;
   pAspathList->asPathList   = (uint32_t*)calloc(length, sizeof(uint32_t));
   pAspathList->asType       = asType;
-  pAspathList->asRelDir     = ASPA_UNKNOWNSTREAM;
+  pAspathList->asRelDir     = asRelDir;
+  pAspathList->afi          = bBigEndian ? ntohs(afi): afi;
+
 
   int i=0;
   for (i=0; i < length; i++)
@@ -121,10 +125,11 @@ void printAsPathList(AS_PATH_LIST* aspl)
   printf("[%s] called \n", __FUNCTION__);
   if (aspl)
   {
-    printf("\tpath ID           : %08X \n" , aspl->pathID);
-    printf("\tlength            : %d \n"   , aspl->asPathLength);
-    printf("\tValidation Result : %d \n"   , aspl->aspaValResult);
-    printf("\tAS Path Type      : %d \n"   , aspl->asType);
+    printf("\tpath ID             : %08X \n" , aspl->pathID);
+    printf("\tlength              : %d \n"   , aspl->asPathLength);
+    printf("\tValidation Result   : %d \n"   , aspl->aspaValResult);
+    printf("\tAS Path Type        : %d \n"   , aspl->asType);
+    printf("\tAS Relationship dir : %d \n"   , aspl->asRelDir);
 
     if(aspl->asPathList)
     {
@@ -155,6 +160,8 @@ bool deleteAspathListEntry (AS_PATH_LIST* aspl)
 
   return true;
 }
+
+
 bool modifyAspaValidationResultToAspathCache(AspathCache *self, uint32_t pathId,
                       uint8_t modAspaResult, AS_PATH_LIST* pathlistEntry)
 {
@@ -197,6 +204,7 @@ int storeAspathList (AspathCache* self, SRxDefaultResult* srxRes,
     plCacheTable->pathId   = pathId;
     plCacheTable->asType   = asType;
     plCacheTable->asRelDir = pathlistEntry->asRelDir;
+    plCacheTable->afi      = pathlistEntry->afi;
 
     uint8_t length = pathlistEntry->asPathLength;
     plCacheTable->data.hops = length;
@@ -265,6 +273,8 @@ AS_PATH_LIST* getAspathList (AspathCache* self, uint32_t pathId, SRxResult* srxR
     aspl->asPathList    = plCacheTable->data.asPathList;
     aspl->aspaValResult = plCacheTable->aspaResult;
     aspl->asType        = plCacheTable->asType;
+    aspl->asRelDir      = plCacheTable->asRelDir;
+    aspl->afi           = plCacheTable->afi;
 
     if (srxRes->aspaResult != aspl->aspaValResult)
       srxRes->aspaResult  = aspl->aspaValResult;

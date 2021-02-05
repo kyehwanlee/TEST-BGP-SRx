@@ -581,7 +581,9 @@ bool processValidationRequest(ServerConnectionHandler* self,
   // initialize the val pointer - it will be adjusted within the correct
   // request type.
   uint8_t* valPtr = (uint8_t*)hdr;
-  AS_TYPE asType;
+  AS_TYPE     asType;
+  AS_REL_DIR  asRelDir;
+  AS_REL_TYPE asRelType;
   if (v4)
   {
     SRXPROXY_VERIFY_V4_REQUEST* v4Hdr = (SRXPROXY_VERIFY_V4_REQUEST*)hdr;
@@ -597,6 +599,7 @@ bool processValidationRequest(ServerConnectionHandler* self,
     bgpData.safi     = v4Hdr->bgpsecValReqData.valPrefix.safi;
     bgpData.local_as = v4Hdr->bgpsecValReqData.valData.local_as;
     asType           = ntohl(v4Hdr->asType);
+    asRelType        = ntohl(v4Hdr->asRelType);
   }
   else
   {
@@ -609,9 +612,11 @@ bool processValidationRequest(ServerConnectionHandler* self,
     bgpData.numberHops  = ntohs(v6Hdr->bgpsecValReqData.numHops);
     bgpData.attr_length = ntohs(v6Hdr->bgpsecValReqData.attrLen);
     // Now in network format as required.
-    bgpData.afi         = v6Hdr->bgpsecValReqData.valPrefix.afi;
-    bgpData.safi        = v6Hdr->bgpsecValReqData.valPrefix.safi;
-    bgpData.local_as    = v6Hdr->bgpsecValReqData.valData.local_as;
+    bgpData.afi      = v6Hdr->bgpsecValReqData.valPrefix.afi;
+    bgpData.safi     = v6Hdr->bgpsecValReqData.valPrefix.safi;
+    bgpData.local_as = v6Hdr->bgpsecValReqData.valData.local_as;
+    //asType           = ntohl(v6Hdr->asType);
+    //asRelType        = ntohl(v6Hdr->asRelType);
   }
 
 
@@ -653,7 +658,8 @@ bool processValidationRequest(ServerConnectionHandler* self,
   ProxyClientMapping* clientMapping = clientID > 0 ? &self->proxyMap[clientID]
                                                    : NULL;
 
-  printf("\n[%s] called and ASpath cache starts with AS Type:%d \n", __FUNCTION__, asType);
+  printf("\n[%s] called and ASpath cache starts with AS Type:%d AS Relationship:%d \n",
+      __FUNCTION__, asType, asRelType);
   uint32_t pathId = 0;
 
   doStoreUpdate = !getUpdateResult (self->updateCache, &updateID,
@@ -666,6 +672,17 @@ bool processValidationRequest(ServerConnectionHandler* self,
   AS_PATH_LIST *aspl;
   SRxResult srxRes_aspa; 
   bool modifyUpdateCacheWithAspaValue = false;
+
+  switch (asRelType)
+  {
+    case AS_REL_CUSTOMER:
+      asRelDir = ASPA_UPSTREAM; break;
+    case AS_REL_PROVIDER:
+      asRelDir = ASPA_DOWNSTREAM; break;
+    default:
+      asRelDir = ASPA_UNKNOWNSTREAM;     
+  }
+
 
   if (pathId == 0)  // if not found in  cEntry
   {
@@ -704,7 +721,7 @@ bool processValidationRequest(ServerConnectionHandler* self,
     // AS Path List not exist in Cache
     else
     {
-      aspl = newAspathListEntry(bgpData.numberHops, bgpData.asPath, asType, true);
+      aspl = newAspathListEntry(bgpData.numberHops, bgpData.asPath, asType, asRelDir, bgpData.afi, true);
       if(!aspl)
       {
         printf("+ memory allocation for AS path list entry resulted in fault \n");
@@ -717,12 +734,6 @@ bool processValidationRequest(ServerConnectionHandler* self,
         defResInfo.resSourceASPA     = hdr->aspaResSrc;
       }
 
-      // TODO: here need AS Relationship Direction
-      //
-      AS_REL_DIR asRelDir;
-      asRelDir = check_AsRelationship(self->aspathCache->aspaDBManager->config->as_relationship_data, 
-          aspl->asPathList, aspl->asPathLength);
-      
       // in order to free aspl, need to copy value inside the function below
       //
       storeAspathList(self->aspathCache, &defResInfo, pathId, asType, aspl);

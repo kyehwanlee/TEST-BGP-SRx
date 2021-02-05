@@ -671,6 +671,7 @@ uint8_t* createV4Request(uint8_t* pdu, SRxVerifyFlag method, uint32_t rToken,
   hdr->bgpsecValReqData.valPrefix.safi   = bgpsec->safi;
   hdr->bgpsecValReqData.valData.local_as = htonl(bgpsec->local_as);
   hdr->asType                            = htonl(asPathList.asType);
+  hdr->asRelType                         = htonl(asPathList.asRelationship);
 
   if ((numHops + attrLength) != 0)
   {
@@ -771,6 +772,7 @@ void verifyUpdate(SRxProxy* proxy, uint32_t localID,
   }
   printf("+ [proxy: %s] asPathList.length: %d\n", __FUNCTION__, asPathList.length);
   printf("+ [proxy: %s] asPathList.asType: %d\n", __FUNCTION__, asPathList.asType);
+  printf("+ [proxy: %s] asPathList.asRelationship: %d\n", __FUNCTION__, asPathList.asRelationship);
         
   for (int i=0; i< asPathList.length; i++)
       printf("+ [proxy: %s] asPathList.asn: %d\n", __FUNCTION__, asPathList.segments[i].asn);

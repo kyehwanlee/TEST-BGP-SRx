@@ -3231,6 +3231,25 @@ void verify_update (struct bgp *bgp, struct bgp_info *info,
         }
       }
 
+      //
+      // check peering relationship with peer's flags, PEER_FLAG_ASPA_RELATIONSHIP_{PROV|CUST}
+      //
+      struct peer *peer = NULL;
+      peer = info->peer;
+
+      if( CHECK_FLAG (peer->flags, PEER_FLAG_ASPA_RELATIONSHIP_PROV))
+      {
+        asPathList.asRelationship = AS_REL_PROVIDER;        
+      }
+      else if ( CHECK_FLAG (peer->flags, PEER_FLAG_ASPA_RELATIONSHIP_CUST))
+      {
+        asPathList.asRelationship = AS_REL_CUSTOMER;        
+      }
+      else
+      {
+        asPathList.asRelationship = AS_REL_UNKNOWN;        
+      }
+
       // Prepare the prefix
       IPPrefix* prefix = malloc(sizeof(IPPrefix));
       prefix_to_IPPrefix (&info->node->p, prefix);

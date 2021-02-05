@@ -227,6 +227,7 @@ typedef struct {
   uint32_t         originAS;
   uint32_t         bgpsecLength;
   AS_TYPE          asType;
+  AS_REL_TYPE      asRelType;
   BGPSECValReqData bgpsecValReqData;
 } __attribute__((packed)) SRXPROXY_VERIFY_V4_REQUEST;
 

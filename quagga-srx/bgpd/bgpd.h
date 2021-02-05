@@ -423,6 +423,26 @@ Software Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
 //                                    "Unflag that the peer as a route server and" \
 //                                    " receiving pcount equals zero is not allowed.\n"
 
+
+#define SRX_VTY_CMD_NEIGHBOR_AS_RELATIONSHIP NEIGHBOR_CMD2 "aspa (provider|customer|sibling)" 
+#define SRX_VTY_HLP_NEIGHBOR_AS_RELATIONSHIP NEIGHBOR_STR NEIGHBOR_ADDR_STR2 \
+                                    "Configure ASPA peering relationship\n" \
+                                    "configure neighbor relationship as a provider peer\n" \
+                                    "configure neighbor relationship as a customer peer\n" \
+                                    "configure neighbor relationship as a sibling peer\n"
+
+
+#define SRX_VTY_CMD_NO_NEIGHBOR_AS_RELATIONSHIP NO_NEIGHBOR_CMD2 "aspa (provider|customer|sibling)" 
+#define SRX_VTY_HLP_NO_NEIGHBOR_AS_RELATIONSHIP NO_STR NEIGHBOR_STR NEIGHBOR_ADDR_STR2 \
+                                    "Configure ASPA peering relationship\n" \
+                                    "configure neighbor relationship as a provider peer\n" \
+                                    "configure neighbor relationship as a customer peer\n" \
+                                    "configure neighbor relationship as a sibling peer\n"
+
+
+
+
+
 #endif /* USE_SRX */
 
 /* Typedef BGP specific types.  */
@@ -905,6 +925,8 @@ struct peer
 #define PEER_FLAG_BGPSEC_CAPABILITY_RECV    (1 << 14)/* bgpsec capability - RECV */
 #define PEER_FLAG_BGPSEC_CAPABILITY_SEND    (1 << 15)/* bgpsec capability - SEND */
 #define PEER_FLAG_BGPSEC_CAPABILITY         (1 << 15)/* bgpsec capability - SEND */
+#define PEER_FLAG_ASPA_RELATIONSHIP_PROV    (1 << 16)/* ASPA peer relationship provider */
+#define PEER_FLAG_ASPA_RELATIONSHIP_CUST    (1 << 17)/* ASPA peer relationship customer */
 #endif
 
   /* NSF mode (graceful restart) */
