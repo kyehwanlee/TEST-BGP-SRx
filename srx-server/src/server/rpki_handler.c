@@ -527,20 +527,16 @@ int handleAspaPdu(void* rpkiHandler, uint32_t customerAsn,
   RPKIHandler* handler = (RPKIHandler*)rpkiHandler;
   ASPA_DBManager* aspaDBManager = handler->aspaDBManager;
 
-  
   // call new ASPAObject here instead
   ASPA_Object *aspaObj = newASPAObject(customerAsn, providerAsCount, providerAsns, 1);
-
 
   char strWord[6];
   sprintf(strWord, "%d", customerAsn);
   printf("+ received a new ASPA object, search key in DB: %s\n", strWord);
 
   //char *strAsn1="65001", *strAsn2="60003";
-  TrieNode *root = aspaDBManager->tableRoot;
-
-  root = insert_trie(root, strWord, strWord, aspaObj);
-  //root = insert_trie(root, strAsn2, "100 200 400", aspaObj); // test
+  TrieNode *root;
+  root = insertAspaObj(aspaDBManager, strWord, strWord, aspaObj);
 
   // TODO: call rpki queue
 

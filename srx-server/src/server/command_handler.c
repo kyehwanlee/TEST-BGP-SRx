@@ -423,7 +423,7 @@ uint8_t do_AspaValidation(PATH_LIST* asPathList, uint8_t length, AS_TYPE asType,
       printf("+ customer AS: %d\t provider AS: %d\n", customerAS, providerAS);
 
       currentResult = hopResult[i+1] = 
-        ASPA_DB_lookup(aspaDBManager->tableRoot, customerAS, providerAS, afi);
+        ASPA_DB_lookup(aspaDBManager, customerAS, providerAS, afi);
 
       result |= currentResult;
       printf("+ current lookup result: %x Accured Result: %x\n", currentResult, result);
@@ -466,7 +466,7 @@ uint8_t do_AspaValidation(PATH_LIST* asPathList, uint8_t length, AS_TYPE asType,
       printf("+ customer AS: %d\t provider AS: %d\n", customerAS, providerAS);
 
       currentResult = hopResult[i+1] = 
-        ASPA_DB_lookup(aspaDBManager->tableRoot, customerAS, providerAS, afi);
+        ASPA_DB_lookup(aspaDBManager, customerAS, providerAS, afi);
 
       result |= currentResult;
       printf("+ current lookup result: %x Accured Result: %x\n", currentResult, result);

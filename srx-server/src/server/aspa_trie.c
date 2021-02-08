@@ -4,6 +4,7 @@
 #include <string.h>
 #include <stdbool.h>
 #include "server/aspa_trie.h"
+#include "util/log.h"
 
 static uint32_t countTrieNode =0;
 
@@ -12,15 +13,42 @@ bool initializeAspaDBManager(ASPA_DBManager* aspaDBManager, Configuration* confi
    aspaDBManager->tableRoot = newAspaTrie();
    aspaDBManager->count = 0;
    aspaDBManager->config = config;
+  
+   if (!createRWLock(&aspaDBManager->tableLock))
+   {
+     RAISE_ERROR("Unable to setup the aspa object db r/w lock");
+     return false;
+   }
 
   return true;
 }
+
+void emptyAspaDB(ASPA_DBManager* self)
+{
+  acquireWriteLock(&self->tableLock);
+  free_trienode(self->tableRoot);
+  self->tableRoot = NULL;
+  self->count = 0;
+  unlockWriteLock(&self->tableLock);
+}
+
+
+void releaseAspaDBManager(ASPA_DBManager* self)
+{
+  if (self != NULL)
+  {
+    releaseRWLock(&self->tableLock);
+    emptyAspaDB(self);
+  }
+}
+
 
 TrieNode* newAspaTrie(void) 
 {
   TrieNode *rootNode = make_trienode('\0', NULL, NULL);
   return rootNode;
 }
+
 
 ASPA_Object* newASPAObject(uint32_t cusAsn, uint16_t pAsCount, uint32_t* provAsns, uint16_t afi)
 {
@@ -87,10 +115,13 @@ void free_trienode(TrieNode* node) {
 // TODO: 
 //      1. new value substitution 
 //
-TrieNode* insert_trie(TrieNode* root, char* word, char* userData, ASPA_Object* obj) {
+//TrieNode* insert_trie(ASPA_DBManager* self, char* word, char* userData, ASPA_Object* obj) {
+TrieNode* insertAspaObj(ASPA_DBManager* self, char* word, char* userData, ASPA_Object* obj) {
     // Inserts the word onto the Trie
     // ASSUMPTION: The word only has lower case characters
-    TrieNode* temp = root;
+    TrieNode* temp = self->tableRoot;
+    acquireWriteLock(&self->tableLock);
+
     int i=0;
     for (i=0; word[i] != '\0'; i++) {
         // Get the relative position in the alphabet list
@@ -111,7 +142,9 @@ TrieNode* insert_trie(TrieNode* root, char* word, char* userData, ASPA_Object* o
     // At the end of the word, mark this node as the leaf node
     temp->is_leaf = 1;
     countTrieNode++;
-    return root;
+    unlockWriteLock(&self->tableLock);
+
+    return self->tableRoot;
 }
 
 uint32_t getCountTrieNode(void)
@@ -136,10 +169,10 @@ int search_trie(TrieNode* root, char* word)
     return 0;
 }
 
-ASPA_Object* findAspaObject(TrieNode* root, char* word)
+ASPA_Object* findAspaObject(ASPA_DBManager* self, char* word)
 {
     ASPA_Object *obj;
-    TrieNode* temp = root;
+    TrieNode* temp = self->tableRoot; 
 
     for(int i=0; word[i]!='\0'; i++)
     {
@@ -221,13 +254,16 @@ void print_search(TrieNode* root, char* word) {
         printf("Found!\n");
 }/*}}}*/
 
-ASPA_ValidationResult ASPA_DB_lookup(TrieNode* root, uint32_t customerAsn, uint32_t providerAsn, uint8_t afi )
+ASPA_ValidationResult ASPA_DB_lookup(ASPA_DBManager* self, uint32_t customerAsn, uint32_t providerAsn, uint8_t afi )
 {
   printf("++ [%s] called \n", __FUNCTION__);
+
   char strCusAsn[6] = {};
   sprintf(strCusAsn, "%d", customerAsn);  
 
-  ASPA_Object *obj = findAspaObject(root, strCusAsn);
+  acquireWriteLock(&self->tableLock);
+  ASPA_Object *obj = findAspaObject(self, strCusAsn);
+  unlockWriteLock(&self->tableLock);
 
   if (!obj) // if there is no object item
   {
