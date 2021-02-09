@@ -81,9 +81,10 @@ typedef struct {
 bool createAspathCache(AspathCache* self, ASPA_DBManager* aspaDBManager);
 void releaseAspathCache(AspathCache* self);
 void emptyAspathCache(AspathCache* self);
-AS_PATH_LIST* newAspathListEntry (uint32_t length, uint32_t* pathData, AS_TYPE asType, AS_REL_DIR asRelDir, uint16_t afi, bool bBigEndian);
+AS_PATH_LIST* newAspathListEntry (uint32_t length, uint32_t* pathData, uint32_t pathId, 
+                                  AS_TYPE asType, AS_REL_DIR asRelDir, uint16_t afi, bool bBigEndian);
 int storeAspathList (AspathCache* self, SRxDefaultResult* defRes, uint32_t pathId, AS_TYPE, AS_PATH_LIST* pathlistEntry);
-AS_PATH_LIST* getAspathList (AspathCache* self, uint32_t pathId, SRxResult* srxRes);
+AS_PATH_LIST* getAspathListFromAspathCache (AspathCache* self, uint32_t pathId, SRxResult* srxRes);
 void printAsPathList(AS_PATH_LIST* aspl);
 uint32_t makePathId (uint8_t asPathLength, PATH_LIST* asPathList, bool bBigEndian);
 

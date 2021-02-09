@@ -690,7 +690,7 @@ bool processValidationRequest(ServerConnectionHandler* self,
     printf("+ generated Path ID : %08X \n", pathId);
 
     // to see if there is already exist or not in AS path Cache with path id
-    aspl = getAspathList (self->aspathCache, pathId, &srxRes_aspa);
+    aspl = getAspathListFromAspathCache (self->aspathCache, pathId, &srxRes_aspa);
     
     // AS Path List already exist in Cache
     if(aspl)
@@ -721,7 +721,7 @@ bool processValidationRequest(ServerConnectionHandler* self,
     // AS Path List not exist in Cache
     else
     {
-      aspl = newAspathListEntry(bgpData.numberHops, bgpData.asPath, asType, asRelDir, bgpData.afi, true);
+      aspl = newAspathListEntry(bgpData.numberHops, bgpData.asPath, pathId, asType, asRelDir, bgpData.afi, true);
       if(!aspl)
       {
         printf("+ memory allocation for AS path list entry resulted in fault \n");

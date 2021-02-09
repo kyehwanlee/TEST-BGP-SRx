@@ -1266,6 +1266,7 @@ void handleClient(ServerSocket* svrSock, int sock, void* user)
       case PDU_TYPE_RESET_QUERY:
         OUTPUTF(true, "[+%lds] Received a 'Reset Query'\n", diffReq);
         sendPrefixes(&sock, 0, sessionID, true, ccl->version);
+        sendAspaPdu(&sock, ccl->version); // test for override
         break;
 
       case PDU_TYPE_ERROR_REPORT:

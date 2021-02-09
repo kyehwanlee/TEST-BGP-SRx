@@ -8,10 +8,12 @@
 
 static uint32_t countTrieNode =0;
 
+// API for initialization
+//
 bool initializeAspaDBManager(ASPA_DBManager* aspaDBManager, Configuration* config) 
 {
    aspaDBManager->tableRoot = newAspaTrie();
-   aspaDBManager->count = 0;
+   aspaDBManager->countAspaObj = 0;
    aspaDBManager->config = config;
   
    if (!createRWLock(&aspaDBManager->tableLock))
@@ -23,16 +25,20 @@ bool initializeAspaDBManager(ASPA_DBManager* aspaDBManager, Configuration* confi
   return true;
 }
 
-void emptyAspaDB(ASPA_DBManager* self)
+// delete all db
+//
+static void emptyAspaDB(ASPA_DBManager* self)
 {
   acquireWriteLock(&self->tableLock);
   free_trienode(self->tableRoot);
   self->tableRoot = NULL;
-  self->count = 0;
+  self->countAspaObj = 0;
   unlockWriteLock(&self->tableLock);
 }
 
 
+// external api for release db
+//
 void releaseAspaDBManager(ASPA_DBManager* self)
 {
   if (self != NULL)
@@ -43,13 +49,17 @@ void releaseAspaDBManager(ASPA_DBManager* self)
 }
 
 
-TrieNode* newAspaTrie(void) 
+// generate trie node
+//
+static TrieNode* newAspaTrie(void) 
 {
   TrieNode *rootNode = make_trienode('\0', NULL, NULL);
   return rootNode;
 }
 
 
+// external api for creating db object
+//
 ASPA_Object* newASPAObject(uint32_t cusAsn, uint16_t pAsCount, uint32_t* provAsns, uint16_t afi)
 {
   ASPA_Object *obj = (ASPA_Object*)calloc(1, sizeof(ASPA_Object));
@@ -70,7 +80,9 @@ ASPA_Object* newASPAObject(uint32_t cusAsn, uint16_t pAsCount, uint32_t* provAsn
 
 }
 
-bool deleteASPAObject(ASPA_Object *obj)
+// delete aspa object
+//
+bool deleteASPAObject(ASPA_DBManager* self, ASPA_Object *obj)
 {
   if(obj)
   {
@@ -79,13 +91,16 @@ bool deleteASPAObject(ASPA_Object *obj)
       free(obj->providerAsns);
     }
     free (obj);
+    self->countAspaObj--;
     return true;
   }
   return false;
 }
 
 
-TrieNode* make_trienode(char data, char* userData, ASPA_Object* obj) {
+// create trie node
+//
+static TrieNode* make_trienode(char data, char* userData, ASPA_Object* obj) {
     // Allocate memory for a TrieNode
     TrieNode* node = (TrieNode*) calloc (1, sizeof(TrieNode));
     int i=0;
@@ -93,12 +108,13 @@ TrieNode* make_trienode(char data, char* userData, ASPA_Object* obj) {
         node->children[i] = NULL;
     node->is_leaf = 0;
     node->data = data;
-    node->userData = userData? userData:NULL;
-    node->aspaObjects = obj;
+    node->userData = NULL;
+    node->aspaObjects = NULL;
     return node;
 }
 
-void free_trienode(TrieNode* node) {
+// free node
+static void free_trienode(TrieNode* node) {
     // Free the trienode sequence
     int i=0;
     for(i=0; i<N; i++) {
@@ -112,47 +128,53 @@ void free_trienode(TrieNode* node) {
     free(node);
 }
 
-// TODO: 
-//      1. new value substitution 
+//  new value insert and substitution 
 //
-//TrieNode* insert_trie(ASPA_DBManager* self, char* word, char* userData, ASPA_Object* obj) {
 TrieNode* insertAspaObj(ASPA_DBManager* self, char* word, char* userData, ASPA_Object* obj) {
-    // Inserts the word onto the Trie
-    // ASSUMPTION: The word only has lower case characters
     TrieNode* temp = self->tableRoot;
     acquireWriteLock(&self->tableLock);
 
-    int i=0;
-    for (i=0; word[i] != '\0'; i++) {
-        // Get the relative position in the alphabet list
+    for (int i=0; word[i] != '\0'; i++) {
         int idx = (int) word[i] - '0';
         //printf("index: %02x(%d), word[%d]: %c  \n", idx, idx, i, word[i]);
         if (temp->children[idx] == NULL) {
-            // If the corresponding child doesn't exist,
-            // simply create that child!
+            // If the corresponding child doesn't exist, simply create that child!
             temp->children[idx] = make_trienode(word[i], userData, obj);
         }
         else {
             // Do nothing. The node already exists
         }
         // Go down a level, to the child referenced by idx
-        // since we have a prefix match
         temp = temp->children[idx];
     }
     // At the end of the word, mark this node as the leaf node
     temp->is_leaf = 1;
+    temp->userData =  userData;
+
+    // substitution
+    if (temp->aspaObjects && temp->aspaObjects != obj)
+    {
+      deleteASPAObject(self, temp->aspaObjects);
+    }
+    temp->aspaObjects = obj;
     countTrieNode++;
+    self->countAspaObj++;
+
     unlockWriteLock(&self->tableLock);
 
-    return self->tableRoot;
+    return temp;
 }
 
+// get total count
+//
 uint32_t getCountTrieNode(void)
 {
   return countTrieNode;
 }
 
-int search_trie(TrieNode* root, char* word)
+// search method
+//
+static int search_trie(TrieNode* root, char* word)
 {
     // Searches for word in the Trie
     TrieNode* temp = root;
@@ -169,6 +191,8 @@ int search_trie(TrieNode* root, char* word)
     return 0;
 }
 
+// external api for searching trie
+//
 ASPA_Object* findAspaObject(ASPA_DBManager* self, char* word)
 {
     ASPA_Object *obj;
@@ -189,6 +213,9 @@ ASPA_Object* findAspaObject(ASPA_DBManager* self, char* word)
     return NULL;
 }
 
+//
+//  print all nodes
+//
 TrieNode* printAllLeafNode(TrieNode *node)
 {
   TrieNode* leaf = NULL;
@@ -254,6 +281,9 @@ void print_search(TrieNode* root, char* word) {
         printf("Found!\n");
 }/*}}}*/
 
+// 
+// external API for db loopkup
+//
 ASPA_ValidationResult ASPA_DB_lookup(ASPA_DBManager* self, uint32_t customerAsn, uint32_t providerAsn, uint8_t afi )
 {
   printf("++ [%s] called \n", __FUNCTION__);

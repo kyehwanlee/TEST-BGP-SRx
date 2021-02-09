@@ -324,12 +324,16 @@ static void handleEndOfData (uint32_t valCacheID, uint16_t session_id,
           TrieNode *root = aspaDBManager->tableRoot;
 
           printf("+ Path ID: %X\n", pathId);
-          AS_PATH_LIST *aspl = getAspathList (handler->aspathCache, pathId, &srxRes);
+          AS_PATH_LIST *aspl = getAspathListFromAspathCache (handler->aspathCache, pathId, &srxRes);
 
           if (aspl)
           {
             // call ASPA validation
-            uint8_t afi       = 1; // temporary behavior TODO: laster should be replaced 
+            // 
+            uint8_t afi = aspl->afi;  
+            if (aspl->afi == 0 || aspl->afi > 2) // if more than 2 (AFI_IP6)
+              afi = AFI_IP;                      // set default
+
             uint8_t valResult = do_AspaValidation (aspl->asPathList, 
                 aspl->asPathLength, aspl->asType, aspl->asRelDir, afi, aspaDBManager);
       

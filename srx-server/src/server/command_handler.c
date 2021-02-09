@@ -660,17 +660,16 @@ static bool _processUpdateValidation(CommandHandler* cmdHandler,
     // Retrieve data from aspath cache with crc Key, path ID, here
     //
     printf("+ Path ID: %X\n", pathId);
-    AS_PATH_LIST *aspl = getAspathList (cmdHandler->aspathCache, pathId, &srxRes);
+    AS_PATH_LIST *aspl = getAspathListFromAspathCache (cmdHandler->aspathCache, pathId, &srxRes);
     printAsPathList(aspl);
 
     if (aspl)
     {
-      //
       // call ASPA validation
       //
-      uint8_t afi = AFI_IP;  // default
-      if (aspl->afi > 2)
-        afi = AFI_IP;
+      uint8_t afi = aspl->afi;  
+      if (aspl->afi == 0 || aspl->afi > 2) // if more than 2 (AFI_IP6)
+        afi = AFI_IP;                      // set default
 
       uint8_t valResult = do_AspaValidation (aspl->asPathList, 
           aspl->asPathLength, aspl->asType, aspl->asRelDir, afi, aspaDBManager);
