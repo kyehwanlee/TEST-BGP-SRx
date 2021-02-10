@@ -795,8 +795,8 @@ int bgp_srx_evaluation (struct bgp *bgp, int mode)
       srx_config_unset (bgp, SRX_CONFIG_EVAL_DISTR);
       srx_config_set   (bgp, SRX_CONFIG_EVAL_ORIGIN);
       break;
+    case SRX_CONFIG_EVAL_OVAV:
     case SRX_CONFIG_EVAL_ASPA: // work along with origin validation
-      srx_config_unset (bgp, SRX_CONFIG_EVAL_DISTR);
       srx_config_set   (bgp, SRX_CONFIG_EVAL_ORIGIN);
       srx_config_set   (bgp, SRX_CONFIG_EVAL_ASPA);
       break;

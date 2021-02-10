@@ -86,7 +86,8 @@ Software Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
                                 " commands\n"
 
 #define SRX_VTY_CMD_EVALUATE    "srx evaluation (" SRX_VTY_EVAL_ORIGIN_ONLY \
-                                                 "|" SRX_VTY_EVAL_BGPSEC ")"
+                                                 "|" SRX_VTY_EVAL_BGPSEC \
+                                                 "|" SRX_VTY_EVAL_ASPA ")"
 #define SRX_VTY_OUT_EVALUATE    "srx evaluation %s%s"
 #define SRX_VTY_HLP_EVALUATE    SRX_VTY_HLP_STR \
                                 "Activate the policy processing\n" \
@@ -535,9 +536,10 @@ struct bgp
 #define SRX_CONFIG_EVAL_ORIGIN   (1 << 1)
 // Below must be set in combination with VALORIGIN
 #define SRX_CONFIG_EVAL_PATH     (1 << 2)
-#define SRX_CONFIG_EVALUATE      (SRX_CONFIG_EVAL_ORIGIN | SRX_CONFIG_EVAL_PATH | SRX_CONFIG_EVAL_ASPA)
+#define SRX_CONFIG_EVALUATE      (SRX_CONFIG_EVAL_ORIGIN | SRX_CONFIG_EVAL_PATH)
+#define SRX_CONFIG_EVAL_OVAV     (SRX_CONFIG_EVAL_ORIGIN | SRX_CONFIG_EVAL_ASPA)
 
-#define SRX_CONFIG_EVAL_DISTR    ((1 << 3) | SRX_CONFIG_EVALUATE)
+#define SRX_CONFIG_EVAL_DISTR    ((1 << 3) | SRX_CONFIG_EVALUATE | SRX_CONFIG_EVAL_ASPA)
 #define SRX_CONFIG_DISPLAY_INFO  (1 << 4)
 #endif /* USE_SRX */
 

@@ -1254,8 +1254,6 @@ bgp_info_cmp (struct bgp *bgp, struct bgp_info *new, struct bgp_info *exist,
     }
 
     // Retrieve Result
-    //exist_result = srx_calc_validation_state(bgp, exist);
-    //new_result   = srx_calc_validation_state(bgp, new);
     exist_SrxVal = getInfoToSrxVal(exist);
     new_SrxVal   = getInfoToSrxVal(new);
   }
