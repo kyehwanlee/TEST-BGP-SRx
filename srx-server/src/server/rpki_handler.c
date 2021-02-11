@@ -529,7 +529,8 @@ int handleAspaPdu(void* rpkiHandler, uint32_t customerAsn,
   ASPA_DBManager* aspaDBManager = handler->aspaDBManager;
 
   // call new ASPAObject here instead
-  ASPA_Object *aspaObj = newASPAObject(customerAsn, providerAsCount, providerAsns, 1);
+  uint16_t afi = AFI_IP; // TODO: later need to parse from cache server, for now use default
+  ASPA_Object *aspaObj = newASPAObject(customerAsn, providerAsCount, providerAsns, afi);
 
   char strWord[6];
   sprintf(strWord, "%d", customerAsn);

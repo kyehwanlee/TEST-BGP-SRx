@@ -657,8 +657,11 @@ int bgp_info_set_ignore_flag (struct bgp_info* info)
   ignore = 0;
   bgp = info->peer->bgp;
 
-  zlog_debug ("[ ASPA ] %s called [uID:%08X]- ROA: %d BGPSEC:%d ASPA:%d (0:V 1:NF 2:Iv 3:Ud 5:Uk 6:Uv)", 
-      __FUNCTION__, info->updateID, info->val_res_ROA, info->val_res_BGPSEC, info->val_res_ASPA);
+  if (BGP_DEBUG (aspa, ASPA))
+  {
+    zlog_debug ("[ ASPA ] %s called [uID:%08X]- ROA: %d BGPSEC:%d ASPA:%d (0:V 1:NF 2:Iv 3:Ud 4:DNU 5:Uk 6:Uv)", 
+        __FUNCTION__, info->updateID, info->val_res_ROA, info->val_res_BGPSEC, info->val_res_ASPA);
+  }
   // check the setting ignore-invalid according to the result value
   if (bgp->srx_config & SRX_CONFIG_EVALUATE)
   {
@@ -3191,22 +3194,6 @@ void verify_update (struct bgp *bgp, struct bgp_info *info,
       oas = aspath_origin_as (info->attr->aspath);
       SRxASPathList asPathList;
       memset(&asPathList, 0x0, sizeof(asPathList));
-  
-      struct assegment* cseg = NULL;
-      if(info->attr->aspath && info->attr->aspath->segments)
-      {
-        cseg = info->attr->aspath->segments;
-        asPathList.length = cseg->length;
-        asPathList.segments = (ASSEGMENT*)calloc(asPathList.length, sizeof(ASSEGMENT));
-        asPathList.asType = cseg->type;
-
-        for (int i=0; cseg && i<cseg->length; i++)
-        {
-          asPathList.segments[i].asn =  cseg->as[i]; 
-          zlog_debug ("[ ASPA ] asPathList.segment[%d].asn: %6d type:%d AS relationship: %d", 
-              i, cseg->as[i], asPathList.asType, asPathList.asRelationship);
-        }
-      }
 
       //
       // check peering relationship with peer's flags, PEER_FLAG_ASPA_RELATIONSHIP_{PROV|CUST}
@@ -3225,6 +3212,29 @@ void verify_update (struct bgp *bgp, struct bgp_info *info,
       else
       {
         asPathList.asRelationship = AS_REL_UNKNOWN;        
+      }
+
+      struct assegment* cseg = NULL;
+      if(info->attr->aspath && info->attr->aspath->segments)
+      {
+        cseg = info->attr->aspath->segments;
+        asPathList.length = cseg->length;
+        asPathList.segments = (ASSEGMENT*)calloc(asPathList.length, sizeof(ASSEGMENT));
+        asPathList.asType = cseg->type;
+            
+        zlog_debug ("[ ASPA ] AS PathList Info - AS Length: %d  Type: %s  AS relationship: %s", 
+                asPathList.length, asPathList.asType==2 ? "AS_SEQUENCE": (asPathList.asType==1 ? "AS_SET": "ETC"), 
+                asPathList.asRelationship == 2 ? "provider" : (asPathList.asRelationship == 1 ? "customer": "unknown"));
+
+        for (int i=0; cseg && i<cseg->length; i++)
+        {
+          asPathList.segments[i].asn =  cseg->as[i]; 
+          if (BGP_DEBUG (aspa, ASPA))
+          {
+            zlog_debug ("[ ASPA ] asPathList.segment[%d].asn: %6d type:%d AS relationship: %d", 
+                i, cseg->as[i], asPathList.asType, asPathList.asRelationship);
+          }
+        }
       }
 
       // Prepare the prefix

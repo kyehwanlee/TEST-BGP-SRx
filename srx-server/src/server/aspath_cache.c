@@ -333,28 +333,28 @@ void printPathListCacheTableEntry(PathListCacheTable *cacheEntry)
   if (cacheEntry)
   {
     printf( "\n");
-    printf( " path ID           : %08X" , cacheEntry->pathId);
-    printf( " length (hops)     : %d "  , cacheEntry->data.hops);
-    printf( " Validation Result : %d "  , cacheEntry->aspaResult);
-    printf( " \t(0:valid, 2:Invalid, 3:Undefined 5:Unknown, 6:Unverifiable)");
-    printf( " AS Path Type      : %d "  , cacheEntry->asType);
+    printf( " path ID           : 0x%08X\n" , cacheEntry->pathId);
+    printf( " length (hops)     : %d\n"  , cacheEntry->data.hops);
+    printf( " Validation Result : %d\n"  , cacheEntry->aspaResult);
+    printf( " \t(0:valid, 2:Invalid, 3:Undefined 5:Unknown, 6:Unverifiable)\n");
+    printf( " AS Path Type      : %d\n"  , cacheEntry->asType);
 
     if (cacheEntry->data.asPathList)
     {
       for(int i=0; i<cacheEntry->data.hops; i++)
       {
-        printf( " - Path List[%d]: %d ", i, cacheEntry->data.asPathList[i]);
+        printf( " - Path List[%d]: %d \n", i, cacheEntry->data.asPathList[i]);
       }
       printf( "\n");
     }
     else
     {
-      printf( " Path List: Doesn't exist ");
+      printf( " Path List: Doesn't exist \n");
     }
   }
   else
   {
-    printf( " No Entry exist");
+    printf( " No Entry exist\n");
   }
 }
 
