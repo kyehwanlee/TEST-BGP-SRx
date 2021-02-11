@@ -231,7 +231,6 @@ TrieNode* printAllLeafNode(TrieNode *node)
   {
     if(node->children[i])
     {
-      //printf("%d", i);
       leaf = printAllLeafNode(node->children[i]);
       if (leaf)
       {
@@ -286,7 +285,7 @@ void print_search(TrieNode* root, char* word) {
 //
 ASPA_ValidationResult ASPA_DB_lookup(ASPA_DBManager* self, uint32_t customerAsn, uint32_t providerAsn, uint8_t afi )
 {
-  printf("++ [%s] called \n", __FUNCTION__);
+  LOG(LEVEL_INFO, FILE_LINE_INFO " called");
 
   char strCusAsn[6] = {};
   sprintf(strCusAsn, "%d", customerAsn);  
@@ -297,29 +296,29 @@ ASPA_ValidationResult ASPA_DB_lookup(ASPA_DBManager* self, uint32_t customerAsn,
 
   if (!obj) // if there is no object item
   {
-    printf("++ [db] No customer ASN exist -- Unknown \n");
+    LOG(LEVEL_INFO, "[db] No customer ASN exist -- Unknown");
     return ASPA_RESULT_UNKNOWN;
   }
   else // found object
   {
-    printf("++ [db] customer ASN: %d\n", obj->customerAsn);
-    printf("++ [db] providerAsCount : %d\n", obj->providerAsCount);
-    printf("++ [db] Address: provider asns : %p\n", obj->providerAsns);
-    printf("++ [db] afi: %d\n", obj->afi);
+    LOG(LEVEL_INFO, "[db] customer ASN: %d", obj->customerAsn);
+    LOG(LEVEL_INFO, "[db] providerAsCount : %d", obj->providerAsCount);
+    LOG(LEVEL_INFO, "[db] Address: provider asns : %p", obj->providerAsns);
+    LOG(LEVEL_INFO, "[db] afi: %d", obj->afi);
 
     if (obj->providerAsns)
     {
       for(int i=0; i< obj->providerAsCount; i++)
       {
-        printf("++ [db] providerAsns[%d]: %d\n", i, obj->providerAsns[i]);
+        LOG(LEVEL_INFO, "[db] providerAsns[%d]: %d", i, obj->providerAsns[i]);
         if (obj->providerAsns[i] == providerAsn && obj->afi == afi)
         {
-          printf("++ [db] Matched -- Valid \n");
+          LOG(LEVEL_INFO, "[db] Matched -- Valid");
           return ASPA_RESULT_VALID;
         }
       }
   
-      printf("++ [db] No Matched -- Invalid \n");
+      LOG(LEVEL_INFO, "[db] No Matched -- Invalid");
       return ASPA_RESULT_INVALID;
     }
   }
@@ -330,26 +329,6 @@ ASPA_ValidationResult ASPA_DB_lookup(ASPA_DBManager* self, uint32_t customerAsn,
 
 
 
-
-
-#if 0
-int main() {
-    // Driver program for the Trie Data Structure Operations
-    TrieNode* root = make_trienode('\0');
-    root = insert_trie(root, "61500");
-    root = insert_trie(root, "61301");
-
-    printf(" --- searching --- \n");
-    print_search(root, "61500");
-    print_search(root, "61300");
-    print_search(root, "60000");
-
-    print_trie(root);
-    free_trienode(root);
-    printf("\n");
-    return 0;
-}
-#endif
 
 
 

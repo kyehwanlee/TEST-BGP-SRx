@@ -653,39 +653,33 @@ int bgp_info_set_ignore_flag (struct bgp_info* info)
 {
   int ignore;
   struct bgp *bgp;
-  //int valRes;
 
   ignore = 0;
   bgp = info->peer->bgp;
-  //valRes = srx_calc_validation_state(bgp, info);
 
-  printf("\n[%s] called[uID:%08X] - ROA: %d  BGPSEC:%d  ASPA:%d (0:V 1:NF 2:I 3:UD)\n", 
+  zlog_debug ("[ ASPA ] %s called [uID:%08X]- ROA: %d BGPSEC:%d ASPA:%d (0:V 1:NF 2:Iv 3:Ud 5:Uk 6:Uv)", 
       __FUNCTION__, info->updateID, info->val_res_ROA, info->val_res_BGPSEC, info->val_res_ASPA);
   // check the setting ignore-invalid according to the result value
   if (bgp->srx_config & SRX_CONFIG_EVALUATE)
   {
-    printf("bgp srx val policy : %04X  \n", bgp->srx_val_policy);
     switch (info->val_res_ROA) 
     {
       case SRx_RESULT_INVALID:
         if (bgp->srx_val_policy & SRX_VAL_POLICY_ROA_IGNORE_INVALID)
         {
           ignore = 1;
-          printf("Ignore set - roa invalid\n");
         }
         break;
       case SRx_RESULT_NOTFOUND:
         if (bgp->srx_val_policy & SRX_VAL_POLICY_ROA_IGNORE_NOTFOUND)
         {
           ignore = 1;
-          printf("Ignore set - roa notfound\n");
         }
         break;
       case SRx_RESULT_UNDEFINED:
         if (bgp->srx_val_policy & SRX_VAL_POLICY_ROA_IGNORE_UNDEFINED)
         {
           ignore = 1;
-          printf("Ignore set - roa undefined\n");
         }
       default:
         break;
@@ -699,21 +693,18 @@ int bgp_info_set_ignore_flag (struct bgp_info* info)
           if (bgp->srx_val_policy & SRX_VAL_POLICY_BGPSEC_IGNORE_INVALID)
           {
             ignore = 1;
-            printf("Ignore set - bgpsec invalid\n");
           }
           break;
         case SRx_RESULT_NOTFOUND: // XXX: no exist in case of not found in PV
           if (bgp->srx_val_policy & SRX_VAL_POLICY_BGPSEC_IGNORE_NOTFOUND)
           {
             ignore = 1;
-            printf("Ignore set - bgpsec notfound\n");
           }
           break;
         case SRx_RESULT_UNDEFINED:
           if (bgp->srx_val_policy & SRX_VAL_POLICY_BGPSEC_IGNORE_UNDEFINED)
           {
             ignore = 1;
-            printf("Ignore set - bgpsec undefined\n");
           }
         default:
           break;
@@ -728,28 +719,24 @@ int bgp_info_set_ignore_flag (struct bgp_info* info)
           if (bgp->srx_val_policy & SRX_VAL_POLICY_ASPA_IGNORE_INVALID)
           {
             ignore = 1;
-            printf("Ignore set - aspa invalid\n");
           }
           break;
         case SRx_RESULT_UNKNOWN:
           if (bgp->srx_val_policy & SRX_VAL_POLICY_ASPA_IGNORE_UNKNOWN)
           {
             ignore = 1;
-            printf("Ignore set - aspa unknown\n");
           }
           break;
         case SRx_RESULT_UNDEFINED:
           if (bgp->srx_val_policy & SRX_VAL_POLICY_ASPA_IGNORE_UNDEFINED)
           {
             ignore = 1;
-            printf("Ignore set - aspa undefined\n");
           }
           break;
         case SRx_RESULT_UNVERIFIABLE:
           if (bgp->srx_val_policy & SRX_VAL_POLICY_ASPA_IGNORE_UNVERIFIABLE)
           {
             ignore = 1;
-            printf("Ignore set - aspa unverifiable\n");
           }
         default:
           break;
@@ -773,18 +760,12 @@ int bgp_info_set_ignore_flag (struct bgp_info* info)
   {
     if (ignore == 0)
     {
-     // zlog_debug ("Remove 'Ignore' flag for update [0x%08X]!",
-     //             info->updateID);
       bgp_info_unset_flag (info->node, info, BGP_INFO_IGNORE);
-      printf("before: ignore set, now: ignore unset\n");
     }
   }
   else if (ignore == 1)
   {
-    //zlog_debug ("Setting 'Ignore' flag for update [0x%08X]!",
-    //            info->updateID);
     bgp_info_set_flag (info->node, info, BGP_INFO_IGNORE);
-    printf("Ignore Flag Set at the end\n");
   }
 
   return ignore;
@@ -1021,7 +1002,6 @@ void bgp_info_set_validation_result (struct bgp_info *info,
     int requeue       = 0;
 
     // First store the current status
-    //int oldResult = srx_calc_validation_state(bgp, info);
     SRxResult oldValResult = getInfoToSrxVal(info);
     uint8_t oldIgnore = CHECK_FLAG (info->flags, BGP_INFO_IGNORE) ? 1 : 0;
 
@@ -1167,13 +1147,11 @@ static u_int32_t srx_loc_prev_value(struct bgp* bgp, u_int32_t locPref,
       {
         totalLocalPref += prefPolicy[i]->value; // add
       }
-      printf("+ set type:%d(0:RV,1:PV,2:AV), relative:%d, value: %d SRxlocalPref(total):%d  \n", 
-          i, prefPolicy[i]->relative, prefPolicy[i]->value, totalLocalPref);
     }
   }
   if (totalLocalPref < 0) // underflow
     totalLocalPref = 0;
-  printf("+ attribute local pref: %d  Total calculated local pref: %d  num Set:%d\n\n", locPref, totalLocalPref, numSet);
+  
 
   return (uint32_t)totalLocalPref;
 }
@@ -3225,7 +3203,8 @@ void verify_update (struct bgp *bgp, struct bgp_info *info,
         for (int i=0; cseg && i<cseg->length; i++)
         {
           asPathList.segments[i].asn =  cseg->as[i]; 
-          printf("+ asPathList.segment[%d].asn: %d type:%d\n", i, cseg->as[i], asPathList.asType);
+          zlog_debug ("[ ASPA ] asPathList.segment[%d].asn: %6d type:%d AS relationship: %d", 
+              i, cseg->as[i], asPathList.asType, asPathList.asRelationship);
         }
       }
 

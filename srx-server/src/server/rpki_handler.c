@@ -253,7 +253,6 @@ static void handleEndOfData (uint32_t valCacheID, uint16_t session_id,
   while (rq_dequeue(rQueue, &queueElem))
   {
     uID = &queueElem.updateID;
-    printf("\n[%s] ---  [uID: %08X] \n", __FUNCTION__, *uID);
     valRes.updateID = queueElem.updateID;
     valRes.valType  = VRT_NONE;
     valRes.valResult.roaResult    = SRx_RESULT_DONOTUSE;
@@ -276,7 +275,6 @@ static void handleEndOfData (uint32_t valCacheID, uint16_t session_id,
     // Now check for BGPSEC path Validation
     if ((queueElem.reason & RQ_KEY) == RQ_KEY)
     {
-      printf("[%s] called for BGPSEC [uID: %08X] \n", __FUNCTION__, *uID);
       UC_UpdateData* updateData = getUpdateData(uCache, uID);
       SCA_BGP_PathAttribute* bgpsec_path = updateData->bgpsec_path;
       if (bgpsec_path != NULL)
@@ -303,7 +301,7 @@ static void handleEndOfData (uint32_t valCacheID, uint16_t session_id,
     // Here check for ASPA Validation which was registered as Unknown
     if ((queueElem.reason & RQ_ASPA) == RQ_ASPA)
     {
-      printf("[%s] called for ASPA [uID: %08X] \n", __FUNCTION__, *uID);
+      LOG(LEVEL_INFO, FILE_LINE_INFO " called for ASPA [uID: %08X] ", *uID);
       uint32_t pathId= 0;
       if (!getUpdateResult(uCache, uID, 0, NULL, &srxRes, &defaultRes, &pathId))
       {
@@ -323,7 +321,7 @@ static void handleEndOfData (uint32_t valCacheID, uint16_t session_id,
           ASPA_DBManager* aspaDBManager = handler->aspaDBManager;
           TrieNode *root = aspaDBManager->tableRoot;
 
-          printf("+ Path ID: %X\n", pathId);
+          LOG(LEVEL_INFO, "Path ID: 0x%X", pathId);
           AS_PATH_LIST *aspl = getAspathListFromAspathCache (handler->aspathCache, pathId, &srxRes);
 
           if (aspl)
@@ -337,8 +335,7 @@ static void handleEndOfData (uint32_t valCacheID, uint16_t session_id,
             uint8_t valResult = do_AspaValidation (aspl->asPathList, 
                 aspl->asPathLength, aspl->asType, aspl->asRelDir, afi, aspaDBManager);
       
-            printf("Validation Result(0:valid, 2:Invalid, 3:Undefined "
-                "4:DonotUse 5:Unknown, 6:Unverifiable): %d\n", valResult);
+            LOG(LEVEL_INFO, "Validation Result: %d (0:v, 2:Iv, 3:Ud 4:DNU 5:Uk, 6:Uf)", valResult);
 
             // modify Aspath Cache with the validation result
             if (valResult != aspl->aspaValResult)
@@ -527,7 +524,7 @@ static void handleRouterKey (uint32_t valCacheID, uint16_t session_id,
 int handleAspaPdu(void* rpkiHandler, uint32_t customerAsn, 
                     uint16_t providerAsCount, uint32_t* providerAsns)
 {
-  printf("\n+ [%s] ASPA handler called for registering ASPA object(s) into DB \n", __FUNCTION__);
+  LOG(LEVEL_INFO, FILE_LINE_INFO " ASPA handler called for registering ASPA object(s) into DB");
   RPKIHandler* handler = (RPKIHandler*)rpkiHandler;
   ASPA_DBManager* aspaDBManager = handler->aspaDBManager;
 
@@ -536,46 +533,11 @@ int handleAspaPdu(void* rpkiHandler, uint32_t customerAsn,
 
   char strWord[6];
   sprintf(strWord, "%d", customerAsn);
-  printf("+ received a new ASPA object, search key in DB: %s\n", strWord);
+  LOG(LEVEL_INFO, "received a new ASPA object, search key in DB: %s", strWord);
 
   //char *strAsn1="65001", *strAsn2="60003";
   TrieNode *root;
   root = insertAspaObj(aspaDBManager, strWord, strWord, aspaObj);
-
-  // TODO: call rpki queue
-
-//#define SEARCH_TEST/*{{{*/
-#ifdef  SEARCH_TEST
-  //print_search(root, "60002");
-  //ASPA_Object *obj = findAspaObject(root, "60002");
-  ASPA_Object *obj = findAspaObject(root, strWord);
-
-  if (obj)
-  {
-    printf("+ Testing for searching ASPA object in DB: %p ...\n", obj);
-    printf("++ customer ASN: %d\n", obj->customerAsn);
-    printf("++ providerAsCount : %d\n", obj->providerAsCount);
-    printf("++ Address: provider asns : %p\n", obj->providerAsns);
-    if (obj->providerAsns)
-    {
-      for(int i=0; i< obj->providerAsCount; i++)
-      {
-        printf("++ providerAsns[%d]: %d\n", i, obj->providerAsns[i]);
-      }
-    }
-    printf("++ afi: %d\n", obj->afi);
-  }
-#endif/*}}}*/
-
-//#define ASPA_OBJECT_DB_TEST/*{{{*/
-#if defined(ASPA_OBJECT_DB_TEST)
-  root = insert_trie(root, "60001", "TESTING userData 60001", aspaObj);
-  root = insert_trie(root, "65500", "TESTING userData 65500", aspaObj);
-
-  printf("++ total ASPA object DB entry: %d \n", getCountTrieNode());
-  printAllLeafNode(root);
-#endif/*}}}*/
-
   return 0;
 
 }

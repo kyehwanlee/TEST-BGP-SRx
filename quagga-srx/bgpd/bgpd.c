@@ -2426,8 +2426,7 @@ bool handleSRxValidationResult (SRxUpdateID updateID, uint32_t localID,
 
   bool retVal = false;
 
-  zlog_info ("[%s] notified Aspa Validation Result: %x \n \
-      (0:valid, 2:Invalid, 3:Undefined 5:Unknown, 6:Unverifiable)\n",
+  zlog_debug ("[ ASPA ] %s notified Aspa Validation Result: %x (0:V 1:Nf 2:Iv 3:Ud 5:Uk 6:Uv)",
       __FUNCTION__, aspaResult);
 
   if (localID != 0) // update & requestToken substitution

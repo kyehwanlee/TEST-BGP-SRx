@@ -658,17 +658,14 @@ bool processValidationRequest(ServerConnectionHandler* self,
   ProxyClientMapping* clientMapping = clientID > 0 ? &self->proxyMap[clientID]
                                                    : NULL;
 
-  printf("\n[%s] called and ASpath cache starts with AS Type:%d AS Relationship:%d \n",
-      __FUNCTION__, asType, asRelType);
+  LOG(LEVEL_INFO, FILE_LINE_INFO "called and ASpath cache starts with AS Type:%d AS Relationship:%d",
+      asType, asRelType);
   uint32_t pathId = 0;
 
   doStoreUpdate = !getUpdateResult (self->updateCache, &updateID,
                                     clientID, clientMapping,
                                     &srxRes, &defResInfo, &pathId);
 
-    
-  // TODO: test algorithm below
-  //
   AS_PATH_LIST *aspl;
   SRxResult srxRes_aspa; 
   bool modifyUpdateCacheWithAspaValue = false;
@@ -687,7 +684,7 @@ bool processValidationRequest(ServerConnectionHandler* self,
   if (pathId == 0)  // if not found in  cEntry
   {
     pathId = makePathId(bgpData.numberHops, bgpData.asPath, true);
-    printf("+ generated Path ID : %08X \n", pathId);
+    LOG(LEVEL_INFO, "generated Path ID : %08X ", pathId);
 
     // to see if there is already exist or not in AS path Cache with path id
     aspl = getAspathListFromAspathCache (self->aspathCache, pathId, &srxRes_aspa);
@@ -699,19 +696,15 @@ bool processValidationRequest(ServerConnectionHandler* self,
       //  this value is some value not undefined
       if (srxRes_aspa.aspaResult == SRx_RESULT_UNDEFINED)
       {
-        printf("+ Already registered with the previous pdu \n");
+        LOG(LEVEL_INFO, "Already registered with the previous pdu");
       }
       else
       {
-        printf("+ ASPA validation Result[%d] is already exist \n", srxRes_aspa.aspaResult);
+        LOG(LEVEL_INFO, "ASPA validation Result[%d] is already exist", srxRes_aspa.aspaResult);
 
-        // then disable validation operation
-        //doAspaVal = false;
-
-        // TODO: modify UpdateCache's srx Res -> aspaResult with srxRes_aspa.aspaResult
-        // !!! But UpdateCache's cEntry here dosen't exist yet
-        //
-        // maybe after calling storeUpdate, put this value into cEntry directly
+        // Modify UpdateCache's srx Res -> aspaResult with srxRes_aspa.aspaResult
+        // But UpdateCache's cEntry here dosen't exist yet
+        // so, after calling storeUpdate, put this value into cEntry directly
         modifyUpdateCacheWithAspaValue = true;
       }
 
@@ -724,7 +717,7 @@ bool processValidationRequest(ServerConnectionHandler* self,
       aspl = newAspathListEntry(bgpData.numberHops, bgpData.asPath, pathId, asType, asRelDir, bgpData.afi, true);
       if(!aspl)
       {
-        printf("+ memory allocation for AS path list entry resulted in fault \n");
+        LOG(LEVEL_ERROR, " memory allocation for AS path list entry resulted in fault");
         return false;
       }
   

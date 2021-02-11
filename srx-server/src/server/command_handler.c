@@ -343,15 +343,15 @@ void reverse(int arr[], int i, int n)
 uint8_t do_AspaValidation(PATH_LIST* asPathList, uint8_t length, AS_TYPE asType, 
                     AS_REL_DIR direction, uint8_t afi, ASPA_DBManager* aspaDBManager)
 {
-  printf("\n[%s] ASPA Validation Starts\n", __FUNCTION__);
+  LOG(LEVEL_INFO, FILE_LINE_INFO " ASPA Validation Starts");
   uint8_t result = ASPA_RESULT_NIBBLE_ZERO; // for being distinguished with 0 (ASPA_RESULT_VALID)
 
   uint32_t customerAS, providerAS, startId=0;
   bool swapFlag = false;
 
   // 
-  // TODO: Initial Check for direct neighbor
-  // XXX Issue: how to figure out 60001 and 60002 are direct neighbor in SRx server inside
+  // Initial Check for direct neighbor
+  // Issue: how to figure out Router1 and Rtouer2 are direct neighbor in SRx server side
   //   
   //    1. Direct neight decision should be taken place in a router 
   //        This means if a router detects a first ASN in AS path doesn't belong to the list of peering routers,
@@ -360,15 +360,10 @@ uint8_t do_AspaValidation(PATH_LIST* asPathList, uint8_t length, AS_TYPE asType,
   //    2. Otherwize, SRx server needs router's peering information
   //       It needs to have all peering router information and compare those info to the proxy client 
   //
-  //
-  // XXX:
-  //    (Conclusion) 
+  // 
   //        Direct Neighbor Check will take place in a router. And if that case happens, 
   //        the router sends a flag unset for ASPA validation.
-  //
-#ifdef NOT_YET
-  check_DirectNeighbor();
-#endif
+  
 
   //
   // AS Set check routine
@@ -381,7 +376,7 @@ uint8_t do_AspaValidation(PATH_LIST* asPathList, uint8_t length, AS_TYPE asType,
     hopResult[i] = 0;
   }
 
-  printf("[%s] as path type: %d as relationship: %d\n", __FUNCTION__, asType, direction);
+  LOG(LEVEL_INFO, "AS path type: %d AS length: %d as relationship: %d", asType, length, direction);
   if (asType == AS_SET || asType != AS_SEQUENCE)
   {
     hopResult[0] = ASPA_RESULT_UNVERIFIABLE; 
@@ -407,26 +402,26 @@ uint8_t do_AspaValidation(PATH_LIST* asPathList, uint8_t length, AS_TYPE asType,
    */
   if (isUpStream)
   {
-    printf("+ Upstream Validation start\n");
-    printf("+ Lookup Result(0:valid, 1:Invalid, 2:Undefined 4:Unknown, 8:Unverifiable)\n");
+    LOG(LEVEL_INFO, "Upstream Validation start");
+    LOG(LEVEL_INFO, "Lookup Result Index (0:valid, 1:Invalid, 2:Undefined 4:Unknown, 8:Unverifiable)");
     for (int i=0; i < length-1; i++)
     {
       if (asType == AS_SET) // if AS_SET, skip
       {
         hopResult[i+1] = ASPA_RESULT_UNVERIFIABLE;
-        printf("+ validation  - Unverifiable detected\n");
+        LOG(LEVEL_INFO, "validation  - Unverifiable detected");
         continue;
       }
 
       customerAS = list[i];
       providerAS = list[i+1];
-      printf("+ customer AS: %d\t provider AS: %d\n", customerAS, providerAS);
+      LOG(LEVEL_INFO, "customer AS: %d\t provider AS: %d", customerAS, providerAS);
 
       currentResult = hopResult[i+1] = 
         ASPA_DB_lookup(aspaDBManager, customerAS, providerAS, afi);
 
       result |= currentResult;
-      printf("+ current lookup result: %x Accured Result: %x\n", currentResult, result);
+      LOG(LEVEL_INFO, "current lookup result: %x Accured Result: %x", currentResult, result);
 
       if (currentResult == ASPA_RESULT_VALID || currentResult == ASPA_RESULT_UNKNOWN)
         continue;
@@ -442,14 +437,14 @@ uint8_t do_AspaValidation(PATH_LIST* asPathList, uint8_t length, AS_TYPE asType,
    */
   else 
   {
-    printf("+ Downstream Validation start\n");
+    LOG(LEVEL_INFO, "Downstream Validation start");
     uint32_t temp;
     for (int i=0; i < length-1; i++)
     {
       if (asType == AS_SET) // if AS_SET, skip
       {
         hopResult[i+1] = ASPA_RESULT_UNVERIFIABLE;
-        printf("+ validation  - Unverifiable detected\n");
+        LOG(LEVEL_INFO, "validation  - Unverifiable detected");
         continue;
       }
 
@@ -461,15 +456,15 @@ uint8_t do_AspaValidation(PATH_LIST* asPathList, uint8_t length, AS_TYPE asType,
         temp       = customerAS;
         customerAS = providerAS;
         providerAS = temp;
-        printf(" customer provider ASN swapped \n");
+        LOG(LEVEL_INFO, "customer provider ASN swapped ");
       }
-      printf("+ customer AS: %d\t provider AS: %d\n", customerAS, providerAS);
+      LOG(LEVEL_INFO, "customer AS: %d\t provider AS: %d", customerAS, providerAS);
 
       currentResult = hopResult[i+1] = 
         ASPA_DB_lookup(aspaDBManager, customerAS, providerAS, afi);
 
       result |= currentResult;
-      printf("+ current lookup result: %x Accured Result: %x\n", currentResult, result);
+      LOG(LEVEL_INFO, "current lookup result: %x Accured Result: %x", currentResult, result);
       
       if (currentResult == ASPA_RESULT_VALID || currentResult == ASPA_RESULT_UNKNOWN)
         continue;
@@ -477,7 +472,7 @@ uint8_t do_AspaValidation(PATH_LIST* asPathList, uint8_t length, AS_TYPE asType,
       if (currentResult == ASPA_RESULT_INVALID && !swapFlag)
       {
         swapFlag = true;
-        printf(" INVALID and swap flag set \n");
+        LOG(LEVEL_INFO, "INVALID and swap flag set ");
         continue;
       }
       else
@@ -632,34 +627,11 @@ static bool _processUpdateValidation(CommandHandler* cmdHandler,
     ASPA_DBManager* aspaDBManager = handler->aspaDBManager;
     TrieNode *root = aspaDBManager->tableRoot;
 
-    //#define TEST_ASPA_DB
-#ifdef  TEST_ASPA_DB/*{{{*/
-    printf("\n[%s] Testing ASPA object DB for AS path cache\n", __FUNCTION__);
-    print_search(root, "60001");
-    print_search(root, "60002");
-    ASPA_Object *obj = findAspaObject(root, "60002"); //test
-    printf("ASPA object: %p\n", obj);
-
-    if (obj)
-    {
-      printf("customer ASN: %d\n", obj->customerAsn);
-      printf("providerAsCount : %d\n", obj->providerAsCount);
-      printf("Address: provider asns : %p\n", obj->providerAsns);
-      if (obj->providerAsns)
-      {
-        for(int i=0; i< obj->providerAsCount; i++)
-        {
-          printf("providerAsns[%d]: %d\n", i, obj->providerAsns[i]);
-        }
-      }
-      printf("afi: %d\n", obj->afi);
-    }
-#endif // TEST_ASPA_DB/*}}}*/
 
     // -------------------------------------------------------------------
     // Retrieve data from aspath cache with crc Key, path ID, here
     //
-    printf("+ Path ID: %X\n", pathId);
+    LOG(LEVEL_INFO, "Path ID: 0x%X", pathId);
     AS_PATH_LIST *aspl = getAspathListFromAspathCache (cmdHandler->aspathCache, pathId, &srxRes);
     printAsPathList(aspl);
 
@@ -674,7 +646,7 @@ static bool _processUpdateValidation(CommandHandler* cmdHandler,
       uint8_t valResult = do_AspaValidation (aspl->asPathList, 
           aspl->asPathLength, aspl->asType, aspl->asRelDir, afi, aspaDBManager);
 
-      printf("Validation Result(0:valid, 2:Invalid, 3:Undefined 4:DonotUse 5:Unknown, 6:Unverifiable): %d\n",
+      LOG(LEVEL_INFO, "Validation Result: %d (0:v, 2:Iv, 3:Ud 4:DNU 5:Uk, 6:Uf)",
           valResult);
 
       // modify Aspath Cache with the validation result
@@ -692,7 +664,7 @@ static bool _processUpdateValidation(CommandHandler* cmdHandler,
     }
     else
     {
-      printf("Something went wrong... path list was not registered\n");
+      LOG(LEVEL_WARNING, "Something went wrong... path list was not registered");
     }
 
     // release memory
@@ -706,7 +678,7 @@ static bool _processUpdateValidation(CommandHandler* cmdHandler,
   {
     RPKI_QUEUE*      rQueue = getRPKIQueue();
     rq_queue(rQueue, RQ_ASPA, &updateID);
-    printf("+ rpki queuing for aspa Unknown [uID:0x%08X]\n", updateID);
+    LOG(LEVEL_INFO, "rpki queuing for aspa Unknown [uID:0x%08X]", updateID);
   }
 
   //
@@ -736,34 +708,6 @@ static bool _processUpdateValidation(CommandHandler* cmdHandler,
                       updateID);
     }    
   }
-
-//#define HASH_TEST
-#if defined (HASH_TEST)
-  AS_PATH_LIST* pAspathList; 
-  pAspathList               = (AS_PATH_LIST*)calloc(1, sizeof(AS_PATH_LIST));
-  pAspathList->asPathLength = 1;
-  pAspathList->asPathList   = (uint32_t*)calloc(1, sizeof(uint32_t));
-  pAspathList->asType       = 2;
-  pAspathList->asPathList[0] = 65001;
-  pAspathList->pathID   = 0x0006;
-  storeAspathList(cmdHandler->aspathCache, &defRes, 0x0006, 2, pAspathList);
-  pAspathList->pathID   = 0x0002;
-  storeAspathList(cmdHandler->aspathCache, &defRes, 0x0002, 1, pAspathList);
-  pAspathList->pathID   = 0x0003;
-  storeAspathList(cmdHandler->aspathCache, &defRes, 0x0003, 2, pAspathList);
-  pAspathList->pathID   = 0x0005;
-  storeAspathList(cmdHandler->aspathCache, &defRes, 0x0005, 3, pAspathList);
-  pAspathList->pathID   = 0x0004;
-  storeAspathList(cmdHandler->aspathCache, &defRes, 0x0004, 2, pAspathList);
-  pAspathList->pathID   = 0x0001;
-  storeAspathList(cmdHandler->aspathCache, &defRes, 0x0001, 1, pAspathList);
-
-  printf("+ [UTHASH] total Count: %d\n", getCountAsPathCache (cmdHandler->aspathCache));
-
-  //sortByPathId(cmdHandler->aspathCache);
-  printAllAsPathCache(cmdHandler->aspathCache);
-#endif
-
   
   return processed;
 }

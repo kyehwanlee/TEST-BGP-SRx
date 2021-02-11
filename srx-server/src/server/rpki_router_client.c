@@ -651,11 +651,9 @@ static bool receivePDUs(RPKIRouterClient* client, bool returnAterEndOfData,
                                        (RPKIErrorReportHeader*)byteBuffer);
         break;
       case PDU_TYPE_ASPA_PDU :
-        printf("+++ [%s] ASPA PDU received from Rpki rtr server\n", __FUNCTION__);
-        //
-        // TODO: ASPA validation  
+        LOG(LEVEL_INFO, FILE_LINE_INFO "ASPA PDU received from Rpki rtr server");
+        // ASPA validation  
         handleReceiveAspaPdu(client, (RPKIAspaHeader*)byteBuffer, pduLen);
-        //
         break;
 
       case PDU_TYPE_RESERVED :
@@ -1235,7 +1233,7 @@ void generalSignalProcess(void)
 bool handleReceiveAspaPdu(RPKIRouterClient* client, RPKIAspaHeader* hdr, uint32_t pduLen)
 {
   // 
-  // TODO: figure out the numbers how many provider ASes are in the received  pdu
+  // figure out the numbers how many provider ASes are in the received  pdu
   //
   //     1. parsing
   //     2. memcpy for providerASNs if providerAsCount is greater than 1
@@ -1251,15 +1249,15 @@ bool handleReceiveAspaPdu(RPKIRouterClient* client, RPKIAspaHeader* hdr, uint32_
 
   providerAsns = (uint32_t*)calloc(providerAsCount, sizeof(uint32_t));
 
-  printf("\n+ [%s] called to receive ASPA Object PDU from rpki cache\n", __FUNCTION__);
-  printf("+ customer asn: %d\n", customerAsn);
-  printf("+ provider as count: %d\n", providerAsCount);
+  LOG(LEVEL_INFO, FILE_LINE_INFO " called to receive ASPA Object PDU from rpki cache");
+  LOG(LEVEL_INFO, "customer asn: %d", customerAsn);
+  LOG(LEVEL_INFO, "provider as count: %d", providerAsCount);
 
   // 3. inside hdr, there might have multiple provider asns
   for(int i=0; i< providerAsCount; i++)
   {
     providerAsns[i] = ntohl(startp_providerAsns[i]);
-    printf("+ provider asn[%d]: %d\n", i, providerAsns[i]);
+    LOG(LEVEL_INFO, "provider asn[%d]: %d", i, providerAsns[i]);
   }
 
   // this calls 'handleAspaPdu()' in rpki_handler module

@@ -21,10 +21,10 @@ typedef struct {
 
 
 //
-// TODO: to let main call this function to generate UT hash
+// To let main call this function to generate UT hash
 bool createAspathCache(AspathCache* self, ASPA_DBManager* aspaDBManager)
 {
-  printf("[%s] AS path cache :%p \n", __FUNCTION__, self);
+  LOG(LEVEL_INFO, FILE_LINE_INFO " AS path cache instance :%p", self);
   
   if (!createRWLock(&self->tableLock))
   {
@@ -91,7 +91,7 @@ AS_PATH_LIST* newAspathListEntry (uint32_t length, uint32_t* pathData, uint32_t 
 {
   if (!length)
   {
-    printf("Error with no length\n");
+    LOG(LEVEL_ERROR, "Error with no length");
     return NULL;
   }
 
@@ -122,27 +122,27 @@ AS_PATH_LIST* newAspathListEntry (uint32_t length, uint32_t* pathData, uint32_t 
 
 void printAsPathList(AS_PATH_LIST* aspl)
 {
-  printf("[%s] called \n", __FUNCTION__);
+  LOG(LEVEL_INFO, FILE_LINE_INFO " called ");
   if (aspl)
   {
-    printf("\tpath ID             : %08X \n" , aspl->pathID);
-    printf("\tlength              : %d \n"   , aspl->asPathLength);
-    printf("\tValidation Result   : %d \n"   , aspl->aspaValResult);
-    printf("\tAS Path Type        : %d \n"   , aspl->asType);
-    printf("\tAS Relationship dir : %d \n"   , aspl->asRelDir);
-    printf("\tafi                 : %d \n"   , aspl->afi);
+    LOG(LEVEL_INFO, "\tpath ID             : 0x%08X" , aspl->pathID);
+    LOG(LEVEL_INFO, "\tlength              : %d "   , aspl->asPathLength);
+    LOG(LEVEL_INFO, "\tValidation Result   : %d "   , aspl->aspaValResult);
+    LOG(LEVEL_INFO, "\tAS Path Type        : %d "   , aspl->asType);
+    LOG(LEVEL_INFO, "\tAS Relationship dir : %d "   , aspl->asRelDir);
+    LOG(LEVEL_INFO, "\tafi                 : %d "   , aspl->afi);
 
     if(aspl->asPathList)
     {
       for(int i=0; i<aspl->asPathLength; i++)
       {
-        printf("\tPath List[%d]: %d \n"   , i, aspl->asPathList[i]);
+        LOG(LEVEL_INFO, "\tPath List[%d]: %d "   , i, aspl->asPathList[i]);
       }
     }
   }
   else
   {
-    printf("\tNo path list\n");
+    LOG(LEVEL_INFO, "\tNo path list");
   }
 }
 
@@ -227,18 +227,9 @@ int storeAspathList (AspathCache* self, SRxDefaultResult* srxRes,
     }
 
     add_AspathList(self, plCacheTable);
-    printf("performed to add PathList Entry into As Path Cache\n");
+    LOG(LEVEL_INFO, "performed to add PathList Entry into As Path Cache");
 
   }
-
-//#define TEST 
-#ifdef TEST
-  PathListCacheTable *tmp_plCacheTable;
-  if (find_AspathList (self, pathId, &tmp_plCacheTable))
-  {
-    printf("Found in UThash\n");
-  }
-#endif
 
   return retVal;
 }
@@ -259,7 +250,7 @@ AS_PATH_LIST* getAspathListFromAspathCache (AspathCache* self, uint32_t pathId, 
 {
   if (!pathId)
   {
-    printf("Invalid path id\n");
+    LOG(LEVEL_ERROR, "Invalid path id");
     return NULL;
   }
 
@@ -305,7 +296,7 @@ uint32_t makePathId (uint8_t asPathLength, PATH_LIST* asPathList, bool bBigEndia
 
   if (!asPathList)
   {
-    printf("as path list is NULL, making CRC failure\n");
+    LOG(LEVEL_ERROR, "as path list is NULL, making CRC failure");
     return 0;
   }
 
@@ -313,7 +304,7 @@ uint32_t makePathId (uint8_t asPathLength, PATH_LIST* asPathList, bool bBigEndia
   strBuf = (char*)calloc(strSize, sizeof(char));
   if (!strBuf)
   {
-    printf("memory allocation error\n");
+    LOG(LEVEL_ERROR, "memory allocation error");
     return 0;
   }
 
@@ -327,7 +318,7 @@ uint32_t makePathId (uint8_t asPathLength, PATH_LIST* asPathList, bool bBigEndia
   }
 
   pathId = crc32((uint8_t*)strBuf, strSize);
-  printf("PathID: %08X strings: %s\n", pathId, strBuf);
+  LOG(LEVEL_INFO, "PathID: %08X strings: %s", pathId, strBuf);
 
   if (strBuf)
   {
@@ -341,29 +332,30 @@ void printPathListCacheTableEntry(PathListCacheTable *cacheEntry)
 {
   if (cacheEntry)
   {
-    printf("path ID           : %08X \n" , cacheEntry->pathId);
-    printf("length (hops)     : %d \n"   , cacheEntry->data.hops);
-    printf("Validation Result : %d \n"   , cacheEntry->aspaResult);
-    printf("\t(0:valid, 2:Invalid, 3:Undefined 5:Unknown, 6:Unverifiable)\n");
-    printf("AS Path Type      : %d \n"   , cacheEntry->asType);
+    printf( "\n");
+    printf( " path ID           : %08X" , cacheEntry->pathId);
+    printf( " length (hops)     : %d "  , cacheEntry->data.hops);
+    printf( " Validation Result : %d "  , cacheEntry->aspaResult);
+    printf( " \t(0:valid, 2:Invalid, 3:Undefined 5:Unknown, 6:Unverifiable)");
+    printf( " AS Path Type      : %d "  , cacheEntry->asType);
 
     if (cacheEntry->data.asPathList)
     {
       for(int i=0; i<cacheEntry->data.hops; i++)
       {
-        printf("- Path List[%d]: %d \n", i, cacheEntry->data.asPathList[i]);
+        printf( " - Path List[%d]: %d ", i, cacheEntry->data.asPathList[i]);
       }
+      printf( "\n");
     }
     else
     {
-        printf("Path List: Doesn't exist \n");
+      printf( " Path List: Doesn't exist ");
     }
   }
   else
   {
-    printf("No Entry exist\n");
+    printf( " No Entry exist");
   }
-  printf("\n");
 }
 
 
@@ -401,9 +393,7 @@ void printAllAsPathCache(AspathCache *self)
   acquireWriteLock(&self->tableLock);
   HASH_ITER(hh, (PathListCacheTable*)self->aspathCacheTable, currCacheTable, tmp) 
   {
-    printf("\n");
     printPathListCacheTableEntry(currCacheTable);
-    printf("\n");
   }
   unlockWriteLock(&self->tableLock);
 }
