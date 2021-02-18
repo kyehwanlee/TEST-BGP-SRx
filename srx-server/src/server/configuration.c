@@ -95,6 +95,8 @@
 #define RPKI_2_RTR_6810 0
 /** Version of the router to cache protocol */
 #define RPKI_2_RTR_8210 1
+/** Version 2 (Added ASPA) of the router to cache protocol */
+#define RPKI_2_RTR_8210_BIS 2
 
 #define CFG_PARAM_CREDITS 1
 
@@ -730,6 +732,10 @@ bool readConfigFile(Configuration* self, const char* filename)
           LOG(LEVEL_INFO, "Configure router to cache protocol RFC 8210 "
                           "(ROA / KEY)!");
           break;
+        case RPKI_2_RTR_8210_BIS:
+          LOG(LEVEL_INFO, "Configure router to cache protocol RFC 8210-bis "
+              "(ROA / KEY / ASPA)!");
+          break;     
         default:
           LOG(LEVEL_ERROR, "Unsupported router to cache protocol!");
           goto free_config;

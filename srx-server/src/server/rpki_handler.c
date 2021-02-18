@@ -101,7 +101,8 @@ static void handleRouterKey (uint32_t valCacheID, uint16_t session_id,
 static void handleEndOfData (uint32_t valCacheID, uint16_t session_id,
                              void* rpkiHandler);
 int handleAspaPdu(void* rpkiHandler, uint32_t customerAsn, 
-                    uint16_t providerAsCount, uint32_t* providerAsns);
+                    uint16_t providerAsCount, uint32_t* providerAsns, 
+                    uint8_t addrFamilyType, uint8_t withdraw);
 
 /**
  * Configure the RPKI Handler and create an RPKIRouter client.
@@ -521,25 +522,54 @@ static void handleRouterKey (uint32_t valCacheID, uint16_t session_id,
 // work1. parsing ASPA objects into AS number in forms of string
 // work2. call DB to store
 //
-int handleAspaPdu(void* rpkiHandler, uint32_t customerAsn, 
-                    uint16_t providerAsCount, uint32_t* providerAsns)
+int handleAspaPdu(void* rpkiHandler, uint32_t customerAsn, uint16_t providerAsCount, 
+                  uint32_t* providerAsns, uint8_t addrFamilyType, uint8_t withdraw)
 {
   LOG(LEVEL_INFO, FILE_LINE_INFO " ASPA handler called for registering ASPA object(s) into DB");
   RPKIHandler* handler = (RPKIHandler*)rpkiHandler;
   ASPA_DBManager* aspaDBManager = handler->aspaDBManager;
+  int retVal = 0;
+  
+  uint16_t afi = AFI_IP; // default
+  if (addrFamilyType == 0)
+  {
+    afi = AFI_IP;
+  }
+  else if (addrFamilyType == 1)
+  {
+    afi = AFI_IP6;
+  }
+  else 
+  {
+    LOG(LEVEL_WARNING, "AFI value error");
+  }
 
-  // call new ASPAObject here instead
-  uint16_t afi = AFI_IP; // TODO: later need to parse from cache server, for now use default
-  ASPA_Object *aspaObj = newASPAObject(customerAsn, providerAsCount, providerAsns, afi);
-
+  ASPA_Object *aspaObj = NULL;
   char strWord[6];
-  sprintf(strWord, "%d", customerAsn);
-  LOG(LEVEL_INFO, "received a new ASPA object, search key in DB: %s", strWord);
+  TrieNode *node = NULL;
 
-  //char *strAsn1="65001", *strAsn2="60003";
-  TrieNode *root;
-  root = insertAspaObj(aspaDBManager, strWord, strWord, aspaObj);
-  return 0;
+  if (withdraw == 1) // 0 == announce, 1 == withdraw
+  {
+    aspaObj = newASPAObject(customerAsn, providerAsCount, providerAsns, afi);
+
+    sprintf(strWord, "%d", customerAsn);
+    LOG(LEVEL_INFO, "received a new ASPA object, search key in DB: %s", strWord);
+
+    node = insertAspaObj(aspaDBManager, strWord, strWord, aspaObj);
+  }
+  else if (withdraw == 0)
+  {
+    // XXX: TBD 
+    // Draft didn't mention about withdraw clearly
+    //
+    // call  delete_TrieNode_AspaObj 
+  }
+
+  if (node)
+  {
+    retVal = 1; // success
+  }
+  return retVal;
 
 }
 

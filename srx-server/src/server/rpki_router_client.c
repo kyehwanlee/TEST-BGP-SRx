@@ -1243,13 +1243,17 @@ bool handleReceiveAspaPdu(RPKIRouterClient* client, RPKIAspaHeader* hdr, uint32_
   uint32_t customerAsn = ntohl(hdr->customerAsn);
   uint16_t providerAsCount = ntohs(hdr->providerAsCount);
   uint32_t *providerAsns;
+  uint8_t  flags = hdr->flags;
+
+  uint8_t withdraw       = flags & 0x01; // bit 0: 0 == announce, 1 == withdraw
+  uint8_t addrFamilyType = flags & 0x02; // bit 1: AFI (IPv4 == 0, IPv6 == 1)
 
   uint8_t *byteHdr = (uint8_t*)hdr;
   uint32_t *startp_providerAsns = (uint32_t*)(byteHdr + sizeof(RPKIAspaHeader));
 
   providerAsns = (uint32_t*)calloc(providerAsCount, sizeof(uint32_t));
 
-  LOG(LEVEL_INFO, FILE_LINE_INFO " called to receive ASPA Object PDU from rpki cache");
+  LOG(LEVEL_INFO, "---" FILE_LINE_INFO " receive ASPA Object PDU from rpki cache ---");
   LOG(LEVEL_INFO, "customer asn: %d", customerAsn);
   LOG(LEVEL_INFO, "provider as count: %d", providerAsCount);
 
@@ -1260,9 +1264,13 @@ bool handleReceiveAspaPdu(RPKIRouterClient* client, RPKIAspaHeader* hdr, uint32_
     LOG(LEVEL_INFO, "provider asn[%d]: %d", i, providerAsns[i]);
   }
 
+  LOG(LEVEL_INFO, "afi : %d (0 == AFI_IP, 1 == AFI_IP6)", addrFamilyType);
+  LOG(LEVEL_INFO, "flag: %s ", withdraw == 0 ? "Announce": 
+                              (withdraw == 1 ? "Withdraw": "None"));
+
   // this calls 'handleAspaPdu()' in rpki_handler module
   client->params->cbHandleAspaPdu(client->user, customerAsn, providerAsCount, 
-                                    providerAsns); 
+                                    providerAsns, addrFamilyType, withdraw); 
   return true;
 }
 

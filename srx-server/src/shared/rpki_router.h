@@ -305,16 +305,23 @@ typedef struct {
    |   Provider Autonomous System Number(s)    |
    |                                           |
    ~-------------------------------------------~
+    The Flags field is defined as follows:
+
+       Bit     Bit Name
+       ----    -------------------
+        0      Announce/Withdraw (ann == 0, with == 1)
+        1      AFI (IPv4 == 0, IPv6 == 1)
+        2-7    Reserved, must be zero
  */
 
 /**
- * PDU Cache Reset
+ * PDU ASPA
  */
 typedef struct {
-  uint8_t     version;     // Version
-  uint8_t     type;        // TYPE_CACHE_RESET
-  uint16_t    reserved;    // zero
-  uint32_t    length;      // 8 Bytes
+  uint8_t     version;     // 
+  uint8_t     type;        // 
+  uint16_t    reserved;    // 
+  uint32_t    length;      // 
   uint8_t     flags;
   uint8_t     zero;
   uint16_t    providerAsCount;

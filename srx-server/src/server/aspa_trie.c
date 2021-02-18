@@ -103,8 +103,12 @@ bool deleteASPAObject(ASPA_DBManager* self, ASPA_Object *obj)
 static TrieNode* make_trienode(char data, char* userData, ASPA_Object* obj) {
     // Allocate memory for a TrieNode
     TrieNode* node = (TrieNode*) calloc (1, sizeof(TrieNode));
-    int i=0;
-    for (i=0; i<N; i++)
+    if (!node)
+    {
+      return NULL;
+    }
+
+    for (int i=0; i<N; i++)
         node->children[i] = NULL;
     node->is_leaf = 0;
     node->data = data;
@@ -128,9 +132,29 @@ static void free_trienode(TrieNode* node) {
     free(node);
 }
 
-//  new value insert and substitution 
+bool delete_TrieNode_AspaObj (ASPA_DBManager* self, char* word, char* userData, ASPA_Object* obj)
+{
+
+    acquireWriteLock(&self->tableLock);
+
+    /*
+    char strCusAsn[6] = {};
+    sprintf(strCusAsn, "%d", customerAsn);  
+    aspaObj = findAspaObject(self, strCusAsn);
+      
+    if (temp->aspaObjects && temp->aspaObjects != obj)
+      deleteASPAObject(self, temp->aspaObjects);
+    
+    */
+
+    unlockWriteLock(&self->tableLock);
+
+    return true;
+}
+
+//  new value insert or substitution according to draft
 //
-TrieNode* insertAspaObj(ASPA_DBManager* self, char* word, char* userData, ASPA_Object* obj) {
+TrieNode* insertAspaObj (ASPA_DBManager* self, char* word, char* userData, ASPA_Object* obj) {
     TrieNode* temp = self->tableRoot;
     acquireWriteLock(&self->tableLock);
 
@@ -147,18 +171,23 @@ TrieNode* insertAspaObj(ASPA_DBManager* self, char* word, char* userData, ASPA_O
         // Go down a level, to the child referenced by idx
         temp = temp->children[idx];
     }
-    // At the end of the word, mark this node as the leaf node
-    temp->is_leaf = 1;
-    temp->userData =  userData;
 
-    // substitution
-    if (temp->aspaObjects && temp->aspaObjects != obj)
+    if (temp)
     {
-      deleteASPAObject(self, temp->aspaObjects);
+      // At the end of the word, mark this node as the leaf node
+      temp->is_leaf = 1;
+      temp->userData =  userData;
+
+      // substitution if exist
+      if (temp->aspaObjects && temp->aspaObjects != obj)
+      {
+        deleteASPAObject(self, temp->aspaObjects);
+        countTrieNode--;
+      }
+      temp->aspaObjects = obj;
+      countTrieNode++;
+      self->countAspaObj++;
     }
-    temp->aspaObjects = obj;
-    countTrieNode++;
-    self->countAspaObj++;
 
     unlockWriteLock(&self->tableLock);
 
@@ -196,21 +225,29 @@ static int search_trie(TrieNode* root, char* word)
 ASPA_Object* findAspaObject(ASPA_DBManager* self, char* word)
 {
     ASPA_Object *obj;
+  
+    acquireWriteLock(&self->tableLock);
     TrieNode* temp = self->tableRoot; 
 
     for(int i=0; word[i]!='\0'; i++)
     {
         int position = word[i] - '0';
         if (temp->children[position] == NULL)
-            return NULL;
+        {
+          obj = NULL;
+          temp = NULL;
+          break;
+        }
         temp = temp->children[position];
     }
+
     if (temp != NULL && temp->is_leaf == 1)
     {
         obj = temp->aspaObjects;
-        return obj;
     }
-    return NULL;
+    unlockWriteLock(&self->tableLock);
+
+    return obj;
 }
 
 //
@@ -290,9 +327,7 @@ ASPA_ValidationResult ASPA_DB_lookup(ASPA_DBManager* self, uint32_t customerAsn,
   char strCusAsn[6] = {};
   sprintf(strCusAsn, "%d", customerAsn);  
 
-  acquireWriteLock(&self->tableLock);
   ASPA_Object *obj = findAspaObject(self, strCusAsn);
-  unlockWriteLock(&self->tableLock);
 
   if (!obj) // if there is no object item
   {
