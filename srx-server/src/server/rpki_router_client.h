@@ -276,7 +276,7 @@ typedef struct {
   bool        allowDowngrade;
 
   int (*cbHandleAspaPdu)(void* user, uint32_t cusAsn, uint16_t provAsCount, 
-                         uint32_t* provAsns, uint8_t addrFamilyType, uint8_t withdraw);
+                         uint32_t* provAsns, uint8_t addrFamilyType, uint8_t announce);
 
 } RPKIRouterClientParams;
 

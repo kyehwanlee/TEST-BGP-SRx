@@ -438,4 +438,10 @@ void outputUpdateCacheAsXML(UpdateCache* self, FILE* stream, int maxBlob);
 
 bool modifyUpdateCacheResultWithAspaVal(UpdateCache* self, SRxUpdateID* updateID,
                         SRxResult* srxResult_aspa);
+
+void process_ASPA_EndOfData(UpdateCache* self, 
+                            int (*cb)(void* uCache, void* hldr, uint32_t uid, uint32_t pid, time_t), 
+                            void* rpkiHandler);
 #endif // !__UPDATE_CACHE_H__
+
+

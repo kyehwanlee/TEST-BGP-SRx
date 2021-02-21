@@ -658,13 +658,14 @@ bool processValidationRequest(ServerConnectionHandler* self,
   ProxyClientMapping* clientMapping = clientID > 0 ? &self->proxyMap[clientID]
                                                    : NULL;
 
-  LOG(LEVEL_INFO, FILE_LINE_INFO "called and ASpath cache starts with AS Type:%d AS Relationship:%d",
-      asType, asRelType);
   uint32_t pathId = 0;
 
   doStoreUpdate = !getUpdateResult (self->updateCache, &updateID,
                                     clientID, clientMapping,
                                     &srxRes, &defResInfo, &pathId);
+  
+  LOG(LEVEL_INFO, FILE_LINE_INFO " ASpath cache starts with pathID: [0x%08X] "
+      "AS Type: %d AS Relationship: %d updateId: [0x%08X]", pathId, asType, asRelType, updateID);
 
   AS_PATH_LIST *aspl;
   SRxResult srxRes_aspa; 
@@ -684,7 +685,7 @@ bool processValidationRequest(ServerConnectionHandler* self,
   if (pathId == 0)  // if not found in  cEntry
   {
     pathId = makePathId(bgpData.numberHops, bgpData.asPath, true);
-    LOG(LEVEL_INFO, "generated Path ID : %08X ", pathId);
+    LOG(LEVEL_INFO, FILE_LINE_INFO " generated Path ID : %08X ", pathId);
 
     // to see if there is already exist or not in AS path Cache with path id
     aspl = getAspathListFromAspathCache (self->aspathCache, pathId, &srxRes_aspa);
@@ -696,11 +697,16 @@ bool processValidationRequest(ServerConnectionHandler* self,
       //  this value is some value not undefined
       if (srxRes_aspa.aspaResult == SRx_RESULT_UNDEFINED)
       {
-        LOG(LEVEL_INFO, "Already registered with the previous pdu");
+        LOG(LEVEL_INFO, FILE_LINE_INFO " Already registered with the previous pdu");
       }
       else
       {
-        LOG(LEVEL_INFO, "ASPA validation Result[%d] is already exist", srxRes_aspa.aspaResult);
+        // in case the same update message comes from same peer, even though same update, 
+        // bgpsec pdu is different, so that it results in a new updateID, which in turn 
+        // makes not found in updatecahe. So this case makes not found pathId, but aspath cache 
+        // stores srx result value in db with the matched path id. So srxRes_aspa.aspaResult is
+        // not undefined
+        LOG(LEVEL_INFO, FILE_LINE_INFO " ASPA validation Result[%d] is already exist", srxRes_aspa.aspaResult);
 
         // Modify UpdateCache's srx Res -> aspaResult with srxRes_aspa.aspaResult
         // But UpdateCache's cEntry here dosen't exist yet

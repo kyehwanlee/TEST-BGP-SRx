@@ -17,6 +17,7 @@ typedef struct {
   AS_TYPE           asType;
   AS_REL_DIR        asRelDir;
   uint16_t          afi;
+  time_t            lastModified;
 } PathListCacheTable;
 
 
@@ -103,6 +104,7 @@ AS_PATH_LIST* newAspathListEntry (uint32_t length, uint32_t* pathData, uint32_t 
   pAspathList->asType       = asType;
   pAspathList->asRelDir     = asRelDir;
   pAspathList->afi          = bBigEndian ? ntohs(afi): afi;
+  pAspathList->lastModified = 0;
 
 
   for (int i=0; i < length; i++)
@@ -178,9 +180,15 @@ bool modifyAspaValidationResultToAspathCache(AspathCache *self, uint32_t pathId,
   {
     if(modAspaResult != SRx_RESULT_DONOTUSE)
     {
+      // access time updated
+      plCacheTable->lastModified = pathlistEntry->lastModified;
+      LOG(LEVEL_INFO, "AspathCache entry for path ID: 0x%08X - last modfied time update: %u", pathId, plCacheTable->lastModified);
+
       if(modAspaResult != plCacheTable->aspaResult)
       {
-        plCacheTable->aspaResult = modAspaResult;
+        plCacheTable->aspaResult   = modAspaResult;
+        LOG(LEVEL_INFO, FILE_LINE_INFO " AS path cache data modified [pathID]:0x%08X [Value]: %d [Time]: %u", 
+            pathId, modAspaResult, plCacheTable->lastModified);
       }
     }
   }
@@ -202,10 +210,11 @@ int storeAspathList (AspathCache* self, SRxDefaultResult* srxRes,
   else
   {
     plCacheTable = (PathListCacheTable*) calloc(1, sizeof(PathListCacheTable));
-    plCacheTable->pathId   = pathId;
-    plCacheTable->asType   = asType;
-    plCacheTable->asRelDir = pathlistEntry->asRelDir;
-    plCacheTable->afi      = pathlistEntry->afi;
+    plCacheTable->pathId       = pathId;
+    plCacheTable->asType       = asType;
+    plCacheTable->asRelDir     = pathlistEntry->asRelDir;
+    plCacheTable->afi          = pathlistEntry->afi;
+    plCacheTable->lastModified = pathlistEntry->lastModified;
 
     uint8_t length = pathlistEntry->asPathLength;
     plCacheTable->data.hops = length;
@@ -227,7 +236,7 @@ int storeAspathList (AspathCache* self, SRxDefaultResult* srxRes,
     }
 
     add_AspathList(self, plCacheTable);
-    LOG(LEVEL_INFO, "performed to add PathList Entry into As Path Cache");
+    LOG(LEVEL_INFO, FILE_LINE_INFO " performed to add PathList Entry into As Path Cache");
 
   }
 
@@ -266,6 +275,7 @@ AS_PATH_LIST* getAspathListFromAspathCache (AspathCache* self, uint32_t pathId, 
     aspl->asType        = plCacheTable->asType;
     aspl->asRelDir      = plCacheTable->asRelDir;
     aspl->afi           = plCacheTable->afi;
+    aspl->lastModified  = plCacheTable->lastModified;
 
     uint8_t length     = plCacheTable->data.hops;
     aspl->asPathList   = (uint32_t*)calloc(length, sizeof(uint32_t));

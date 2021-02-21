@@ -850,7 +850,7 @@ static void* manageConnection (void* clientPtr)
           }
           break;
         default:
-          RAISE_ERROR("Unexpected protocol behavior!");
+          RAISE_ERROR("Unexpected protocol behavior! (lastRecv: %d) ", client->lastRecv);
           client->stop = true;
       }
     }
@@ -1245,7 +1245,7 @@ bool handleReceiveAspaPdu(RPKIRouterClient* client, RPKIAspaHeader* hdr, uint32_
   uint32_t *providerAsns;
   uint8_t  flags = hdr->flags;
 
-  uint8_t withdraw       = flags & 0x01; // bit 0: 0 == announce, 1 == withdraw
+  uint8_t announce       = flags & 0x01; // bit 0: 1 == announce, 0 == withdraw
   uint8_t addrFamilyType = flags & 0x02; // bit 1: AFI (IPv4 == 0, IPv6 == 1)
 
   uint8_t *byteHdr = (uint8_t*)hdr;
@@ -1265,12 +1265,12 @@ bool handleReceiveAspaPdu(RPKIRouterClient* client, RPKIAspaHeader* hdr, uint32_
   }
 
   LOG(LEVEL_INFO, "afi : %d (0 == AFI_IP, 1 == AFI_IP6)", addrFamilyType);
-  LOG(LEVEL_INFO, "flag: %s ", withdraw == 0 ? "Announce": 
-                              (withdraw == 1 ? "Withdraw": "None"));
+  LOG(LEVEL_INFO, "flag: %s ", announce == 1 ? "Announce": 
+                              (announce == 0 ? "Withdraw": "None"));
 
   // this calls 'handleAspaPdu()' in rpki_handler module
   client->params->cbHandleAspaPdu(client->user, customerAsn, providerAsCount, 
-                                    providerAsns, addrFamilyType, withdraw); 
+                                    providerAsns, addrFamilyType, announce); 
   return true;
 }
 

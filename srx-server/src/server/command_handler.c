@@ -340,7 +340,7 @@ void reverse(int arr[], int i, int n)
     arr[n - i - 1] = value;
 }
 
-uint8_t do_AspaValidation(PATH_LIST* asPathList, uint8_t length, AS_TYPE asType, 
+uint8_t AspaValidate  (PATH_LIST* asPathList, uint8_t length, AS_TYPE asType, 
                     AS_REL_DIR direction, uint8_t afi, ASPA_DBManager* aspaDBManager)
 {
   LOG(LEVEL_INFO, FILE_LINE_INFO " ASPA Validation Starts");
@@ -643,16 +643,18 @@ static bool _processUpdateValidation(CommandHandler* cmdHandler,
       if (aspl->afi == 0 || aspl->afi > 2) // if more than 2 (AFI_IP6)
         afi = AFI_IP;                      // set default
 
-      uint8_t valResult = do_AspaValidation (aspl->asPathList, 
+      uint8_t valResult = AspaValidate (aspl->asPathList, 
           aspl->asPathLength, aspl->asType, aspl->asRelDir, afi, aspaDBManager);
 
-      LOG(LEVEL_INFO, "Validation Result: %d (0:v, 2:Iv, 3:Ud 4:DNU 5:Uk, 6:Uf)",
-          valResult);
+      LOG(LEVEL_INFO, FILE_LINE_INFO "\033[92m"" Validation Result: %d "
+          "(0:v, 2:Iv, 3:Ud 4:DNU 5:Uk, 6:Uf)""\033[0m", valResult);
 
       // modify Aspath Cache with the validation result
       //
       if (valResult != aspl->aspaValResult)
       {
+        time_t cTime = time(NULL);
+        aspl->lastModified = cTime;
         modifyAspaValidationResultToAspathCache (cmdHandler->aspathCache, pathId, 
             valResult, aspl);
         aspl->aspaValResult = valResult;
@@ -672,14 +674,6 @@ static bool _processUpdateValidation(CommandHandler* cmdHandler,
       deleteAspathListEntry (aspl);
   }
 
-  // unknown case, put into rpki queue for later validation
-  if (srxRes.aspaResult  == SRx_RESULT_UNKNOWN || 
-      srxRes_mod.aspaResult == SRx_RESULT_UNKNOWN)
-  {
-    RPKI_QUEUE*      rQueue = getRPKIQueue();
-    rq_queue(rQueue, RQ_ASPA, &updateID);
-    LOG(LEVEL_INFO, "rpki queuing for aspa Unknown [uID:0x%08X]", updateID);
-  }
 
   //
   // in case, path id already exists in AS Path Cache and srx result already 

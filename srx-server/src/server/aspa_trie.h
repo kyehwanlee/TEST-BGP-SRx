@@ -36,6 +36,8 @@ typedef struct {
   uint32_t          countAspaObj;
   Configuration*    config;  // The system configuration
   RWLock            tableLock;
+  int (*cbProcessEndOfData)(void* uCache, void* rpkiHandler, 
+                            uint32_t uid, uint32_t pid, time_t ct);
 } ASPA_DBManager;
 
 

@@ -803,7 +803,7 @@ bool modifyUpdateCacheResultWithAspaVal(UpdateCache* self, SRxUpdateID* updateID
 {
 
   CacheEntry* cEntry;
-  bool retVal = true;
+  bool retVal = false;
   SRxUpdateID updID = *updateID;
 
   if (!tableFind(self, updID, &cEntry))
@@ -821,8 +821,9 @@ bool modifyUpdateCacheResultWithAspaVal(UpdateCache* self, SRxUpdateID* updateID
       if (srxResult_aspa->aspaResult != cEntry->srxResult.aspaResult)
       {
         cEntry->srxResult.aspaResult = srxResult_aspa->aspaResult;
-        LOG(LEVEL_INFO, "cEntry(UpdateCache) updated with uID: %08X, ASPA result:%d", 
+        LOG(LEVEL_INFO, "\033[92m""cEntry(UpdateCache) updated with uID: %08X, ASPA result:%d ""\033[0m", 
             *updateID, srxResult_aspa->aspaResult);
+        retVal = true;
       }
     }
 
@@ -1577,3 +1578,27 @@ void outputUpdateCacheAsXML(UpdateCache* self, FILE* stream, int maxBlob)
   releaseXMLOut(&out);
 }
 
+
+
+void process_ASPA_EndOfData(UpdateCache* self, 
+                            int (*cb)(void* uCache, void* hldr, uint32_t uid, uint32_t pid, time_t ct), 
+                            void* rpkiHandler)
+{
+  time_t lastEndOfDataTime = time(NULL);
+
+  int count=0;
+  //SRxUpdateID updateID, tmp;
+
+  CacheEntry* cEntry, *tmp;
+    
+  printf("updateID in hash, Time: %u\n", lastEndOfDataTime);
+  HASH_ITER(hh, (CacheEntry*)self->table, cEntry, tmp) 
+  {
+    printf("[%d] updateID: 0x%08X  pathID: 0x%08X\n", 
+        count++, cEntry->updateID, cEntry->aspathCacheID);
+
+    cb((void*)self, (void*)rpkiHandler, cEntry->updateID, cEntry->aspathCacheID, 
+        lastEndOfDataTime); // call process_ASPA_EndOfData_main
+  }
+
+}

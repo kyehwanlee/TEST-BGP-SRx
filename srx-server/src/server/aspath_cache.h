@@ -54,6 +54,7 @@ typedef struct {
   AS_TYPE       asType;
   AS_REL_DIR    asRelDir;
   uint16_t      afi;
+  time_t        lastModified;
 } AS_PATH_LIST;
 
 

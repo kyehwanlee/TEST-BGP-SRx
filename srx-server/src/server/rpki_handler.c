@@ -102,7 +102,7 @@ static void handleEndOfData (uint32_t valCacheID, uint16_t session_id,
                              void* rpkiHandler);
 int handleAspaPdu(void* rpkiHandler, uint32_t customerAsn, 
                     uint16_t providerAsCount, uint32_t* providerAsns, 
-                    uint8_t addrFamilyType, uint8_t withdraw);
+                    uint8_t addrFamilyType, uint8_t announce);
 
 /**
  * Configure the RPKI Handler and create an RPKIRouter client.
@@ -251,6 +251,9 @@ static void handleEndOfData (uint32_t valCacheID, uint16_t session_id,
   SRxUpdateID*     uID = NULL;
     
   LOG(LEVEL_INFO, "Received an end of data, process RPKI Queue:\n");
+
+  process_ASPA_EndOfData(uCache, handler->aspaDBManager->cbProcessEndOfData, handler);
+
   while (rq_dequeue(rQueue, &queueElem))
   {
     uID = &queueElem.updateID;
@@ -299,77 +302,21 @@ static void handleEndOfData (uint32_t valCacheID, uint16_t session_id,
       }
     }
 
-    // Here check for ASPA Validation which was registered as Unknown
+    // Here check for ASPA Validation which was registered 
     if ((queueElem.reason & RQ_ASPA) == RQ_ASPA)
     {
-      LOG(LEVEL_INFO, FILE_LINE_INFO " called for ASPA [uID: %08X] ", *uID);
+      LOG(LEVEL_INFO, FILE_LINE_INFO " called for ASPA dequeue [uID: %08X] ", *uID);
       uint32_t pathId= 0;
-      if (!getUpdateResult(uCache, uID, 0, NULL, &srxRes, &defaultRes, &pathId))
+      if (getUpdateResult(uCache, uID, 0, NULL, &srxRes, &defaultRes, &pathId))
       {
-        LOG(LEVEL_WARNING, "Update 0x%08X not found during de-queuing of RPKI "
-                           "QUEUE!", queueElem.updateID);
+        valRes.valType |= VRT_ASPA;
+        valRes.valResult.aspaResult = srxRes.aspaResult;
       }
       else
       {
-        // 
-        // 1. get as path list data using uID
-        // 2. aspa validation based on the newly received aspa object
-        // 3. store the result into val Res variable to send a notification
-        //
-        if (defaultRes.result.aspaResult != SRx_RESULT_INVALID)
-        {
-
-          ASPA_DBManager* aspaDBManager = handler->aspaDBManager;
-          TrieNode *root = aspaDBManager->tableRoot;
-
-          LOG(LEVEL_INFO, "Path ID: 0x%X", pathId);
-          AS_PATH_LIST *aspl = getAspathListFromAspathCache (handler->aspathCache, pathId, &srxRes);
-
-          if (aspl)
-          {
-            // call ASPA validation
-            // 
-            uint8_t afi = aspl->afi;  
-            if (aspl->afi == 0 || aspl->afi > 2) // if more than 2 (AFI_IP6)
-              afi = AFI_IP;                      // set default
-
-            uint8_t valResult = do_AspaValidation (aspl->asPathList, 
-                aspl->asPathLength, aspl->asType, aspl->asRelDir, afi, aspaDBManager);
-      
-            LOG(LEVEL_INFO, "Validation Result: %d (0:v, 2:Iv, 3:Ud 4:DNU 5:Uk, 6:Uf)", valResult);
-
-            // modify Aspath Cache with the validation result
-            if (valResult != aspl->aspaValResult)
-            {
-              modifyAspaValidationResultToAspathCache (handler->aspathCache, pathId, 
-                  valResult, aspl);
-              aspl->aspaValResult = valResult;
-              srxRes.aspaResult = valResult;
-
-              // modify UpdateCache data as well
-              modifyUpdateCacheResultWithAspaVal(uCache, uID, &srxRes);
-            }
-
-            valRes.valType |= VRT_ASPA;
-            valRes.valResult.aspaResult = aspl->aspaValResult;
-
-          }
-          else
-          {
-            LOG(LEVEL_ERROR, "Update 0x%08X is registered for ASPA but the "
-                "AS Path List is not found!", *uID);
-          }
-
-          if (aspl)
-            free (aspl);
-        }
-        else 
-        {
-          LOG(LEVEL_ERROR, "Update 0x%08X is not capable to do ASPA validation",
-              *uID);
-        }
+        LOG(LEVEL_WARNING, "Update 0x%08X not found during de-queuing of RPKI "
+            "QUEUE!", queueElem.updateID);
       }
-
     }
     
     if (uCache->resChangedCallback != NULL)
@@ -523,7 +470,7 @@ static void handleRouterKey (uint32_t valCacheID, uint16_t session_id,
 // work2. call DB to store
 //
 int handleAspaPdu(void* rpkiHandler, uint32_t customerAsn, uint16_t providerAsCount, 
-                  uint32_t* providerAsns, uint8_t addrFamilyType, uint8_t withdraw)
+                  uint32_t* providerAsns, uint8_t addrFamilyType, uint8_t announce)
 {
   LOG(LEVEL_INFO, FILE_LINE_INFO " ASPA handler called for registering ASPA object(s) into DB");
   RPKIHandler* handler = (RPKIHandler*)rpkiHandler;
@@ -542,33 +489,53 @@ int handleAspaPdu(void* rpkiHandler, uint32_t customerAsn, uint16_t providerAsCo
   else 
   {
     LOG(LEVEL_WARNING, "AFI value error");
+    return retVal;
   }
 
-  ASPA_Object *aspaObj = NULL;
-  char strWord[6];
   TrieNode *node = NULL;
+  ASPA_Object *aspaObj = NULL;
+  aspaObj = newASPAObject(customerAsn, providerAsCount, providerAsns, afi);
 
-  if (withdraw == 1) // 0 == announce, 1 == withdraw
+  char strWord[6];
+  sprintf(strWord, "%d", customerAsn);
+    
+
+  if (announce == 1) // 1 == announce, 0 == withdraw
   {
-    aspaObj = newASPAObject(customerAsn, providerAsCount, providerAsns, afi);
-
-    sprintf(strWord, "%d", customerAsn);
-    LOG(LEVEL_INFO, "received a new ASPA object, search key in DB: %s", strWord);
-
+    LOG(LEVEL_INFO, "[Announce] ASPA object, search key in DB: %s", strWord);
     node = insertAspaObj(aspaDBManager, strWord, strWord, aspaObj);
+    if (node)
+    {
+      retVal = 1; // success
+    }
   }
-  else if (withdraw == 0)
+  else if (announce == 0) // withdraw
   {
-    // XXX: TBD 
-    // Draft didn't mention about withdraw clearly
+    // XXX: Draft didn't mention about withdraw clearly
     //
-    // call  delete_TrieNode_AspaObj 
+    LOG(LEVEL_INFO, "[Withdraw] ASPA object, search key in DB: %s", strWord);
+    bool resWithdraw = delete_TrieNode_AspaObj (aspaDBManager, strWord, aspaObj);
+
+    if (resWithdraw)
+    {
+      LOG(LEVEL_INFO, "[Withdraw] Withdraw executed successfully");
+      retVal = 1; // success
+    }
+    else
+    {
+      LOG(LEVEL_WARNING, "[Withdraw] Withdraw Failed due to not found or mismatch");
+    }
+
+    if (aspaObj) // release memory unless used for inserting db
+      deleteASPAObject(aspaDBManager, aspaObj);
+  }
+  else
+  {
+    LOG(LEVEL_WARNING, " Cannot recognize the flag set");
+    if (aspaObj) // release memory unless used for inserting db
+      deleteASPAObject(aspaDBManager, aspaObj);
   }
 
-  if (node)
-  {
-    retVal = 1; // success
-  }
   return retVal;
 
 }
