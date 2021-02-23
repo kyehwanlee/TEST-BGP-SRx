@@ -2539,10 +2539,12 @@ static void _handleSRxSynchRequest_processTable(struct bgp* bgp,
     {
       binfo  = (struct bgp_info*)bnode->info;
       srxLockUpdate(binfo);
-      defResult.resSourceROA    = SRxRS_ROUTER;
-      defResult.resSourceBGPSEC = SRxRS_ROUTER;
+      defResult.resSourceROA        = SRxRS_ROUTER;
+      defResult.resSourceBGPSEC     = SRxRS_ROUTER;
+      defResult.resSourceASPA       = SRxRS_ROUTER;
       defResult.result.roaResult    = binfo->val_res_ROA;
       defResult.result.bgpsecResult = binfo->val_res_BGPSEC;
+      defResult.result.aspaResult   = binfo->val_res_ASPA;
       verify_update (bgp, binfo, &defResult, false);
       srxUnLockUpdate(binfo);
     }

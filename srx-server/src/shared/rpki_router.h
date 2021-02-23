@@ -309,7 +309,7 @@ typedef struct {
 
        Bit     Bit Name
        ----    -------------------
-        0      Announce/Withdraw (ann == 0, with == 1)
+        0      Announce/Withdraw (ann == 1, with == 0)
         1      AFI (IPv4 == 0, IPv6 == 1)
         2-7    Reserved, must be zero
  */
