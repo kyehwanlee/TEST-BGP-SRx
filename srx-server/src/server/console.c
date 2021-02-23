@@ -227,7 +227,11 @@ char* CON_HELP_RESP= "\r\nAvailable commands are:\r\n"
 #endif
                  " !! [<parameter>]      Repeat last command with optional new"
                  "\r\n                       parameter if specified, otherwise"
-                 "\r\n                       old parameter!"
+                 "\r\n                       old parameter!\r\n"
+                 " show-aspa             Show ASPA object registered in object"
+                 "\r\n                       cache db \r\n"
+                 " show-aspath           Show AS path list received from the"
+                 "\r\n                       clients \r\n"
                  "\r\n\r\n";
 
 char* CON_VERSION_CMD  = "show-version";

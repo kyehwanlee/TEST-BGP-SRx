@@ -131,5 +131,10 @@ void stopProcessingCommands(CommandHandler* self);
  */
 bool broadcastResult(CommandHandler* self, SRxValidationResult* valResult);
 
+
+// ASPA validation function declaration 
+//
+uint8_t AspaValidate  (PATH_LIST* , uint8_t length, AS_TYPE , AS_REL_DIR , 
+    uint8_t afi, ASPA_DBManager* );
 #endif // !__COMMAND_HANDLER_H__
 

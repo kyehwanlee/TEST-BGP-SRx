@@ -11,6 +11,9 @@
 
 static uint32_t countTrieNode =0;
 int process_ASPA_EndOfData_main(void* uc, void* handler, uint32_t uid, uint32_t pid, time_t ct);
+extern RPKI_QUEUE* getRPKIQueue();
+extern uint8_t AspaValidate  (PATH_LIST* asPathList, uint8_t length, AS_TYPE asType, 
+                    AS_REL_DIR direction, uint8_t afi, ASPA_DBManager* aspaDBManager);
 
 // API for initialization
 //
@@ -417,7 +420,7 @@ int process_ASPA_EndOfData_main(void* uc, void* handler, uint32_t uid, uint32_t 
   uint32_t      pathId      = 0;
   RPKIHandler*  rpkiHandler = (RPKIHandler*)handler;
 
-  printf("=== main process_main_ASPA_EndOfData UpdateCache:%p rpkiHandler:%p ctime:%u\n", 
+  LOG(LEVEL_INFO, "=== main process_main_ASPA_EndOfData UpdateCache:%p rpkiHandler:%p ctime:%u", 
       (UpdateCache*)uCache, (RPKIHandler*)rpkiHandler, ct);
 
 

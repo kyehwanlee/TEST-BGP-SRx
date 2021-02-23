@@ -88,7 +88,11 @@ int storeAspathList (AspathCache* self, SRxDefaultResult* defRes, uint32_t pathI
 AS_PATH_LIST* getAspathListFromAspathCache (AspathCache* self, uint32_t pathId, SRxResult* srxRes);
 void printAsPathList(AS_PATH_LIST* aspl);
 uint32_t makePathId (uint8_t asPathLength, PATH_LIST* asPathList, bool bBigEndian);
+bool modifyAspaValidationResultToAspathCache(AspathCache *self, uint32_t pathId,
+                      uint8_t modAspaResult, AS_PATH_LIST* pathlistEntry);
 
+bool deleteAspathListEntry (AS_PATH_LIST* aspl);
+void printAllAsPathCache(AspathCache *self);
 
 
 
