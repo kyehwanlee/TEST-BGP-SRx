@@ -856,6 +856,12 @@ SRxResult getInfoToSrxVal (struct bgp_info *info)
     resVals.bgpsecResult = info->val_res_BGPSEC;
     resVals.aspaResult   = info->val_res_ASPA;
   }
+  else
+  {
+    resVals.roaResult    = SRx_RESULT_UNDEFINED;
+    resVals.bgpsecResult = SRx_RESULT_UNDEFINED;
+    resVals.aspaResult   = SRx_RESULT_UNDEFINED;
+  }
 
   return resVals;
 }
@@ -1206,7 +1212,8 @@ bgp_info_cmp (struct bgp *bgp, struct bgp_info *new, struct bgp_info *exist,
   int ret;
 #ifdef USE_SRX
   int use_evaluation =    srx_config_check(bgp, SRX_CONFIG_EVAL_ORIGIN)
-                       || srx_config_check(bgp, SRX_CONFIG_EVAL_PATH);
+                       || srx_config_check(bgp, SRX_CONFIG_EVAL_PATH)
+                       || srx_config_check(bgp, SRX_CONFIG_EVAL_ASPA);
   int new_result = 0;
   int exist_result = 0;
   SRxResult exist_SrxVal;
@@ -1280,21 +1287,44 @@ bgp_info_cmp (struct bgp *bgp, struct bgp_info *new, struct bgp_info *exist,
   if (new_pref < exist_pref)
     return 0;
 
-#ifdef USE_SRX_NOUSE
-  if (use_evaluation && CHECK_FLAG (bgp->srx_val_policy,
-                                    SRX_VAL_POLICY_PREFER_VALID))
-  {
+#ifdef USE_SRX
     /* 2.5. Prefer valid > everything else*/
-
+  
     // Prefer VALID over Everything else!
-    if ((new_result == SRx_RESULT_VALID) && (exist_result != SRx_RESULT_VALID))
-    {
+  if (use_evaluation && CHECK_FLAG (bgp->srx_val_policy, 
+        SRX_VAL_POLICY_ROA_PREFER_VALID))
+  {
+    if ((new_SrxVal.roaResult   == SRx_RESULT_VALID) && 
+        (exist_SrxVal.roaResult != SRx_RESULT_VALID))
       return 1;
-    }
-    if ((new_result != SRx_RESULT_VALID) && (exist_result == SRx_RESULT_VALID))
-    {
+
+    if ((new_SrxVal.roaResult   != SRx_RESULT_VALID) && 
+        (exist_SrxVal.roaResult == SRx_RESULT_VALID))
       return 0;
-    }
+  }
+
+  if (use_evaluation && CHECK_FLAG (bgp->srx_val_policy, 
+        SRX_VAL_POLICY_BGPSEC_PREFER_VALID))
+  {
+    if ((new_SrxVal.bgpsecResult    == SRx_RESULT_VALID) && 
+        (exist_SrxVal.bgpsecResult  != SRx_RESULT_VALID))
+      return 1;
+
+    if ((new_SrxVal.bgpsecResult    != SRx_RESULT_VALID) && 
+        (exist_SrxVal.bgpsecResult  == SRx_RESULT_VALID))
+      return 0;
+  }
+
+  if (use_evaluation && CHECK_FLAG (bgp->srx_val_policy, 
+        SRX_VAL_POLICY_ASPA_PREFER_VALID))
+  {
+    if ((new_SrxVal.aspaResult      == SRx_RESULT_VALID) && 
+        (exist_SrxVal.aspaResult    != SRx_RESULT_VALID))
+      return 1;
+
+    if ((new_SrxVal.aspaResult      != SRx_RESULT_VALID) && 
+        (exist_SrxVal.aspaResult    == SRx_RESULT_VALID))
+      return 0;
   }
 #endif /* USE_SRX */
 

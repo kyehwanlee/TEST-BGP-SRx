@@ -1450,13 +1450,13 @@ DEFUN (srx_show_config,
   {
     if (CHECK_FLAG(bgp->srx_config, SRX_CONFIG_EVAL_DISTR))
     {
-      vty_out (vty, "bgpsec (prefix-origin and path processing) using "
-                    "srx-server%s", VTY_NEWLINE);
+      vty_out (vty, "bgpsec (prefix-origin, path processing, aspa validation) "
+                    "using srx-server%s", VTY_NEWLINE);
     }
     else
     {
-      vty_out (vty, "bgpsec (prefix-origin and path processing) locally%s",
-               VTY_NEWLINE);
+      vty_out (vty, "bgpsec (prefix-origin, path processing, aspa validation) "
+                    "locally%s", VTY_NEWLINE);
     }
   }
   else if (CHECK_FLAG(bgp->srx_config, SRX_CONFIG_EVAL_ORIGIN))
@@ -1521,8 +1521,8 @@ DEFUN (srx_show_config,
   vty_out (vty, "  policy.........: ");
   if (bgp->srx_val_policy & SRX_VAL_POLICY_IGNORE_NOTFOUND)
   {
-    vty_out (vty, "%signore-notfound\t (%2s %2s %2s)%s", (doPolicy ? _BLANKS : ""),
-            (bgp->srx_val_policy & SRX_VAL_POLICY_ROA_IGNORE_NOTFOUND ? "RV":""),
+    vty_out (vty, "%signore-notfound\t\t (%2s %2s %2s)%s", (doPolicy ? _BLANKS : ""),
+            (bgp->srx_val_policy & SRX_VAL_POLICY_ROA_IGNORE_NOTFOUND ? "OV":""),
             (bgp->srx_val_policy & SRX_VAL_POLICY_BGPSEC_IGNORE_NOTFOUND ? "PV":""),
             (bgp->srx_val_policy & SRX_VAL_POLICY_ASPA_IGNORE_UNKNOWN ? "AV":""),
             VTY_NEWLINE);
@@ -1530,8 +1530,8 @@ DEFUN (srx_show_config,
   }
   if (bgp->srx_val_policy & SRX_VAL_POLICY_IGNORE_INVALID)
   {
-    vty_out (vty, "%signore-invalid\t (%2s %2s %2s)%s", (doPolicy ? _BLANKS : ""), 
-            (bgp->srx_val_policy & SRX_VAL_POLICY_ROA_IGNORE_INVALID? "RV":""),
+    vty_out (vty, "%signore-invalid\t\t (%2s %2s %2s)%s", (doPolicy ? _BLANKS : ""), 
+            (bgp->srx_val_policy & SRX_VAL_POLICY_ROA_IGNORE_INVALID? "OV":""),
             (bgp->srx_val_policy & SRX_VAL_POLICY_BGPSEC_IGNORE_INVALID ? "PV":""),
             (bgp->srx_val_policy & SRX_VAL_POLICY_ASPA_IGNORE_INVALID ? "AV":""),
              VTY_NEWLINE);
@@ -1539,8 +1539,8 @@ DEFUN (srx_show_config,
   }
   if (bgp->srx_val_policy & SRX_VAL_POLICY_IGNORE_UNDEFINED)
   {
-    vty_out (vty, "%signore-undefined\t (%2s %2s %2s)%s", (doPolicy ? _BLANKS : ""),
-            (bgp->srx_val_policy & SRX_VAL_POLICY_ROA_IGNORE_UNDEFINED? "RV":""),
+    vty_out (vty, "%signore-undefined\t\t (%2s %2s %2s)%s", (doPolicy ? _BLANKS : ""),
+            (bgp->srx_val_policy & SRX_VAL_POLICY_ROA_IGNORE_UNDEFINED? "OV":""),
             (bgp->srx_val_policy & SRX_VAL_POLICY_BGPSEC_IGNORE_UNDEFINED ? "PV":""),
             (bgp->srx_val_policy & SRX_VAL_POLICY_ASPA_IGNORE_UNDEFINED ? "AV":""),
              VTY_NEWLINE);
@@ -1550,37 +1550,37 @@ DEFUN (srx_show_config,
   // Origin Validation
   if (bgp->srx_val_local_pref[LOCPRF_TYPE_ROA][VAL_LOCPRF_VALID].is_set)
   {
-    vty_out (vty, "%slocal-preference valid\t(OV) %d", (doPolicy ? _BLANKS : ""),
+    vty_out (vty, "%slocal-preference valid\t (OV) %d", (doPolicy ? _BLANKS : ""),
                   bgp->srx_val_local_pref[LOCPRF_TYPE_ROA][VAL_LOCPRF_VALID].value);
     switch (bgp->srx_val_local_pref[LOCPRF_TYPE_ROA][VAL_LOCPRF_VALID].relative)
     {
       case -1 : vty_out (vty, " SUBTRACT%s", VTY_NEWLINE); break;
       case  1 : vty_out (vty, " ADD%s", VTY_NEWLINE); break;
-      default: vty_out (vty, "%s", VTY_NEWLINE);
+      default: vty_out (vty, " ADD%s", VTY_NEWLINE);
     }
     doPolicy = 1;
   }
   if (bgp->srx_val_local_pref[LOCPRF_TYPE_ROA][VAL_LOCPRF_NOTFOUND].is_set)
   {
-    vty_out (vty, "%slocal-preference notfoundi\t(OV) %d", (doPolicy ? _BLANKS : ""),
+    vty_out (vty, "%slocal-preference notfound\t (OV) %d", (doPolicy ? _BLANKS : ""),
                   bgp->srx_val_local_pref[LOCPRF_TYPE_ROA][VAL_LOCPRF_NOTFOUND].value);
     switch (bgp->srx_val_local_pref[LOCPRF_TYPE_ROA][VAL_LOCPRF_NOTFOUND].relative)
     {
       case -1 : vty_out (vty, " SUBTRACT%s", VTY_NEWLINE); break;
       case  1 : vty_out (vty, " ADD%s", VTY_NEWLINE); break;
-      default: vty_out (vty, "%s", VTY_NEWLINE);
+      default: vty_out (vty, " ADD%s", VTY_NEWLINE);
     }
     doPolicy = 1;
   }
   if (bgp->srx_val_local_pref[LOCPRF_TYPE_ROA][VAL_LOCPRF_INVALID].is_set)
   {
-    vty_out (vty, "%slocal-preference invalid\t(OV) %d", (doPolicy ? _BLANKS : ""),
+    vty_out (vty, "%slocal-preference invalid\t (OV) %d", (doPolicy ? _BLANKS : ""),
                   bgp->srx_val_local_pref[LOCPRF_TYPE_ROA][VAL_LOCPRF_INVALID].value);
     switch (bgp->srx_val_local_pref[LOCPRF_TYPE_ROA][VAL_LOCPRF_INVALID].relative)
     {
       case -1 : vty_out (vty, " SUBTRACT%s", VTY_NEWLINE); break;
       case  1 : vty_out (vty, " ADD%s", VTY_NEWLINE); break;
-      default: vty_out (vty, "%s", VTY_NEWLINE);
+      default: vty_out (vty, " ADD%s", VTY_NEWLINE);
     }
     doPolicy = 1;
   }
@@ -1588,37 +1588,37 @@ DEFUN (srx_show_config,
   // Path Validation
   if (bgp->srx_val_local_pref[LOCPRF_TYPE_BGPSEC][VAL_LOCPRF_VALID].is_set)
   {
-    vty_out (vty, "%slocal-preference valid\t(PV) %d", (doPolicy ? _BLANKS : ""),
+    vty_out (vty, "%slocal-preference valid\t (PV) %d", (doPolicy ? _BLANKS : ""),
                   bgp->srx_val_local_pref[LOCPRF_TYPE_BGPSEC][VAL_LOCPRF_VALID].value);
     switch (bgp->srx_val_local_pref[LOCPRF_TYPE_BGPSEC][VAL_LOCPRF_VALID].relative)
     {
       case -1 : vty_out (vty, " SUBTRACT%s", VTY_NEWLINE); break;
       case  1 : vty_out (vty, " ADD%s", VTY_NEWLINE); break;
-      default: vty_out (vty, "%s", VTY_NEWLINE);
+      default: vty_out (vty, " ADD%s", VTY_NEWLINE);
     }
     doPolicy = 1;
   }
   if (bgp->srx_val_local_pref[LOCPRF_TYPE_BGPSEC][VAL_LOCPRF_NOTFOUND].is_set)
   {
-    vty_out (vty, "%slocal-preference notfoundi\t(PV) %d", (doPolicy ? _BLANKS : ""),
+    vty_out (vty, "%slocal-preference notfoundi\t (PV) %d", (doPolicy ? _BLANKS : ""),
                   bgp->srx_val_local_pref[LOCPRF_TYPE_BGPSEC][VAL_LOCPRF_NOTFOUND].value);
     switch (bgp->srx_val_local_pref[LOCPRF_TYPE_BGPSEC][VAL_LOCPRF_NOTFOUND].relative)
     {
       case -1 : vty_out (vty, " SUBTRACT%s", VTY_NEWLINE); break;
       case  1 : vty_out (vty, " ADD%s", VTY_NEWLINE); break;
-      default: vty_out (vty, "%s", VTY_NEWLINE);
+      default: vty_out (vty, " ADD%s", VTY_NEWLINE);
     }
     doPolicy = 1;
   }
   if (bgp->srx_val_local_pref[LOCPRF_TYPE_BGPSEC][VAL_LOCPRF_INVALID].is_set)
   {
-    vty_out (vty, "%slocal-preference invalid\t(PV) %d", (doPolicy ? _BLANKS : ""),
+    vty_out (vty, "%slocal-preference invalid\t (PV) %d", (doPolicy ? _BLANKS : ""),
                   bgp->srx_val_local_pref[LOCPRF_TYPE_BGPSEC][VAL_LOCPRF_INVALID].value);
     switch (bgp->srx_val_local_pref[LOCPRF_TYPE_BGPSEC][VAL_LOCPRF_INVALID].relative)
     {
       case -1 : vty_out (vty, " SUBTRACT%s", VTY_NEWLINE); break;
       case  1 : vty_out (vty, " ADD%s", VTY_NEWLINE); break;
-      default: vty_out (vty, "%s", VTY_NEWLINE);
+      default: vty_out (vty, " ADD%s", VTY_NEWLINE);
     }
     doPolicy = 1;
   }
@@ -1626,45 +1626,45 @@ DEFUN (srx_show_config,
   // ASPA Validation
   if (bgp->srx_val_local_pref[LOCPRF_TYPE_ASPA][VAL_LOCPRF_VALID].is_set)
   {
-    vty_out (vty, "%slocal-preference valid\t(AV) %d", (doPolicy ? _BLANKS : ""),
+    vty_out (vty, "%slocal-preference valid\t (AV) %d", (doPolicy ? _BLANKS : ""),
                   bgp->srx_val_local_pref[LOCPRF_TYPE_ASPA][VAL_LOCPRF_VALID].value);
     switch (bgp->srx_val_local_pref[LOCPRF_TYPE_ASPA][VAL_LOCPRF_VALID].relative)
     {
       case -1 : vty_out (vty, " SUBTRACT%s", VTY_NEWLINE); break;
       case  1 : vty_out (vty, " ADD%s", VTY_NEWLINE); break;
-      default: vty_out (vty, "%s", VTY_NEWLINE);
+      default: vty_out (vty, " ADD%s", VTY_NEWLINE);
     }
     doPolicy = 1;
   }
   if (bgp->srx_val_local_pref[LOCPRF_TYPE_ASPA][VAL_LOCPRF_NOTFOUND].is_set)
   {
-    vty_out (vty, "%slocal-preference notfound\t(AV) %d", (doPolicy ? _BLANKS : ""),
+    vty_out (vty, "%slocal-preference notfound\t (AV) %d", (doPolicy ? _BLANKS : ""),
                   bgp->srx_val_local_pref[LOCPRF_TYPE_ASPA][VAL_LOCPRF_NOTFOUND].value);
     switch (bgp->srx_val_local_pref[LOCPRF_TYPE_ASPA][VAL_LOCPRF_NOTFOUND].relative)
     {
       case -1 : vty_out (vty, " SUBTRACT%s", VTY_NEWLINE); break;
       case  1 : vty_out (vty, " ADD%s", VTY_NEWLINE); break;
-      default: vty_out (vty, "%s", VTY_NEWLINE);
+      default: vty_out (vty, " ADD%s", VTY_NEWLINE);
     }
     doPolicy = 1;
   }
   if (bgp->srx_val_local_pref[LOCPRF_TYPE_ASPA][VAL_LOCPRF_INVALID].is_set)
   {
-    vty_out (vty, "%slocal-preference invalid\t(AV) %d", (doPolicy ? _BLANKS : ""),
+    vty_out (vty, "%slocal-preference invalid\t (AV) %d", (doPolicy ? _BLANKS : ""),
                   bgp->srx_val_local_pref[LOCPRF_TYPE_ASPA][VAL_LOCPRF_INVALID].value);
     switch (bgp->srx_val_local_pref[LOCPRF_TYPE_ASPA][VAL_LOCPRF_INVALID].relative)
     {
       case -1 : vty_out (vty, " SUBTRACT%s", VTY_NEWLINE); break;
       case  1 : vty_out (vty, " ADD%s", VTY_NEWLINE); break;
-      default: vty_out (vty, "%s", VTY_NEWLINE);
+      default: vty_out (vty, " ADD%s", VTY_NEWLINE);
     }
     doPolicy = 1;
   }
 
   if (bgp->srx_val_policy & SRX_VAL_POLICY_PREFER_VALID)
   {
-    vty_out (vty, "%sprefer-valid\t (%2s %2s %2s)%s", (doPolicy ? _BLANKS : ""), 
-            (bgp->srx_val_policy & SRX_VAL_POLICY_ROA_PREFER_VALID ? "RV":""),
+    vty_out (vty, "%sprefer-valid\t\t\t (%2s %2s %2s)%s", (doPolicy ? _BLANKS : ""), 
+            (bgp->srx_val_policy & SRX_VAL_POLICY_ROA_PREFER_VALID ? "OV":""),
             (bgp->srx_val_policy & SRX_VAL_POLICY_BGPSEC_PREFER_VALID ? "PV":""),
             (bgp->srx_val_policy & SRX_VAL_POLICY_ASPA_PREFER_VALID ? "AV":""),
             VTY_NEWLINE);
