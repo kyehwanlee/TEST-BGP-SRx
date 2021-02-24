@@ -340,11 +340,11 @@ void reverse(int arr[], int i, int n)
     arr[n - i - 1] = value;
 }
 
-uint8_t AspaValidate  (PATH_LIST* asPathList, uint8_t length, AS_TYPE asType, 
+uint8_t validateASPA (PATH_LIST* asPathList, uint8_t length, AS_TYPE asType, 
                     AS_REL_DIR direction, uint8_t afi, ASPA_DBManager* aspaDBManager)
 {
   LOG(LEVEL_INFO, FILE_LINE_INFO " ASPA Validation Starts");
-  uint8_t result = ASPA_RESULT_NIBBLE_ZERO; // for being distinguished with 0 (ASPA_RESULT_VALID)
+  uint16_t result = ASPA_RESULT_NIBBLE_ZERO; // for being distinguished with 0 (ASPA_RESULT_VALID)
 
   uint32_t customerAS, providerAS, startId=0;
   bool swapFlag = false;
@@ -486,6 +486,7 @@ uint8_t AspaValidate  (PATH_LIST* asPathList, uint8_t length, AS_TYPE asType,
   /* 
    * Final result return
    */
+  result = result & 0x0f; // filter out
   if (result == ASPA_RESULT_VALID)
     return SRx_RESULT_VALID;
 
@@ -494,6 +495,8 @@ uint8_t AspaValidate  (PATH_LIST* asPathList, uint8_t length, AS_TYPE asType,
 
   if ( (result & ASPA_RESULT_UNVERIFIABLE) && !(result & ASPA_RESULT_UNKNOWN))
     return SRx_RESULT_UNVERIFIABLE;
+  
+  return SRx_RESULT_UNDEFINED;
 }
 
 
@@ -643,7 +646,7 @@ static bool _processUpdateValidation(CommandHandler* cmdHandler,
       if (aspl->afi == 0 || aspl->afi > 2) // if more than 2 (AFI_IP6)
         afi = AFI_IP;                      // set default
 
-      uint8_t valResult = AspaValidate (aspl->asPathList, 
+      uint8_t valResult = validateASPA (aspl->asPathList, 
           aspl->asPathLength, aspl->asType, aspl->asRelDir, afi, aspaDBManager);
 
       LOG(LEVEL_INFO, FILE_LINE_INFO "\033[92m"" Validation Result: %d "

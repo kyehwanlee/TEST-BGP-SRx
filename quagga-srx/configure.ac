@@ -14,7 +14,7 @@ AC_CONFIG_MACRO_DIR([m4])
 
 # Set the requires SRxCryptoAPI Version
 REQ_SCA_VER=3
-REQ_PROXY_VER=5
+REQ_PROXY_VER=6
 
 dnl -----------------------------------
 dnl Get hostname and other information.

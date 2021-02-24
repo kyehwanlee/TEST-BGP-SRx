@@ -250,7 +250,8 @@ typedef enum {
   ASPA_RESULT_UNDEFINED    = 2,
   ASPA_RESULT_UNKNOWN      = 4,
   ASPA_RESULT_UNVERIFIABLE = 8,
-  ASPA_RESULT_NIBBLE_ZERO  = 16
+  ASPA_RESULT_NIBBLE_ZERO  = 16,
+  ASPA_Val_ENUM_16bit      = 0xffff,
 } ASPA_ValidationResult;
 
 typedef enum {

@@ -125,6 +125,7 @@ srx-server/src/client/srxproxy64.conf
 srx-server/src/rpkirtr_client
 srx-server/src/rpkirtr_svr
 srx-server/src/server/srx_serverd
+srx-server/src/*.spec
 srx-server/src/srx-0.5.1.1.spec
 srx-server/src/srx-proxy-0.5.1.1.spec
 srx-server/src/srx-proxy-devel-0.5.1.1.spec

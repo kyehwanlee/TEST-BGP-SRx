@@ -12,7 +12,7 @@
 static uint32_t countTrieNode =0;
 int process_ASPA_EndOfData_main(void* uc, void* handler, uint32_t uid, uint32_t pid, time_t ct);
 extern RPKI_QUEUE* getRPKIQueue();
-extern uint8_t AspaValidate  (PATH_LIST* asPathList, uint8_t length, AS_TYPE asType, 
+extern uint8_t validateASPA (PATH_LIST* asPathList, uint8_t length, AS_TYPE asType, 
                     AS_REL_DIR direction, uint8_t afi, ASPA_DBManager* aspaDBManager);
 
 // API for initialization
@@ -456,7 +456,7 @@ int process_ASPA_EndOfData_main(void* uc, void* handler, uint32_t uid, uint32_t 
         {
           // call ASPA validation
           //
-          uint8_t valResult = AspaValidate (aspl->asPathList, 
+          uint8_t valResult = validateASPA (aspl->asPathList, 
               aspl->asPathLength, aspl->asType, aspl->asRelDir, afi, aspaDBManager);
 
           LOG(LEVEL_INFO, FILE_LINE_INFO "\033[92m"" Validation Result: %d "
@@ -488,7 +488,7 @@ int process_ASPA_EndOfData_main(void* uc, void* handler, uint32_t uid, uint32_t 
         // in case there is another update cache entry whose path id is same with the previous
         // This prevents from doing ASPA validation repeatedly with the same AS path list
         //
-        else
+        else /* if else time comparison */
         {
           // update cache entry with the new value 
           if (old_aspaResult != aspl->aspaValResult)
@@ -509,7 +509,7 @@ int process_ASPA_EndOfData_main(void* uc, void* handler, uint32_t uid, uint32_t 
         }
 
       }
-      else
+      else /* no aspath list */
       {
         LOG(LEVEL_WARNING, "Update 0x%08X is registered for ASPA but the "
             "AS Path List is not found!", updateID);

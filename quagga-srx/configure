@@ -2576,7 +2576,7 @@ ac_compiler_gnu=$ac_cv_c_compiler_gnu
 
 # Set the requires SRxCryptoAPI Version
 REQ_SCA_VER=3
-REQ_PROXY_VER=5
+REQ_PROXY_VER=6
 
 ac_aux_dir=
 for ac_dir in "$srcdir" "$srcdir/.." "$srcdir/../.."; do
