@@ -900,7 +900,10 @@ int srx_val_local_preference_unset (struct bgp *bgp, int type, int index)
 int srx_val_policy_set (struct bgp *bgp, uint16_t policy)
 {
   SET_FLAG (bgp->srx_val_policy, policy);
-  zlog_debug ("Set flag: %02X with value: %02X", bgp->srx_val_policy, policy );
+  if (BGP_DEBUG (aspa, ASPA))
+  {
+    zlog_debug ("Set flag: %02X with value: %02X", bgp->srx_val_policy, policy );
+  }
   return CMD_SUCCESS;
 }
 

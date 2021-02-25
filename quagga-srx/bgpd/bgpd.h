@@ -279,6 +279,9 @@ Software Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
                                                   "result = UNVERIFIABLE.\n"
 
 // POLICY LOCAL-PREF ADJUSTMENT
+#define SRX_VTY_HLP_POL_LOCP_OV   "local preference set for origin validation\n"
+#define SRX_VTY_HLP_POL_LOCP_PV   "local preference set for path validation\n"
+#define SRX_VTY_HLP_POL_LOCP_AV   "local preference set for aspa validation\n"
 #define SRX_VTY_HLP_POL_LOCP   "Manipulate local preference\n"
 #define SRX_VTY_HLP_POL_LOCP_V "Policy for validation result  = VALID\n"
 #define SRX_VTY_HLP_POL_LOCP_U SRX_VTY_HLP_ORIGIN_ONLY "Policy for " \
@@ -293,7 +296,9 @@ Software Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA
                                   " (roa|bgpsec|aspa) (valid|notfound|invalid) <0-4294967295>"
 #define SRX_VTY_HLP_POL_LOCP_FIX  SRX_VTY_HLP_STR SRX_VTY_HLP_POLICY \
                                   SRX_VTY_HLP_POL_LOCP \
-                                  "each type selection\n" \
+                                  SRX_VTY_HLP_POL_LOCP_OV \
+                                  SRX_VTY_HLP_POL_LOCP_PV \
+                                  SRX_VTY_HLP_POL_LOCP_AV \
                                   SRX_VTY_HLP_POL_LOCP_V \
                                   SRX_VTY_HLP_POL_LOCP_U \
                                   SRX_VTY_HLP_POL_LOCP_I \

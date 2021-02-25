@@ -2402,24 +2402,25 @@ DEFUN (no_srx_policy_local_preference,
   return validation_local_preference(argc, argv, vty->index, 0);
 }
 
-// original ignore not found
+// deprecated 
 DEFUN (srx_policy_ignore_notfound,
        srx_policy_ignore_notfound_cmd,
        SRX_VTY_CMD_POL_IGNORE_NOTFOUND,
        SRX_VTY_HLP_POL_IGNORE_NOTFOUND)
 {
-  srx_val_policy_set (vty->index, SRX_VAL_POLICY_IGNORE_NOTFOUND);
-  return  CMD_SUCCESS;
+  return CMD_WARNING;
+  //srx_val_policy_set (vty->index, SRX_VAL_POLICY_IGNORE_NOTFOUND);
 }
 
+// deprecated
 DEFUN (no_srx_policy_ignore_notfound,
        no_srx_policy_ignore_notfound_cmd,
        "no " SRX_VTY_CMD_POL_IGNORE_NOTFOUND,
        NO_STR
        SRX_VTY_HLP_POL_IGNORE_NOTFOUND)
 {
-  srx_val_policy_unset (vty->index, SRX_VAL_POLICY_IGNORE_NOTFOUND);
-  return  CMD_SUCCESS;
+  return CMD_WARNING;
+  //srx_val_policy_unset (vty->index, SRX_VAL_POLICY_IGNORE_NOTFOUND);
 }
 
 // for roa validation not found
@@ -2443,23 +2444,25 @@ DEFUN (no_srx_policy_roa_ignore_notfound,
 }
 
 // original invalid
+// deprecated
 DEFUN (srx_policy_ignore_invalid,
        srx_policy_ignore_invalid_cmd,
        SRX_VTY_CMD_POL_IGNORE_INVALID,
        SRX_VTY_HLP_POL_IGNORE_INVALID)
 {
-  srx_val_policy_set (vty->index, SRX_VAL_POLICY_IGNORE_INVALID);
-  return  CMD_SUCCESS;
+  return CMD_WARNING;
+  //srx_val_policy_set (vty->index, SRX_VAL_POLICY_IGNORE_INVALID);
 }
 
+// deprecated
 DEFUN (no_srx_policy_ignore_invalid,
        no_srx_policy_ignore_invalid_cmd,
        "no " SRX_VTY_CMD_POL_IGNORE_INVALID,
        NO_STR
        SRX_VTY_HLP_POL_IGNORE_INVALID)
 {
-  srx_val_policy_unset (vty->index, SRX_VAL_POLICY_IGNORE_INVALID);
-  return  CMD_SUCCESS;
+  return CMD_WARNING;
+  //srx_val_policy_unset (vty->index, SRX_VAL_POLICY_IGNORE_INVALID);
 }
 
 // for roa validation invalid
@@ -2524,23 +2527,25 @@ DEFUN (no_srx_policy_aspa_ignore_invalid,
 }
 
 // original undefined
+// deprecated
 DEFUN (srx_policy_ignore_undefined,
        srx_policy_ignore_undefined_cmd,
        SRX_VTY_CMD_POL_IGNORE_UNDEFINED,
        SRX_VTY_HLP_POL_IGNORE_UNDEFINED)
 {
-  srx_val_policy_set (vty->index, SRX_VAL_POLICY_IGNORE_UNDEFINED);
-  return  CMD_SUCCESS;
+  return CMD_WARNING;
+  //srx_val_policy_set (vty->index, SRX_VAL_POLICY_IGNORE_UNDEFINED);
 }
 
+// deprecated
 DEFUN (no_srx_policy_ignore_undefined,
        no_srx_policy_ignore_undefined_cmd,
        "no " SRX_VTY_CMD_POL_IGNORE_UNDEFINED,
        NO_STR
        SRX_VTY_HLP_POL_IGNORE_UNDEFINED)
 {
-  srx_val_policy_unset (vty->index, SRX_VAL_POLICY_IGNORE_UNDEFINED);
-  return  CMD_SUCCESS;
+  return CMD_WARNING;
+  //srx_val_policy_unset (vty->index, SRX_VAL_POLICY_IGNORE_UNDEFINED);
 }
 
 // roa undefined
@@ -2645,21 +2650,26 @@ DEFUN (no_srx_policy_aspa_ignore_unverifiable,
 }
 
 // original prefer valid
+// deprecated
 DEFUN (srx_policy_prefer_valid,
        srx_policy_prefer_valid_cmd,
        SRX_VTY_CMD_POL_PREFV,
        SRX_VTY_HLP_POL_PREFV)
 {
-  return srx_val_policy_set (vty->index, SRX_VAL_POLICY_PREFER_VALID);
+  vty_out (vty, "%% This command deprecated. "
+                    " Instead, use (roa|bgpsec|aspa) prefer-valid%s", VTY_NEWLINE);
+  return CMD_WARNING;
 }
 
+// deprecated
 DEFUN (no_srx_policy_prefer_valid,
        no_srx_policy_prefer_valid_cmd,
        "no " SRX_VTY_CMD_POL_PREFV,
        NO_STR
        SRX_VTY_HLP_POL_PREFV)
 {
-  return srx_val_policy_unset (vty->index, SRX_VAL_POLICY_PREFER_VALID);
+  return CMD_WARNING;
+  //return srx_val_policy_unset (vty->index, SRX_VAL_POLICY_PREFER_VALID);
 }
 
 
@@ -10929,14 +10939,14 @@ bgp_vty_init (void)
   install_element (BGP_NODE, &srx_policy_local_preference_fix_cmd);
   install_element (BGP_NODE, &no_srx_policy_local_preference_cmd);
 
-  install_element (BGP_NODE, &srx_policy_ignore_notfound_cmd);
-  install_element (BGP_NODE, &no_srx_policy_ignore_notfound_cmd);
+  //install_element (BGP_NODE, &srx_policy_ignore_notfound_cmd); // deprecated
+  //install_element (BGP_NODE, &no_srx_policy_ignore_notfound_cmd); // deprecated
   
   install_element (BGP_NODE, &srx_policy_roa_ignore_notfound_cmd);
   install_element (BGP_NODE, &no_srx_policy_roa_ignore_notfound_cmd);
 
-  install_element (BGP_NODE, &srx_policy_ignore_invalid_cmd);
-  install_element (BGP_NODE, &no_srx_policy_ignore_invalid_cmd);
+  //install_element (BGP_NODE, &srx_policy_ignore_invalid_cmd); // deprecated
+  //install_element (BGP_NODE, &no_srx_policy_ignore_invalid_cmd); // deprecated
   
   install_element (BGP_NODE, &srx_policy_roa_ignore_invalid_cmd);
   install_element (BGP_NODE, &no_srx_policy_roa_ignore_invalid_cmd);
@@ -10947,8 +10957,8 @@ bgp_vty_init (void)
   install_element (BGP_NODE, &srx_policy_aspa_ignore_invalid_cmd);
   install_element (BGP_NODE, &no_srx_policy_aspa_ignore_invalid_cmd);
 
-  install_element (BGP_NODE, &srx_policy_ignore_undefined_cmd);
-  install_element (BGP_NODE, &no_srx_policy_ignore_undefined_cmd);
+  //install_element (BGP_NODE, &srx_policy_ignore_undefined_cmd); // deprecated
+  //install_element (BGP_NODE, &no_srx_policy_ignore_undefined_cmd); // deprecated
   
   install_element (BGP_NODE, &srx_policy_roa_ignore_undefined_cmd);
   install_element (BGP_NODE, &no_srx_policy_roa_ignore_undefined_cmd);
@@ -10965,8 +10975,8 @@ bgp_vty_init (void)
   install_element (BGP_NODE, &srx_policy_aspa_ignore_unverifiable_cmd);
   install_element (BGP_NODE, &no_srx_policy_aspa_ignore_unverifiable_cmd);
 
-  install_element (BGP_NODE, &srx_policy_prefer_valid_cmd);
-  install_element (BGP_NODE, &no_srx_policy_prefer_valid_cmd);
+  //install_element (BGP_NODE, &srx_policy_prefer_valid_cmd); // deprecated
+  //install_element (BGP_NODE, &no_srx_policy_prefer_valid_cmd); // deprecated
 
   install_element (BGP_NODE, &srx_policy_roa_prefer_valid_cmd);
   install_element (BGP_NODE, &no_srx_policy_roa_prefer_valid_cmd);
