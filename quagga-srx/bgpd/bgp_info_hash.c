@@ -125,7 +125,7 @@ static int show_info_hash (struct vty* vty, struct bgp* bgp,
       default:
         valState = -1;
     }
-#if TODO
+#if NOT_USED_THIS_FUNCTION
     if (valState != -1)
     {
       if (bgp->srx_val_local_pref[valState].is_set)

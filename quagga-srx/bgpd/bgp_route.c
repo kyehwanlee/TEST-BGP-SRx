@@ -7004,7 +7004,6 @@ static void srx_route_vty_validation_out(struct vty *vty,
 {
   struct bgp *bgp;
   bgp = binfo->peer->bgp;
-  int valState = SRx_RESULT_UNDEFINED;
   int locPrefPol = -1;
       
   SRxResult srxVal; 
@@ -7032,9 +7031,7 @@ static void srx_route_vty_validation_out(struct vty *vty,
       vty_out (vty, "%08X ", binfo->updateID);
     }
     // Calculate the total validation state
-    valState = srx_calc_validation_state(bgp, binfo);
     // Print the total validation result depending on the validation mode
-    //srx_validation_vty_short_out(vty, valState);
     vty_out (vty, "(");
     if ((bgp->srx_config & SRX_CONFIG_EVAL_ORIGIN) != 0)
     {
@@ -7236,7 +7233,6 @@ route_vty_out (struct vty *vty, struct prefix *p,
 #ifdef USE_SRX
       // Determine srx policy local pref
       struct bgp* bgp = binfo->peer->bgp;
-      int srxResult = srx_calc_validation_state(bgp, binfo);
       int srxDoLocPref;
   
       SRxResult srxVal; 
@@ -7554,12 +7550,15 @@ flap_route_vty_out (struct vty *vty, struct prefix *p,
 static void srx_route_vty_out_detail(struct vty *vty, struct bgp *bgp,
                                      struct bgp_info *binfo)
 {
-  static const char *INDEX_STR[4] =
+  static const char *INDEX_STR[7] =
   {
     "valid",
     "notfound",
     "invalid",
-    "undefined"       // might be removed again
+    "undefined",       // might be removed again
+    "donot_use",
+    "unknown",
+    "unverifiable"
   };
 
   vty_out (vty, "    SRx Information:%s", VTY_NEWLINE);
@@ -7584,10 +7583,8 @@ static void srx_route_vty_out_detail(struct vty *vty, struct bgp *bgp,
       {
         vty_out (vty, "        path:   %s%s", INDEX_STR[binfo->val_res_BGPSEC],
                                         VTY_NEWLINE);
-        vty_out (vty, "        bgpsec: %s  (combination of prefix-origin and "
-                      "path validation)%s",
-                      INDEX_STR[srx_calc_validation_state(bgp, binfo)],
-                      VTY_NEWLINE);
+        vty_out (vty, "        aspa:   %s%s", INDEX_STR[binfo->val_res_ASPA], 
+                                            VTY_NEWLINE);
       }
       else
       {
