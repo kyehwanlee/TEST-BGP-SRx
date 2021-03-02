@@ -71,7 +71,7 @@
 #define PREFIX_FLAG_ANNOUNCEMENT  0x01
 
 /** The current protocol implementation. */
-#define RPKI_RTR_PROTOCOL_VERSION 1
+#define RPKI_RTR_PROTOCOL_VERSION 2
 /** The default RPKI server port */
 #define RPKI_DEFAULT_CACHE_PORT 323
 /** The default address for a RPKI validation cache */
