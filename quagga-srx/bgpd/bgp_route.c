@@ -714,7 +714,7 @@ int bgp_info_set_ignore_flag (struct bgp_info* info)
       }
     }
       
-    if (!ignore)
+    if (!ignore && (bgp->srx_config & SRX_CONFIG_EVAL_ASPA))
     {
       switch (info->val_res_ASPA)
       {
