@@ -22,10 +22,16 @@
  *
  * RPKI/Router definitions.
  *
- * @version 0.5.0.4
+ * @version 0.5.2.0
  *
  * Changelog:
  * -----------------------------------------------------------------------------
+ * 0.5.2.0  - 2021/02/09 - oborchert
+ *            * Added define PREFIX_FLAG_AFI_V6
+ *          - 2020/11/24 - oborchert
+ *            * Added Experimental ASPA (see RFC 8210bis-01)
+ *              Enumeration value PDU_TYPE_ASPA as well as the 
+ *              structure RPKI_ASPAHeader
  * 0.5.0.4  - 2018/03/07 - oborchert
  *            * Added new error code of RFC 8210
  *            * Added error string defines.
@@ -72,6 +78,9 @@
 
 /** The current protocol implementation. */
 #define RPKI_RTR_PROTOCOL_VERSION 2
+/** Bit number 2 specifies the Address Family, 0 for IPv4, 1 for IPv6*/
+#define PREFIX_FLAG_AFI_V6        0x02
+
 /** The default RPKI server port */
 #define RPKI_DEFAULT_CACHE_PORT 323
 /** The default address for a RPKI validation cache */
@@ -266,6 +275,21 @@ typedef struct {
   // message size
   // message
 } __attribute__((packed)) RPKIErrorReportHeader;
+
+/**
+ * PDU ASPA
+ */
+typedef struct {
+  uint8_t     version;     // Version
+  uint8_t     type;        // TYPE_ASPA
+  uint16_t    zero_1;      // zero
+  uint32_t    length;      // 160+ Bytes
+  uint8_t     flags;
+  uint8_t     zero_2;      // zero
+  uint16_t    provider_as_count; // Must be at least 1
+  uint32_t    customer_asn;
+  // followed by list of provider_asn (4 * provider_as_count))
+} __attribute__((packed)) RPKIASPAHeader;
 
 /**
  * A common structure used to determine the packet size and type while sending

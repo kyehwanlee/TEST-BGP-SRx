@@ -22,10 +22,12 @@
  *
  * This handler processes ROA validation
  *
- * @version 0.5.1.0
+ * @version 0.5.2.0
  *
  * Changelog:
  * -----------------------------------------------------------------------------
+ * 0.5.2.0  - 2021/02/16 - oborchert
+ *            * Added skeleton function handleASPAObject() for APSA processing. 
  * 0.5.1.0  - 2018/03/09 - oborchert 
  *            * BZ1263: Merged branch 0.5.0.x (version 0.5.0.4) into trunk 
  *              of 0.5.1.0.
@@ -391,7 +393,7 @@ static u_int8_t getAlgoID(const char* keyInfo)
  * @param asn         The as number in host format
  * @param ski         the ski buffer ()
  * @param keyInfo     Pointer to the key in DER format.
- * @param user        Some user data. (might be deleted later on)             // THIS MIGHT BE DELETED LATER ON
+ * @param rpkiHandler Some user data. (might be deleted later on)             // THIS MIGHT BE DELETED LATER ON
  *
  * @since 0.5.0.0
  */

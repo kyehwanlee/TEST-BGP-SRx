@@ -1168,13 +1168,14 @@ static u_int32_t srx_loc_prev_value(struct bgp* bgp, u_int32_t locPref,
 bool isSetPrefPolicy(struct bgp* bgp)
 {
   bool ret = false;
-
   struct srx_local_pref prefPolicy;
-  for(int t=0; t<NUM_LOCPREF_TYPE; t++)
+  int lp_type, lp_result;
+
+  for (lp_type=0; lp_type < NUM_LOCPREF_TYPE; lp_type++)
   {
-    for(int r=0; r < NUM_LOCPREF_RESULT; r++)
+    for (lp_result=0; lp_result < NUM_LOCPREF_RESULT; lp_result++)
     {
-      prefPolicy = bgp->srx_val_local_pref[t][r];
+      prefPolicy = bgp->srx_val_local_pref[lp_type][lp_result];
       if(prefPolicy.is_set && prefPolicy.value)
         return true;
     }
@@ -3256,13 +3257,14 @@ void verify_update (struct bgp *bgp, struct bgp_info *info,
                 asPathList.length, asPathList.asType==2 ? "AS_SEQUENCE": (asPathList.asType==1 ? "AS_SET": "ETC"), 
                 asPathList.asRelationship == 2 ? "provider" : (asPathList.asRelationship == 1 ? "customer": "unknown"));
 
-        for (int i=0; cseg && i<cseg->length; i++)
+        int csedIdx = 0;
+        for (csedIdx=0; cseg && csedIdx < cseg->length; csedIdx++)
         {
-          asPathList.segments[i].asn =  cseg->as[i]; 
+          asPathList.segments[csedIdx].asn =  cseg->as[csedIdx]; 
           if (BGP_DEBUG (aspa, ASPA))
           {
             zlog_debug ("[ ASPA ] asPathList.segment[%d].asn: %6d type:%d AS relationship: %d", 
-                i, cseg->as[i], asPathList.asType, asPathList.asRelationship);
+                csedIdx, cseg->as[csedIdx], asPathList.asType, asPathList.asRelationship);
           }
         }
       }
@@ -7073,11 +7075,12 @@ static void srx_route_vty_validation_out(struct vty *vty,
     */
 
     int32_t totalLocalPref = 0;
+    int lp_type = 0;
 
     // Determine local pref policy 'SRxLP'
-    for (int i=0; i<NUM_LOCPREF_TYPE; i++)
+    for (lp_type=0; lp_type < NUM_LOCPREF_TYPE; lp_type++)
     {
-      bSrxResult = *(srxValPtr+i);
+      bSrxResult = *(srxValPtr+lp_type);
       switch (bSrxResult)
       {
         case SRx_RESULT_VALID:
@@ -7095,19 +7098,19 @@ static void srx_route_vty_validation_out(struct vty *vty,
 
       if (locPrefPol > -1)
       {
-        if (bgp->srx_val_local_pref[i][locPrefPol].is_set)
+        if (bgp->srx_val_local_pref[lp_type][locPrefPol].is_set)
         {
-          if (bgp->srx_val_local_pref[i][locPrefPol].relative == 0)  // add
+          if (bgp->srx_val_local_pref[lp_type][locPrefPol].relative == 0)  // add
           {
-            totalLocalPref += bgp->srx_val_local_pref[i][locPrefPol].value;
+            totalLocalPref += bgp->srx_val_local_pref[lp_type][locPrefPol].value;
           }
-          else if (bgp->srx_val_local_pref[i][locPrefPol].relative == -1) // subtract
+          else if (bgp->srx_val_local_pref[lp_type][locPrefPol].relative == -1) // subtract
           {
-            totalLocalPref -= bgp->srx_val_local_pref[i][locPrefPol].value; 
+            totalLocalPref -= bgp->srx_val_local_pref[lp_type][locPrefPol].value; 
           }
           else // add
           {
-            totalLocalPref += bgp->srx_val_local_pref[i][locPrefPol].value;
+            totalLocalPref += bgp->srx_val_local_pref[lp_type][locPrefPol].value;
           }
         }
       }
@@ -7243,9 +7246,10 @@ route_vty_out (struct vty *vty, struct prefix *p,
 
       if (bgp != NULL)
       {
-        for(int i=0; i<NUM_LOCPREF_TYPE; i++)
+        int lp_type = 0;
+        for (lp_type=0; lp_type < NUM_LOCPREF_TYPE; lp_type++)
         {
-          bSrxResult = *(srxValPtr+i);
+          bSrxResult = *(srxValPtr+lp_type);
           switch (bSrxResult)
           {
             case SRx_RESULT_VALID:
@@ -14946,9 +14950,10 @@ bgp_route_finish (void)
 #if 0
     // Determine local pref policy 'SRxLP'
     bool isAnySet = isSetPrefPolicy(bgp);
-    for (int t=0; t<NUM_LOCPREF_TYPE; t++)
+    int lp_type = 0
+    for (lp_type=0; lp_type < NUM_LOCPREF_TYPE; lp_type++)
     {
-      bSrxResult = *(srxValPtr+t);
+      bSrxResult = *(srxValPtr+lp_type);
       switch (bSrxResult)
       {
         case SRx_RESULT_VALID:
@@ -14969,10 +14974,10 @@ bgp_route_finish (void)
 
       if (locPrefPol > -1)
       {
-        if (bgp->srx_val_local_pref[t][locPrefPol].is_set)
+        if (bgp->srx_val_local_pref[lp_type][locPrefPol].is_set)
         {
-          //vty_out (vty, (t==0 ? "R": (t==1 ? "P":"A")));
-          switch (bgp->srx_val_local_pref[t][locPrefPol].relative)
+          //vty_out (vty, (lp_type==0 ? "R": (lp_type==1 ? "P":"A")));
+          switch (bgp->srx_val_local_pref[lp_type][locPrefPol].relative)
           {
             case -1:
               vty_out (vty, "-");
@@ -14984,7 +14989,7 @@ bgp_route_finish (void)
             default:
               vty_out (vty, " ");
           }
-          vty_out (vty, "%2d", bgp->srx_val_local_pref[t][locPrefPol].value);
+          vty_out (vty, "%2d", bgp->srx_val_local_pref[lp_type][locPrefPol].value);
         }
         else
         {
@@ -14996,11 +15001,11 @@ bgp_route_finish (void)
         vty_out (vty, "    "); // in case 
       }
 
-      if(isAnySet && t == NUM_LOCPREF_TYPE -1)
+      if (isAnySet && lp_type == NUM_LOCPREF_TYPE -1)
         vty_out (vty, ")");
-      else if (isAnySet && t < NUM_LOCPREF_TYPE -1)
+      else if (isAnySet && lp_type < NUM_LOCPREF_TYPE -1)
         vty_out (vty, ",");
-      else if (!isAnySet && t < NUM_LOCPREF_TYPE)
+      else if (!isAnySet && lp_type < NUM_LOCPREF_TYPE)
         vty_out (vty, " ");
 
     } 
@@ -15010,9 +15015,9 @@ bgp_route_finish (void)
 
 #if 0
     bool isAnySet = isSetPrefPolicy(bgp);
-    for (int t=0; t<NUM_LOCPREF_TYPE; t++)
+    for (lp_type=0; lp_type<NUM_LOCPREF_TYPE; lp_type++)
     {
-      bSrxResult = *(srxValPtr+t);
+      bSrxResult = *(srxValPtr+lp_type);
       switch (bSrxResult)
       {
         case SRx_RESULT_VALID:
@@ -15036,8 +15041,8 @@ bgp_route_finish (void)
       {
         if (bgp->srx_val_local_pref[t][locPrefPol].is_set)
         {
-          //vty_out (vty, (t==0 ? "R": (t==1 ? "P":"A")));
-          switch (bgp->srx_val_local_pref[t][locPrefPol].relative)
+          //vty_out (vty, (lp_type==0 ? "R": (lp_type==1 ? "P":"A")));
+          switch (bgp->srx_val_local_pref[lp_type][locPrefPol].relative)
           {
             case -1:
               vty_out (vty, "-");
@@ -15049,7 +15054,7 @@ bgp_route_finish (void)
             default:
               vty_out (vty, " ");
           }
-          vty_out (vty, "%2d", bgp->srx_val_local_pref[t][locPrefPol].value);
+          vty_out (vty, "%2d", bgp->srx_val_local_pref[lp_type][locPrefPol].value);
         }
         else
         {
@@ -15061,11 +15066,11 @@ bgp_route_finish (void)
         vty_out (vty, "    "); // in case 
       }
 
-      if(isAnySet && t == NUM_LOCPREF_TYPE -1)
+      if(isAnySet && lp_type == NUM_LOCPREF_TYPE -1)
         vty_out (vty, ")");
-      else if (isAnySet && t < NUM_LOCPREF_TYPE -1)
+      else if (isAnySet && lp_type < NUM_LOCPREF_TYPE -1)
         vty_out (vty, ",");
-      else if (!isAnySet && t < NUM_LOCPREF_TYPE)
+      else if (!isAnySet && lp_type < NUM_LOCPREF_TYPE)
         vty_out (vty, " ");
 
     } 

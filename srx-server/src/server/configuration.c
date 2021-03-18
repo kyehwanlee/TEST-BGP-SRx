@@ -20,10 +20,12 @@
  * other licenses. Please refer to the licenses of all libraries required
  * by this software.
  *
- * @version 0.5.1.1
+ * @version 0.5.2.0
  *
  * Changelog:
  * -----------------------------------------------------------------------------
+ * 0.5.2.0 - 2021/02/16 - oborchert
+ *           * Added RPKI-Router-Protocol Version 2
  * 0.5.1.1 - 2020/07/22 - oborchert
  *           * Fixed error message when unknown parameter is provided.
  * 0.5.0.0 - 2017/07/05 - oborchert
@@ -91,10 +93,11 @@
 #include "util/prefix.h"
 #include "util/directory.h"
 
-/** Version of the router to cache protocol */
+/** Version 0 (Only ROA information) of the router to cache protocol */
 #define RPKI_2_RTR_6810 0
-/** Version of the router to cache protocol */
+/** Version 1 (Added BGPsec Keys) of the router to cache protocol */
 #define RPKI_2_RTR_8210 1
+
 /** Version 2 (Added ASPA) of the router to cache protocol */
 #define RPKI_2_RTR_8210_BIS 2
 

@@ -138,6 +138,29 @@ typedef struct {
                             const char* keyInfo, void* user);
   
   /**
+   * This function is called for each prefix announcement / withdrawal received
+   * from the RPKI validation cache.
+   *
+   * @param valCacheID  This Id represents the cache. It is used to be able to
+   *                    later on identify the white-list / ROA entry in case the
+   *                    cache state changes.
+   * @param sessionID   The cache sessionID entry for this data. It is be useful
+   *                    for sessionID changes in case SRx is implementing a
+   *                    performance driven approach.
+   * @param isAnn       Indicates if this in an announcement or not.
+   * @param afi         (afi: 0=IPv4, 1=IPv6
+   * @param customerAS  The ASn of the customer.
+   * @param providerCt  Number of Providers in the providerList
+   * @param providerASList List of providerASs
+   * @param user        Some user data. (might be deleted later on)             // THIS MIGHT BE DELETED LATER ON
+   */
+  /*
+  void (*aspaCallback)(uint32_t valCacheID, uint16_t sessionID, bool isAnn, 
+                       uint8_t afi, uint32_t customerAS, uint16_t providerCt, 
+                       uint32_t* providerASList, void* user);
+  */
+  
+  /**
    * This function is called each time end of data is received. This allows to
    * trigger all necessary processing after data was received. (i.e. dequeueing
    * the RPKI QUEUE)

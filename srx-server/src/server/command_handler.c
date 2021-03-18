@@ -25,10 +25,12 @@
  * queue is fed by the srx-proxy communication thread.
  *
  *
- * @version 0.5.0.0
+ * @version 0.5.1.2
  *
  * Changelog:
  * -----------------------------------------------------------------------------
+ * 0.5.1.2  - 2020/09/26 - oborchert
+ *            * Fixed some incorrect function description.
  * 0.5.0.0  - 2017/07/07 - oborchert
  *            * Moved update path validation into BGPsec handler.
  *            * Also modified validation request handling. (Cleaned it up a bit)
@@ -908,11 +910,12 @@ static void* handleCommands(void* arg)
 
 
 /**
- * Sends a (new) result to all connected clients.
+ * Sends a (new) result to all connected clients of the provided update.
+ * The UpdateID is embedded in the SRxValidationResult data.
  *
  * @param self Instance
- * @param updId Update identifier
- * @param res Result
+ * @param valResult The validaion result including the UpdateID the result
+ *                  is for.
  * @return true if at least one broadcast could be successfully send to any
  *              registered client
  */

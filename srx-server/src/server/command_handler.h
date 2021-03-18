@@ -21,10 +21,13 @@
  * by this software.
  * 
  *
- * @version 0.3.0.10
+ * @version 0.5.1.2
  *
  * Changelog:
  * -----------------------------------------------------------------------------
+ * 0.5.2.1  - 2020/09/27 - oborchert
+ *            * Synchronized the documentation of broadcastResult with the 
+ *              the implementation ".c" file.
  * 0.3.0.10 - 2015/11/09 - oborchert
  *            * Removed types.h
  * 0.3.0    - 2013/01/28 - oborchert
@@ -122,12 +125,14 @@ bool startProcessingCommands(CommandHandler* self, CommandQueue* cmdQueue);
 void stopProcessingCommands(CommandHandler* self);
 
 /**
- * Sends a (new) result to all connected clients.
+ * Sends a (new) result to all connected clients of the provided update.
+ * The UpdateID is embedded in the SRxValidationResult data.
  *
  * @param self Instance
- * @param valResult The validation result containing all information needed 
- *                  to broadcast the result.
- * @return true if the broadcast could be successfully send.
+ * @param valResult The validaion result including the UpdateID the result
+ *                  is for.
+ * @return true if at least one broadcast could be successfully send to any
+ *              registered client
  */
 bool broadcastResult(CommandHandler* self, SRxValidationResult* valResult);
 
