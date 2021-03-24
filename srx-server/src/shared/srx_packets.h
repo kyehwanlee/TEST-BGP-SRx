@@ -116,7 +116,7 @@ typedef struct {
   uint8_t  type;
   uint16_t reserved1;
   uint8_t  reserved2;
-  uint8_t  reserved3;
+  uint32_t reserved3;
   // The total length of this header in bytes.
   uint32_t length;
   // MUCH MORE DATA FOLLOWS, SEE srx_packet.h
@@ -133,7 +133,8 @@ typedef struct {
 typedef struct {
   uint8_t    type;              // 0
   uint16_t   version;
-  uint16_t   zero;
+  uint8_t    zero;
+  uint32_t   padding32;
   uint32_t   length;            // Variable 20(+) Bytes
   uint32_t   proxyIdentifier;
   uint32_t   asn;
@@ -147,7 +148,8 @@ typedef struct {
 typedef struct {
   uint8_t   type;              // 1
   uint16_t  version;
-  uint16_t   zero;
+  uint8_t   zero;
+  uint32_t  padding32;
   uint32_t  length;            // 12 Bytes
   uint32_t  proxyIdentifier;
 } __attribute__((packed)) SRXPROXY_HELLO_RESPONSE;
@@ -158,7 +160,8 @@ typedef struct {
 typedef struct {
   uint8_t   type;              // 2
   uint16_t  keepWindow;
-  uint16_t   zero;
+  uint8_t   zero;
+  uint32_t  padding32;
   uint32_t  length;            // 8 Bytes
 } __attribute__((packed)) SRXPROXY_GOODBYE;
 
@@ -209,11 +212,12 @@ typedef struct {
   uint8_t       roaResSrc;
   uint8_t       bgpsecResSrc;
   uint8_t       aspaResSrc;   // reserved for ASPA validation
+  uint8_t       padding8;
+  uint16_t      padding16;
   uint32_t      length;
   uint8_t       roaDefRes;
   uint8_t       bgpsecDefRes;
   uint8_t       aspaDefRes; // reserved for ASPA validation
-  uint8_t       zero;
   uint8_t       prefixLen;
   uint32_t      requestToken; // Added with protocol version 1.0
 } __attribute__((packed)) SRXRPOXY_BasicHeader_VerifyRequest;
@@ -250,7 +254,7 @@ typedef struct {
   uint8_t     type;            // 5
   uint16_t    algorithm;
   uint8_t     blockType;
-  uint8_t     zero;
+  uint32_t    padding32;
   uint32_t    length;          // 20 Bytes
   uint32_t    updateIdentifier;
   uint32_t    prependCounter;
@@ -266,6 +270,8 @@ typedef struct {
   uint8_t     roaResult;
   uint8_t     bgpsecResult;
   uint8_t     aspaResult;
+  uint8_t     padding8;
+  uint16_t    padding16;
   uint32_t    length;          // 16 Bytes
   uint32_t    requestToken; // Added with protocol version 1.0
   SRxUpdateID updateID;
@@ -277,7 +283,8 @@ typedef struct {
 typedef struct {
   uint8_t          type;            // 7
   uint16_t         reserved;
-  uint16_t          zero;
+  uint8_t          zero;
+  uint32_t         padding32;
   uint32_t         length;          // 16(+) Bytes
   uint32_t         updateIdentifier;
   uint32_t         bgpsecLength;
@@ -290,7 +297,8 @@ typedef struct {
 typedef struct {
   uint8_t     type;            // 8
   uint16_t    keepWindow;
-  uint16_t     zero;
+  uint8_t     zero;
+  uint32_t    padding32;
   uint32_t    length;          // 12 Bytes
   uint32_t    updateIdentifier;
 } __attribute__((packed)) SRXPROXY_DELETE_UPDATE;
@@ -301,7 +309,8 @@ typedef struct {
 typedef struct {
   uint8_t     type;            // 9
   uint16_t    reserved;
-  uint16_t     changeType;
+  uint8_t     changeType;
+  uint32_t    padding32;
   uint32_t    length;          // 8 Bytes
   uint32_t    peerAS;
 } __attribute__((packed)) SRXPROXY_PEER_CHANGE;
@@ -312,7 +321,8 @@ typedef struct {
 typedef struct {
   uint8_t     type;            // 10
   uint16_t    reserved;
-  uint16_t     zero;
+  uint8_t     zero;
+  uint32_t    padding32;
   uint32_t    length;          // 8 Bytes
 } __attribute__((packed)) SRXPROXY_SYNCH_REQUEST;
 
@@ -322,7 +332,8 @@ typedef struct {
 typedef struct {
   uint8_t     type;            // 11
   uint16_t    errorCode;
-  uint16_t     zero;
+  uint8_t     zero;
+  uint32_t    padding32;
   uint32_t    length;          // 8 Bytes
 } __attribute__((packed)) SRXPROXY_ERROR;
 
